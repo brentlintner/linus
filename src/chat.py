@@ -18,9 +18,13 @@ GEMINI_DISPLAY_NAME = os.getenv('GEMINI_DISPLAY_NAME')
 # TODO: save history to a file and/or use a cache and update it as you go
 history = []
 
-def load_context_cache():
-    cache_file = os.path.join(os.path.dirname(__file__), '../docs/background.txt')
-    with open(cache_file, 'r') as f:
+# TODO: use an arg parser, add cmd to list and remove caches
+# TODO: with argparser add command to resume the last session
+
+def prompt_prefix():
+    # TODO: have multiple characters and choose one at random (all celebrities or fictional characters on the phone but together)
+    prompt_prefix_file = os.path.join(os.path.dirname(__file__), '../docs/background.txt')
+    with open(prompt_prefix_file, 'r') as f:
         return f.read()
 
 def delete_context_cache(cache):
@@ -36,18 +40,19 @@ def check_if_env_vars_set():
         sys.exit(1)
 
     if not GEMINI_MODEL:
-        print("Please set the GEMINI_MODEL environment variable.")
-        sys.exit(1)
-
-    if not GEMINI_DISPLAY_NAME:
-        print("Please set the GEMINI_DISPLAY_NAME environment variable.")
+        print("Please set the GEMINI_MODEL environment variable (ex: GEMINI_MODEL=gemini-1.5-pro")
         sys.exit(1)
 
 def coding_repl():
+    os.mkdir('tmp') if not os.path.exists('tmp') else None
+
     ai.configure(api_key=GEMINI_API_KEY)
 
-    history.append(load_context_cache())
+    history.append(prompt_prefix())
 
+    # NOTE: caching has a min limit of 32k characters lol
+    # TODO: use a cache, update it as you go, and save it to a file or db
+    # TODO: make the file name i.e. display name based on the first question's subject
     # Create a cache with the context
     # cache = caching.CachedContent.create(
         # model='models/' + GEMINI_MODEL,
@@ -61,6 +66,8 @@ def coding_repl():
     # model = ai.GenerativeModel.from_cached_content(cached_content=cache)
     model = ai.GenerativeModel('models/' + GEMINI_MODEL)
 
+    print(GEMINI_DISPLAY_NAME + '\n') if GEMINI_DISPLAY_NAME else None
+
     while True:
         try:
             user_input = input("> ")
@@ -71,13 +78,14 @@ def coding_repl():
             history.append('Linus: ' + response.text + '\n')
             print('\n' + re.sub(r'([\.\!\?])\s\s', r'\1\n\n', response.text))
 
+            # TODO: go through each file and insert pretty printed version?
             # Check if the response contains a code snippet
-            if "// [START code_snippet:" in response.text:
+            # if "// [START code_snippet:" in response.text:
                 # Extract the code snippet
-                code_snippet = response.text.split("// [START code_snippet:")[1].split("// [END code_snippet:")[0]
+                # code_snippet = response.text.split("// [START code_snippet:")[1].split("// [END code_snippet:")[0]
 
                 # Pretty print and highlight the code
-                print(highlight(code_snippet, PythonLexer(), TerminalFormatter()))
+                # print(highlight(code_snippet, PythonLexer(), TerminalFormatter()))
 
         except KeyboardInterrupt:
             if input("\nReally quit? (y/n) ").lower() == 'y':
