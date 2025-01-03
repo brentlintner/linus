@@ -1,0 +1,7 @@
+#!/usr/bin/env sh
+
+cd "$(dirname "$0")/.."
+
+pipenv --quiet run python src/chat.py
+
+trap 'cd - >> /dev/null' EXIT
