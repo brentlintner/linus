@@ -193,7 +193,7 @@ def coding_repl(resume=False, subject=None):
                 break
 
             history.append('Brent: ' + user_input + '\n')
-            response = model.generate_content('\n'.join(history))
+            response = model.generate_content(''.join(history))
             history.append('Linus: ' + response.text + '\n')
 
             if first_message and not history_filename:
@@ -208,7 +208,7 @@ def coding_repl(resume=False, subject=None):
 
             if history_filename:
                 with open(history_filename, 'w') as f:
-                    f.write('\n'.join(history))
+                    f.write(''.join(history))
 
             sanitized_response = re.sub(r'([^\d][\.\!\?\)\*])\s\s', r'\1\n\n', response.text)
             print()
