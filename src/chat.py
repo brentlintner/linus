@@ -18,7 +18,6 @@ load_dotenv()
 
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 GEMINI_MODEL = os.getenv('GEMINI_MODEL')
-GEMINI_DISPLAY_NAME = os.getenv('GEMINI_DISPLAY_NAME')
 
 history = []
 
@@ -151,11 +150,7 @@ def cli():
 
     check_if_env_vars_set()
 
-    if args.subject:
-        global GEMINI_DISPLAY_NAME
-        GEMINI_DISPLAY_NAME = '_'.join(args.subject)
-
-    coding_repl(resume=args.resume)
+    coding_repl(resume=args.resume, subject=args.subject)
 
 def coding_repl(resume=False, subject=None):
     os.mkdir('tmp') if not os.path.exists('tmp') else None
@@ -192,13 +187,14 @@ def coding_repl(resume=False, subject=None):
             if user_input == 'exit':
                 break
 
-            history.append('Brent: ' + user_input + '\n')
+            history.append('Brent: \n\n' + user_input + '\n')
             response = model.generate_content(''.join(history))
-            history.append('Linus: ' + response.text + '\n')
+            history.append('Linus: \n\n' + response.text + '\n')
 
             if first_message and not history_filename:
                 if subject:
                     chat_subject = '_'.join(subject)
+                    print(f"Using subject: {chat_subject}")
                 else:
                     chat_subject_response = model.generate_content('Summarize the following piece of text in a file name compatible string:\n\n' + user_input)
                     chat_subject = chat_subject_response.text.strip()
