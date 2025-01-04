@@ -1,6 +1,6 @@
-# CLI Coding Partner
+# Coding Partner
 
-A python script to provide a repl to a custom gemini llm.
+A CLI based tool that simulates a coding partner by providing "helpful" suggestions and comments.
 
 ## Dependencies
 
@@ -15,10 +15,6 @@ pipenv install
 cp .env.example .env
 bin/ai -h
 ```
-
-## Current Characters
-
-* [Linux Torvalds](docs/background.txt)
 
 ## Feature Ideas
 
