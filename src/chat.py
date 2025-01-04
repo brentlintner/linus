@@ -1,7 +1,12 @@
 import google.generativeai as ai
 import os
 import sys
+import time
 import re
+import uuid
+import argparse
+from datetime import datetime, timezone
+from collections import deque
 
 from pygments import highlight
 from pygments.lexers import PythonLexer
@@ -15,69 +20,183 @@ GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 GEMINI_MODEL = os.getenv('GEMINI_MODEL')
 GEMINI_DISPLAY_NAME = os.getenv('GEMINI_DISPLAY_NAME')
 
-# TODO: save history to a file and/or use a cache and update it as you go
 history = []
 
-# TODO: use an arg parser, add cmd to list and remove caches
-# TODO: with argparser add command to resume the last session
+verbose = False
+def verbose_logging():
+    global verbose
+    verbose = True
+
+def info(message):
+    if verbose:
+        print(message)
+
+def error(message):
+    print(message)
+
+def tail(filename, n=10):
+    try:
+        with open(filename) as f:
+            return deque(f, n)
+    except FileNotFoundError:
+        return None
+
+def type_response_out(lines, delay=0):
+    for string in lines:
+        for char in string:
+            sys.stdout.write(char)
+            sys.stdout.flush()  # Force character output. Important!
+
+            time.sleep(delay)
+        print()  # Newline after each string
 
 def prompt_prefix():
-    # TODO: have multiple characters and choose one at random (all celebrities or fictional characters on the phone but together)
     prompt_prefix_file = os.path.join(os.path.dirname(__file__), '../docs/background.txt')
     with open(prompt_prefix_file, 'r') as f:
         return f.read()
 
-def delete_context_cache(cache):
-    try:
-        cache.delete()
-        print("Context cache deleted.")
-    except Exception as e:
-        print(f"Error deleting context cache: {e}")
-
 def check_if_env_vars_set():
     if not GEMINI_API_KEY:
-        print("Please set the GEMINI_API_KEY environment variable.")
+        error("Please set the GEMINI_API_KEY environment variable.")
         sys.exit(1)
 
     if not GEMINI_MODEL:
-        print("Please set the GEMINI_MODEL environment variable (ex: GEMINI_MODEL=gemini-1.5-pro")
+        error("Please set the GEMINI_MODEL environment variable (ex: GEMINI_MODEL=gemini-1.5-pro")
         sys.exit(1)
 
-def coding_repl():
+def generate_timestamped_uuid():
+    uuid_val = str(uuid.uuid4())
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S.%fZ")  # ISO 8601 format in UTC
+    return f"{timestamp}-{uuid_val}"
+
+def extract_timestamp(filename):
+    match = re.search(r"(\d{8}T\d{6}\.\d{6}Z)", filename)
+    if match:
+        timestamp_str = match.group(1)
+        try:
+            timestamp = datetime.strptime(timestamp_str, "%Y%m%dT%H%M%S.%fZ")
+            return timestamp
+        except ValueError:
+            error(f"Invalid timestamp format: {timestamp_str}")
+            return None
+    else:
+        error("Timestamp not found in filename")
+        return None
+
+
+def last_session():
+    directory = os.path.join(os.path.dirname(__file__), '../tmp')
+    files_with_timestamps = []
+    for filename in os.listdir(directory):
+        if filename.endswith(".txt"):
+            timestamp = extract_timestamp(filename)
+            if timestamp:  # Only add files with valid timestamps
+                files_with_timestamps.append((filename, timestamp))
+
+
+    # Sort the files by timestamp in descending order
+    files_with_timestamps.sort(key=lambda item: item[1], reverse=True)
+
+    latest_file = files_with_timestamps[0] if files_with_timestamps else None
+
+    return latest_file if latest_file else None
+
+
+def print_history():
+    directory = os.path.join(os.path.dirname(__file__), '../tmp')
+
+    files_with_timestamps = []
+
+    for filename in os.listdir(directory):
+        if filename.endswith(".txt"):
+            timestamp = extract_timestamp(filename)
+            if timestamp:
+                files_with_timestamps.append((filename, timestamp))
+
+    files_with_timestamps.sort(key=lambda item: item[1], reverse=True)
+
+    for filename, timestamp in files_with_timestamps:
+        print(f"{timestamp} - {filename}")
+
+def cli():
+    parser = argparse.ArgumentParser(prog="ai-chat", add_help=False, description="Chat with a Gemini AI based pair programming assistant")
+    parser.add_argument("--resume", "-r", action="store_true", help="Resume the last converstation")
+    parser.add_argument("--help", "-h", action="store_true", help="Print this help message")
+    parser.add_argument("--history", "-l", action="store_true", help="Show a list of previous conversations")
+    parser.add_argument("--verbose", "-v", action="store_true", help="Log verbose output")
+
+    args = parser.parse_args()
+
+    if args.verbose:
+        verbose_logging()
+
+    if args.history:
+        print_history()
+        sys.exit(0)
+
+    if args.help:
+        parser.print_help()
+        sys.exit(0)
+
+    check_if_env_vars_set()
+
+    coding_repl(resume=args.resume)
+
+def coding_repl(resume=False):
     os.mkdir('tmp') if not os.path.exists('tmp') else None
 
     ai.configure(api_key=GEMINI_API_KEY)
 
-    history.append(prompt_prefix())
-
-    # NOTE: caching has a min limit of 32k characters lol
-    # TODO: use a cache, update it as you go, and save it to a file or db
-    # TODO: make the file name i.e. display name based on the first question's subject
-    # Create a cache with the context
-    # cache = caching.CachedContent.create(
-        # model='models/' + GEMINI_MODEL,
-        # display_name=GEMINI_DISPLAY_NAME,
-        # system_instruction=context_cache,
-        # ttl=None # No expiration
-    # )
-    # TODO: cache.update(ttl=datetime.timedelta(hours=2)) on loop?
-
-    # Construct a GenerativeModel which uses the created cache.
-    # model = ai.GenerativeModel.from_cached_content(cached_content=cache)
     model = ai.GenerativeModel('models/' + GEMINI_MODEL)
 
     print(GEMINI_DISPLAY_NAME + '\n') if GEMINI_DISPLAY_NAME else None
+
+    first_message = False if resume else True
+
+    previous_session = last_session() if resume else None
+
+    if previous_session:
+        info(f"Resuming session: {previous_session[0]}") if previous_session else None
+        session_file = os.path.join(os.path.dirname(__file__), f"../tmp/{previous_session[0]}")
+        recap = tail(session_file, 100)
+        sanitized_recap = re.sub(r'.*Past conversation:', '', ''.join(recap), flags=re.DOTALL).strip()
+        sanitized_recap_again = re.sub(r'\n*(Linus:\s|Brent:\s)', r'\n\n\n\1\n\n', sanitized_recap)
+        print(re.sub(r'^\n*([^\n])', r'\1', re.sub(r'([^\d][\.\!\?\)\*])\s\s', r'\1\n\n', sanitized_recap_again), flags=re.DOTALL))
+        print()
+        with open(session_file, 'r') as f:
+            for line in f.readlines():
+                history.append(line)
+    else:
+        info("No previous session found. Starting a new session.") if resume else None
+        history.append(prompt_prefix())
 
     while True:
         try:
             user_input = input("> ")
             if user_input == 'exit':
                 break
+
             history.append('Brent: ' + user_input + '\n')
             response = model.generate_content('\n'.join(history))
             history.append('Linus: ' + response.text + '\n')
-            print('\n' + re.sub(r'([\.\!\?])\s\s', r'\1\n\n', response.text))
 
+            tmp_history_filename = None
+            if first_message and not resume:
+                chat_subject_response = model.generate_content('Summarize the following piece of text in a file name compatible string:\n\n' + user_input)
+                chat_subject = chat_subject_response.text.strip()
+                tmp_history_filename = os.path.join(os.path.dirname(__file__), f"../tmp/linus-{chat_subject}-{generate_timestamped_uuid()}.txt")
+                first_message = False
+            elif resume and previous_session:
+                tmp_history_filename = os.path.join(os.path.dirname(__file__), f"../tmp/{previous_session[0]}")
+
+            with open(tmp_history_filename, 'w') as f:
+                f.write('\n'.join(history))
+
+            sanitized_response = re.sub(r'([^\d][\.\!\?\)\*])\s\s', r'\1\n\n', response.text)
+            print()
+            type_response_out(sanitized_response.split('\n'))
+
+            # TODO: if a code snippet log all at once
             # TODO: go through each file and insert pretty printed version?
             # Check if the response contains a code snippet
             # if "// [START code_snippet:" in response.text:
@@ -92,5 +211,4 @@ def coding_repl():
                 break
 
 if __name__ == "__main__":
-    check_if_env_vars_set()
-    coding_repl()
+    cli()
