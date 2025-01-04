@@ -84,6 +84,17 @@ def extract_timestamp(filename):
         return None
 
 
+def previous_history(resume_from=None):
+    if resume_from and resume_from != True:
+        timestamp = extract_timestamp(resume_from)
+        if timestamp:
+            return (os.path.basename(resume_from), timestamp)
+        else:
+            error("Invalid history file")
+            return None
+
+    return last_session()
+
 def last_session():
     directory = os.path.join(os.path.dirname(__file__), '../tmp')
     files_with_timestamps = []
@@ -92,7 +103,6 @@ def last_session():
             timestamp = extract_timestamp(filename)
             if timestamp:  # Only add files with valid timestamps
                 files_with_timestamps.append((filename, timestamp))
-
 
     # Sort the files by timestamp in descending order
     files_with_timestamps.sort(key=lambda item: item[1], reverse=True)
@@ -120,7 +130,8 @@ def print_history():
 
 def cli():
     parser = argparse.ArgumentParser(prog="ai-chat", add_help=False, description="Chat with a Gemini AI based pair programming assistant")
-    parser.add_argument("--resume", "-r", action="store_true", help="Resume the last converstation")
+    parser.add_argument("--resume", "-r", nargs="?", const=True, default=False, help="Resume a previous conversation. Will use last created session if no argument is provided.")
+    parser.add_argument("--subject", "-s", nargs="+", help="Overrides the subject instead of generating one from the first message")
     parser.add_argument("--help", "-h", action="store_true", help="Print this help message")
     parser.add_argument("--history", "-l", action="store_true", help="Show a list of previous conversations")
     parser.add_argument("--verbose", "-v", action="store_true", help="Log verbose output")
@@ -140,20 +151,20 @@ def cli():
 
     check_if_env_vars_set()
 
+    if args.subject:
+        global GEMINI_DISPLAY_NAME
+        GEMINI_DISPLAY_NAME = '_'.join(args.subject)
+
     coding_repl(resume=args.resume)
 
-def coding_repl(resume=False):
+def coding_repl(resume=False, subject=None):
     os.mkdir('tmp') if not os.path.exists('tmp') else None
 
     ai.configure(api_key=GEMINI_API_KEY)
 
     model = ai.GenerativeModel('models/' + GEMINI_MODEL)
 
-    print(GEMINI_DISPLAY_NAME + '\n') if GEMINI_DISPLAY_NAME else None
-
-    first_message = False if resume else True
-
-    previous_session = last_session() if resume else None
+    previous_session = previous_history(resume) if resume else None
 
     if previous_session:
         info(f"Resuming session: {previous_session[0]}") if previous_session else None
@@ -170,6 +181,11 @@ def coding_repl(resume=False):
         info("No previous session found. Starting a new session.") if resume else None
         history.append(prompt_prefix())
 
+    first_message = False if resume else True
+    history_filename = None
+    if resume and previous_session:
+        history_filename = os.path.join(os.path.dirname(__file__), f"../tmp/{previous_session[0]}")
+
     while True:
         try:
             user_input = input("> ")
@@ -180,17 +196,19 @@ def coding_repl(resume=False):
             response = model.generate_content('\n'.join(history))
             history.append('Linus: ' + response.text + '\n')
 
-            tmp_history_filename = None
-            if first_message and not resume:
-                chat_subject_response = model.generate_content('Summarize the following piece of text in a file name compatible string:\n\n' + user_input)
-                chat_subject = chat_subject_response.text.strip()
-                tmp_history_filename = os.path.join(os.path.dirname(__file__), f"../tmp/linus-{chat_subject}-{generate_timestamped_uuid()}.txt")
-                first_message = False
-            elif resume and previous_session:
-                tmp_history_filename = os.path.join(os.path.dirname(__file__), f"../tmp/{previous_session[0]}")
+            if first_message and not history_filename:
+                if subject:
+                    chat_subject = '_'.join(subject)
+                else:
+                    chat_subject_response = model.generate_content('Summarize the following piece of text in a file name compatible string:\n\n' + user_input)
+                    chat_subject = chat_subject_response.text.strip()
 
-            with open(tmp_history_filename, 'w') as f:
-                f.write('\n'.join(history))
+                history_filename = os.path.join(os.path.dirname(__file__), f"../tmp/linus-{chat_subject}-{generate_timestamped_uuid()}.txt")
+                first_message = False
+
+            if history_filename:
+                with open(history_filename, 'w') as f:
+                    f.write('\n'.join(history))
 
             sanitized_response = re.sub(r'([^\d][\.\!\?\)\*])\s\s', r'\1\n\n', response.text)
             print()
