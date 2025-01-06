@@ -186,6 +186,7 @@ def coding_repl(resume=False, subject=None):
         sanitized_recap_again = re.sub(r'\n*(Linus:\s|Brent:\s)', r'\n\n\1\n\n', sanitized_recap)
         print(re.sub(r'^\n*([^\n])', r'\1', re.sub(r'([^\d][\.\!\?\)\*])\s\s', r'\1\n\n', sanitized_recap_again), flags=re.DOTALL))
         print()
+
         with open(session_file, 'r') as f:
             for line in f.readlines():
                 history.append(line)
@@ -244,12 +245,9 @@ def coding_repl(resume=False, subject=None):
             # TODO: if a code snippet log all at once
             # TODO: go through each file and insert pretty printed version?
             # Check if the response contains a code snippet
-            # if "// [START code_snippet:" in response.text:
-                # Extract the code snippet
-                # code_snippet = response.text.split("// [START code_snippet:")[1].split("// [END code_snippet:")[0]
-
-                # Pretty print and highlight the code
-                # print(highlight(code_snippet, PythonLexer(), TerminalFormatter()))
+            if "// [START code_snippet:" in response.text:
+                code_snippet = response.text.split("// [START code_snippet:")[1].split("// [END code_snippet:")[0]
+                print(highlight(code_snippet, PythonLexer(), TerminalFormatter()))
 
         except KeyboardInterrupt:
             if input("\nReally quit? (y/n) ").lower() == 'y':
