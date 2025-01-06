@@ -21,6 +21,7 @@ tmp
 yarn.lock
 package-lock.json
 Gemfile.lock
+Pipfile.lock
 .git
 .svn
 vim/bundle

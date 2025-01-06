@@ -24,5 +24,6 @@ bin/ai -h
 * Make it easier to distinguish between the user and the character (bold white text?)
 * Make it easier to specify a history file (autocomplete)
 * Support more advanced REPL (arrow keys, multi-line input, etc.)
-* Be able to paste files or snippets, or reference them
+* Be able to paste files or snippets, or reference them so the AI can see them
+* Be able to view files that get printed out (keep track in tmp folder file?)
 * Add "is thinking" terminal logging
