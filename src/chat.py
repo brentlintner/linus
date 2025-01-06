@@ -7,6 +7,7 @@ import re
 import uuid
 import argparse
 import prompt_toolkit
+from prompt_toolkit.formatted_text import HTML
 from datetime import datetime, timezone
 from collections import deque
 from pygments import highlight
@@ -199,13 +200,20 @@ def coding_repl(resume=False, subject=None):
     if resume and previous_session:
         history_filename = os.path.join(os.path.dirname(__file__), f"../tmp/{previous_session[0]}")
 
-    session = prompt_toolkit.PromptSession()
+    prompt_style = prompt_toolkit.styles.Style.from_dict({
+        '': '#a7c080'
+    })
+
+    session = prompt_toolkit.PromptSession(style=prompt_style)
 
     while True:
         try:
-            prompt_text = session.prompt("> ", multiline=True, mouse_support=True)
+            prompt_text = session.prompt("> ", multiline=True)
             if prompt_text == 'exit':
                 break
+
+            # hex_color = "#FFD700"  # Gold, because why not?
+            # print(HTML('<span style="color:{};">You typed: {}</span>').format(hex_color, text))
 
             global loading
             loading = True
