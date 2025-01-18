@@ -7,6 +7,13 @@ import re
 import uuid
 import argparse
 import prompt_toolkit
+from prompt_toolkit.input.ansi_escape_sequences import ANSI_SEQUENCES
+from prompt_toolkit.layout import VSplit, Window
+from prompt_toolkit.key_binding.bindings.named_commands import accept_line
+from prompt_toolkit.styles import Style
+from prompt_toolkit import PromptSession
+from prompt_toolkit.key_binding import KeyBindings
+from prompt_toolkit.keys import Keys
 from prompt_toolkit.formatted_text import HTML
 from datetime import datetime, timezone
 from collections import deque
@@ -45,7 +52,7 @@ def tail(filename, n=10):
     except FileNotFoundError:
         return None
 
-def type_response_out(lines, delay=0):
+def type_response_out(lines, delay=0.01):
     for string in lines:
         for char in string:
             sys.stdout.write(char)
@@ -184,8 +191,8 @@ def coding_repl(resume=False, subject=None):
         session_file = os.path.join(os.path.dirname(__file__), f"../tmp/{previous_session[0]}")
         recap = tail(session_file, 100)
         sanitized_recap = re.sub(r'.*Past conversation:', '', ''.join(recap), flags=re.DOTALL).strip()
-        sanitized_recap_again = re.sub(r'\n*(Linus:\s|Brent:\s)', r'\n\n\1\n\n', sanitized_recap)
-        print(re.sub(r'^\n*([^\n])', r'\1', re.sub(r'([^\d][\.\!\?\)\*])\s\s', r'\1\n\n', sanitized_recap_again), flags=re.DOTALL))
+        # sanitized_recap_again = re.sub(r'\n*(Linus:\s|Brent:\s)', r'\n\1\n', sanitized_recap)
+        print(re.sub(r'^\n*([^\n])', r'\1', re.sub(r'([^\d][\.\!\?\)\*])\s\s', r'\1\n\n', sanitized_recap), flags=re.DOTALL))
         print()
 
         with open(session_file, 'r') as f:
@@ -208,21 +215,18 @@ def coding_repl(resume=False, subject=None):
 
     while True:
         try:
-            prompt_text = session.prompt("> ", multiline=True)
+            prompt_text = session.prompt("> ", multiline=False, vi_mode=True)
             if prompt_text == 'exit':
                 break
-
-            # hex_color = "#FFD700"  # Gold, because why not?
-            # print(HTML('<span style="color:{};">You typed: {}</span>').format(hex_color, text))
 
             global loading
             loading = True
             loading_thread = threading.Thread(target=loading_indicator, daemon=True)
             loading_thread.start()
 
-            history.append('\nBrent: \n\n' + prompt_text + '\n')
+            history.append('\nBrent: ' + prompt_text + '\n')
             response = model.generate_content(''.join(history))
-            history.append('\nLinus: \n\n' + response.text + '\n')
+            history.append('\nLinus: ' + response.text + '\n')
 
             if first_message and not history_filename:
                 if subject:
@@ -248,14 +252,15 @@ def coding_repl(resume=False, subject=None):
             loading_thread.join()
 
             print()
-            type_response_out(sanitized_response.split('\n'))
+            # type_response_out(sanitized_response.split('\n'))
+            print(sanitized_response)
 
             # TODO: if a code snippet log all at once
             # TODO: go through each file and insert pretty printed version?
             # Check if the response contains a code snippet
-            if "// [START code_snippet:" in response.text:
-                code_snippet = response.text.split("// [START code_snippet:")[1].split("// [END code_snippet:")[0]
-                print(highlight(code_snippet, PythonLexer(), TerminalFormatter()))
+            # if "// [START code_snippet:" in response.text:
+                # code_snippet = response.text.split("// [START code_snippet:")[1].split("// [END code_snippet:")[0]
+                # print(highlight(code_snippet, PythonLexer(), TerminalFormatter()))
 
         except KeyboardInterrupt:
             if input("\nReally quit? (y/n) ").lower() == 'y':
@@ -264,7 +269,7 @@ def coding_repl(resume=False, subject=None):
             if input("\nReally quit? (y/n) ").lower() == 'y':
                 break
         except Exception as e:
-            print(f"Linus has frozen. {e}")
+            print(f"Linus has glitched. {e}")
 
 def cli():
     parser = cli_parser()
