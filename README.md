@@ -1,6 +1,8 @@
 # Coding Partner
 
-A CLI based tool that simulates a coding partner by providing "helpful" suggestions and comments.
+CLI tool that uses the Gemini API to provide you with a full-featured AI coding partner.
+
+It can help you write code, debug, and even refactor your code.
 
 ## Dependencies
 
@@ -34,14 +36,7 @@ A CLI based tool that simulates a coding partner by providing "helpful" suggesti
 
 ## Feature Ideas
 
-*   Use the tmux session feature to understand all the commands
-*   Use a context cache and update it as you go (once file is >32K chars)
-*   Add a delay argument to cli once it exists
-*   Have multiple characters and choose one at random (all celebrities or fictional characters on the phone but together)
-*   Make it easier to specify a history file (autocomplete)
-*   Support more advanced REPL (arrow keys, multi-line input, etc.)
-*   Be able to paste files or snippets, or reference them so the AI can see them
-*   Be able to view files that get printed out (keep track in tmp folder file?)
-*   Be able to update files themselves based on new code the AI suggests
+*   Support having a tmux session log to reference (ex: errors, etc)
+*   Use a context cache and update it as you go (once file is >32K chars)?
+*   Support more advanced REPL (arrow keys, multi-line input, etc.) once shift+enter or cmd+enter is pressed
 *   Add "is thinking" terminal logging
-*   Add fuzzy path finder completer
