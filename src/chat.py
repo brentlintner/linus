@@ -182,7 +182,7 @@ class FilePathCompleter(Completer):
 def cli_parser():
     parser = argparse.ArgumentParser(
         prog="ai-chat", add_help=False,
-        description="Chat with a Gemini AI based pair programming assistant")
+        description="Chat with a Gemini AI based pair programming assistant.")
 
     parser.add_argument(
         "--resume", "-r", nargs="?", const=True, default=False,
@@ -205,12 +205,12 @@ def cli_parser():
         help="Log verbose output")
 
     parser.add_argument(
-        "--enable-completer", "-i", action="store_true",
-        help="Enable fuzzy path finder completer")
+        "--interactive", "-i", action="store_true",
+        help="Enable the ability to fuzzy find and reference files for the AI to read using the @ symbol")
 
     return parser
 
-def coding_repl(resume=False, subject=None, enable_completer=False):
+def coding_repl(resume=False, subject=None, interactive=False):
     os.mkdir('tmp') if not os.path.exists('tmp') else None
 
     ai.configure(api_key=GEMINI_API_KEY)
@@ -243,7 +243,7 @@ def coding_repl(resume=False, subject=None, enable_completer=False):
         '': '#a7c080'
     })
 
-    completer = FuzzyCompleter(FilePathCompleter()) if enable_completer else None
+    completer = FuzzyCompleter(FilePathCompleter()) if interactive else None
 
     session = PromptSession(style=prompt_style, completer=completer, complete_style=CompleteStyle.MULTI_COLUMN)
 
@@ -334,7 +334,7 @@ def cli():
 
     check_if_env_vars_set()
 
-    coding_repl(resume=args.resume, subject=args.subject, enable_completer=args.enable_completer)
+    coding_repl(resume=args.resume, subject=args.subject, interactive=args.interactive)
 
 if __name__ == "__main__":
     cli()
