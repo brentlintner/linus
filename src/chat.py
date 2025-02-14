@@ -222,10 +222,9 @@ def coding_repl(resume=False, subject=None, enable_completer=False):
     if previous_session:
         info(f"Resuming session: {previous_session[0]}") if previous_session else None
         session_file = os.path.join(os.path.dirname(__file__), f"../tmp/{previous_session[0]}")
-        recap = tail(session_file, 100)
+        recap = tail(session_file, 2000)
         sanitized_recap = re.sub(r'.*Past conversation:', '', ''.join(recap), flags=re.DOTALL).strip()
-        # sanitized_recap_again = re.sub(r'\n*(Linus:\s|Brent:\s)', r'\n\1\n', sanitized_recap)
-        print(re.sub(r'^\n*([^\n])', r'\1', re.sub(r'([^\d][\.\!\?\)\*])\s\s', r'\1\n\n', sanitized_recap), flags=re.DOTALL))
+        print(sanitized_recap)
         print()
 
         with open(session_file, 'r') as f:
@@ -299,12 +298,14 @@ def coding_repl(resume=False, subject=None, enable_completer=False):
 
             sanitized_response = re.sub(r'([^\d][\.\!\?\)\*])\s\s', r'\1\n\n', response.text)
 
+            redacted_response = re.sub(r'```(file|snippet): (.*?)\n(.*?)\n```', r'```\1: \2', sanitized_response, flags=re.DOTALL)
+
             loading = False  # This makes the loading indicator stop
             loading_thread.join()
 
             print()
             # type_response_out(sanitized_response.split('\n'))
-            print(sanitized_response)
+            print(redacted_response)
 
         except KeyboardInterrupt:
             if input("\nReally quit? (y/n) ").lower() == 'y':
