@@ -36,7 +36,9 @@ It can help you write code, debug, and even refactor your code.
 
 ## Feature Ideas
 
+*   Cleanup the way gemini responses have extra newlines and extra spaces
 *   Support having a tmux session log to reference (ex: errors, etc)
 *   Use a context cache and update it as you go (once file is >32K chars)?
 *   Prune history of duplicate file or snippets versions when history is too long
 *   Support more advanced REPL (arrow keys, multi-line input, etc.) once shift+enter or cmd+enter is pressed
+*   Support text to speech output for responses

@@ -1,7 +1,9 @@
 #!/usr/bin/env sh
 
+cwd=$(pwd)
+
 cd "$(dirname "$0")/.."
 
-pipenv --quiet run python src/chat.py $@
+pipenv --quiet run python src/chat.py -d "$cwd" $@
 
 trap 'cd - >> /dev/null' EXIT

@@ -165,7 +165,7 @@ class FilePathCompleter(Completer):
 
         for root, _, items in os.walk(os.getcwd()):
             for item in items:
-                path = re.sub(r'^\./', '', os.path.join(root, item))
+                path = re.sub(r'^\./', '', os.path.relpath(os.path.join(root, item)))
                 if not self.is_ignored(path) and item.startswith(word_before_cursor[1:]):  # Skip the '@' character
                     yield Completion(path, start_position=-len(word_before_cursor) + 1)
 
@@ -197,6 +197,8 @@ def cli_parser():
     parser.add_argument(
         "--interactive", "-i", action="store_true",
         help="Enable the ability to fuzzy find and reference files for the AI to read using the @ symbol")
+
+    parser.add_argument('--directory', '-d', type=str, help='Specify cwd for file reference completion')
 
     return parser
 
@@ -323,6 +325,9 @@ def cli():
         sys.exit(0)
 
     check_if_env_vars_set()
+
+    if args.directory:
+        os.chdir(args.directory)
 
     coding_repl(resume=args.resume, subject=args.subject, interactive=args.interactive)
 
