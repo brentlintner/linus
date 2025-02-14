@@ -6,24 +6,12 @@ import time
 import re
 import uuid
 import argparse
-import fnmatch
 import pathspec
 import prompt_toolkit
-from prompt_toolkit.input.ansi_escape_sequences import ANSI_SEQUENCES
-from prompt_toolkit.layout import VSplit, Window
-from prompt_toolkit.key_binding.bindings.named_commands import accept_line
-from prompt_toolkit.styles import Style
-from prompt_toolkit import PromptSession
-from prompt_toolkit.key_binding import KeyBindings
-from prompt_toolkit.keys import Keys
-from prompt_toolkit.formatted_text import HTML
 from datetime import datetime, timezone
 from collections import deque
-from pygments import highlight
-from pygments.lexers import PythonLexer
-from pygments.formatters import TerminalFormatter
 from dotenv import load_dotenv
-from google.generativeai import caching
+from prompt_toolkit import PromptSession
 from prompt_toolkit.completion import FuzzyCompleter, Completer, Completion
 from prompt_toolkit.shortcuts import CompleteStyle
 
