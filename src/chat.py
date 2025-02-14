@@ -163,7 +163,7 @@ class FilePathCompleter(Completer):
         if '@' not in word_before_cursor:
             return
 
-        for root, _, items in os.walk('.'):
+        for root, _, items in os.walk(os.getcwd()):
             for item in items:
                 path = re.sub(r'^\./', '', os.path.join(root, item))
                 if not self.is_ignored(path) and item.startswith(word_before_cursor[1:]):  # Skip the '@' character
