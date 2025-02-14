@@ -100,7 +100,7 @@ def extract_timestamp(filename):
 
 def previous_history(resume_from=None):
     if resume_from and resume_from is not True:
-        timestamp = extract_timestamp(filename)
+        timestamp = extract_timestamp(resume_from)
         if timestamp:
             return (os.path.basename(resume_from), timestamp)
         else:
