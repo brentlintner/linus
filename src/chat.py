@@ -6,6 +6,8 @@ import time
 import re
 import uuid
 import argparse
+import fnmatch
+import pathspec
 import prompt_toolkit
 from prompt_toolkit.input.ansi_escape_sequences import ANSI_SEQUENCES
 from prompt_toolkit.layout import VSplit, Window
@@ -22,6 +24,8 @@ from pygments.lexers import PythonLexer
 from pygments.formatters import TerminalFormatter
 from dotenv import load_dotenv
 from google.generativeai import caching
+from prompt_toolkit.completion import FuzzyCompleter, Completer, Completion
+from prompt_toolkit.shortcuts import CompleteStyle
 
 load_dotenv()
 
@@ -94,7 +98,6 @@ def extract_timestamp(filename):
         error("Timestamp not found in filename")
         return None
 
-
 def previous_history(resume_from=None):
     if resume_from and resume_from is not True:
         timestamp = extract_timestamp(resume_from)
@@ -122,7 +125,6 @@ def last_session():
 
     return latest_file if latest_file else None
 
-
 def print_history():
     directory = os.path.join(os.path.dirname(__file__), '../tmp')
 
@@ -149,6 +151,34 @@ def loading_indicator():
                 print('\r ', end='', flush=True)
                 return
 
+class FilePathCompleter(Completer):
+    def __init__(self):
+        self.ignore_patterns = self.load_ignore_patterns()
+        self.spec = pathspec.PathSpec.from_lines('gitwildmatch', self.ignore_patterns)
+
+    def load_ignore_patterns(self):
+        ignore_patterns = []
+        for ignore_file in ['.gitignore', '.ignore']:
+            if os.path.exists(ignore_file):
+                with open(ignore_file) as f:
+                    ignore_patterns.extend([line.strip() for line in f if line.strip() and not line.startswith('#')])
+        return ignore_patterns
+
+    def is_ignored(self, path):
+        return self.spec.match_file(path)
+
+    def get_completions(self, document, complete_event):
+        word_before_cursor = document.get_word_before_cursor()
+
+        if '@' not in word_before_cursor:
+            return
+
+        for root, _, items in os.walk('.'):
+            for item in items:
+                path = re.sub(r'^\./', '', os.path.join(root, item))
+                if not self.is_ignored(path) and item.startswith(word_before_cursor[1:]):  # Skip the '@' character
+                    yield Completion(path, start_position=-len(word_before_cursor) + 1)
+
 def cli_parser():
     parser = argparse.ArgumentParser(
         prog="ai-chat", add_help=False,
@@ -174,10 +204,13 @@ def cli_parser():
         "--verbose", "-v", action="store_true",
         help="Log verbose output")
 
+    parser.add_argument(
+        "--enable-completer", "-i", action="store_true",
+        help="Enable fuzzy path finder completer")
+
     return parser
 
-
-def coding_repl(resume=False, subject=None):
+def coding_repl(resume=False, subject=None, enable_completer=False):
     os.mkdir('tmp') if not os.path.exists('tmp') else None
 
     ai.configure(api_key=GEMINI_API_KEY)
@@ -211,7 +244,9 @@ def coding_repl(resume=False, subject=None):
         '': '#a7c080'
     })
 
-    session = prompt_toolkit.PromptSession(style=prompt_style)
+    completer = FuzzyCompleter(FilePathCompleter()) if enable_completer else None
+
+    session = PromptSession(style=prompt_style, completer=completer, complete_style=CompleteStyle.MULTI_COLUMN)
 
     while True:
         try:
@@ -225,13 +260,27 @@ def coding_repl(resume=False, subject=None):
             loading_thread.start()
 
             history.append('\nBrent: ' + prompt_text + '\n')
+
+            # Handle multiple file references
+            file_references = re.findall(r'@(\S+)', prompt_text)
+            for file_path in file_references:
+                if os.path.isfile(file_path):
+                    with open(file_path, 'r') as f:
+                        file_content = f.read()
+                    history.append(f'\n```file: {file_path}\n{file_content}\n```\n')
+
             response = model.generate_content(''.join(history))
             history.append('\nLinus: ' + response.text + '\n')
+
+            # Parse and update files if response.text contains file references
+            file_references = re.findall(r'```file: (.*?)\n(.*?)\n```', response.text, re.DOTALL)
+            for file_path, file_content in file_references:
+                with open(file_path, 'w') as f:
+                    f.write(file_content)
 
             if first_message and not history_filename:
                 if subject:
                     chat_subject = '_'.join(subject)
-                    print(f"Using subject: {chat_subject}")
                 else:
                     chat_subject_response = model.generate_content(
                         'Summarize the following piece of text in a file name compatible string:\n\n' + prompt_text)
@@ -241,6 +290,8 @@ def coding_repl(resume=False, subject=None):
                     os.path.dirname(__file__), f"../tmp/linus-{chat_subject}-{generate_timestamped_uuid()}.txt")
 
                 first_message = False
+
+                time.sleep(0.1)
 
             if history_filename:
                 with open(history_filename, 'w') as f:
@@ -254,13 +305,6 @@ def coding_repl(resume=False, subject=None):
             print()
             # type_response_out(sanitized_response.split('\n'))
             print(sanitized_response)
-
-            # TODO: if a code snippet log all at once
-            # TODO: go through each file and insert pretty printed version?
-            # Check if the response contains a code snippet
-            # if "// [START code_snippet:" in response.text:
-                # code_snippet = response.text.split("// [START code_snippet:")[1].split("// [END code_snippet:")[0]
-                # print(highlight(code_snippet, PythonLexer(), TerminalFormatter()))
 
         except KeyboardInterrupt:
             if input("\nReally quit? (y/n) ").lower() == 'y':
@@ -289,7 +333,7 @@ def cli():
 
     check_if_env_vars_set()
 
-    coding_repl(resume=args.resume, subject=args.subject)
+    coding_repl(resume=args.resume, subject=args.subject, enable_completer=args.enable_completer)
 
 if __name__ == "__main__":
     cli()

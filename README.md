@@ -18,12 +18,13 @@ bin/ai -h
 
 ## Feature Ideas
 
+* Use the tmux session feature to understand all the commands
 * Use a context cache and update it as you go (once file is >32K chars)
 * Add a delay argument to cli once it exists
 * Have multiple characters and choose one at random (all celebrities or fictional characters on the phone but together)
-* Make it easier to distinguish between the user and the character (bold white text?)
 * Make it easier to specify a history file (autocomplete)
 * Support more advanced REPL (arrow keys, multi-line input, etc.)
 * Be able to paste files or snippets, or reference them so the AI can see them
 * Be able to view files that get printed out (keep track in tmp folder file?)
+* Be able to update files themselves based on new code the AI suggests
 * Add "is thinking" terminal logging
