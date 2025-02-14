@@ -100,7 +100,7 @@ def extract_timestamp(filename):
 
 def previous_history(resume_from=None):
     if resume_from and resume_from is not True:
-        timestamp = extract_timestamp(resume_from)
+        timestamp = extract_timestamp(filename)
         if timestamp:
             return (os.path.basename(resume_from), timestamp)
         else:
@@ -142,13 +142,15 @@ def print_history():
         print(f"{timestamp} - {filename}")
 
 def loading_indicator():
+    thinking_message = "Linus is thinking"
     while True:
-        for char in '|/-\\':
-            print(f'\r{char}', end='', flush=True)
-
-            time.sleep(0.1)
+        for i in range(4):  # Animate 3 dots
+            dots = "." * i
+            print(f'\r{thinking_message}{dots:<4}', end='', flush=True)
+            time.sleep(0.2)
             if not loading:
-                print('\r ', end='', flush=True)
+                # Clear the entire line by printing spaces
+                print('\r' + ' ' * (len(thinking_message) + 4), end='', flush=True)
                 return
 
 class FilePathCompleter(Completer):
