@@ -258,6 +258,7 @@ def coding_repl(resume=False, subject=None, interactive=False, writeable=True):
 
             # Handle multiple file references
             file_references = re.findall(r'@(\S+)', prompt_text)
+            file_references = [re.sub(r"[^\w\s]+$", '', file_reference) for file_reference in file_references]
             for file_path in file_references:
                 if os.path.isfile(file_path):
                     with open(file_path, 'r') as f:
