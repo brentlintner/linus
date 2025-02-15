@@ -54,14 +54,14 @@ You have additional directives regarding how you respond to my requests:
 		print('Hello, world!')
 		```
 
-You have other data you can use to help you with your responses:
+You have a history of our past conversations:
 
-1. Conversation history: This is a record of our current conversation, which will be updated as we talk. Ensure you don't prefix
-your reply with your name like in the conversation history. The conversation history starts after the "Past conversation:" label,
-up until the next list item of this list.
+This will be a record of everything we have said to each other up until now.
 
-Past conversation:
+It will also have references to snippets and code files that we are sharing between each other.
 
-2. Code snippets: This is a list of code snippets that you can use to help you respond to my requests. You can refer to these snippets
-	 to help you craft your responses. If any files or snippets who's filename is the same exists in the past conversation history, you can
-	 use that as a reference instead, because it means we are currently working on that code and it is the latest revision.
+Be sure to always use the last version of the snippet or file, i.e. the last one shared by either of us in the conversation history.
+
+Note that each of our replies is prefixed with our names purely for the sake of showing the history.
+
+Conversation history is as follows:
