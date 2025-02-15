@@ -198,11 +198,15 @@ def cli_parser():
         "--interactive", "-i", action="store_true",
         help="Enable the ability to fuzzy find and reference files for the AI to read using the @ symbol")
 
+    parser.add_argument(
+        "--writeable", "-w", action="store_true",
+        help="Enable the ability to automatically write to files based on the AI's responses")
+
     parser.add_argument('--directory', '-d', type=str, help='Specify cwd for file reference completion')
 
     return parser
 
-def coding_repl(resume=False, subject=None, interactive=False):
+def coding_repl(resume=False, subject=None, interactive=False, writeable=True):
     os.mkdir('tmp') if not os.path.exists('tmp') else None
 
     ai.configure(api_key=GEMINI_API_KEY)
@@ -265,9 +269,10 @@ def coding_repl(resume=False, subject=None, interactive=False):
 
             # Parse and update files if response.text contains file references
             file_references = re.findall(r'```file: (.*?)\n(.*?)\n```', response.text, re.DOTALL)
-            for file_path, file_content in file_references:
-                with open(file_path, 'w') as f:
-                    f.write(file_content)
+            if writeable:
+                for file_path, file_content in file_references:
+                    with open(file_path, 'w') as f:
+                        f.write(file_content)
 
             if first_message and not history_filename:
                 if subject:
@@ -288,9 +293,16 @@ def coding_repl(resume=False, subject=None, interactive=False):
                 with open(history_filename, 'w') as f:
                     f.write(''.join(history))
 
-            sanitized_response = re.sub(r'([^\d][\.\!\?\)\*])\s\s', r'\1\n\n', response.text)
+            sanitized_response = re.sub(
+                r'([^\d][\.\!\?\)\*])\s\s',
+                r'\1\n\n',
+                response.text)
 
-            redacted_response = re.sub(r'```(file|snippet): (.*?)\n(.*?)\n```', r'```\1: \2', sanitized_response, flags=re.DOTALL)
+            redacted_response = re.sub(
+                r'```(file|snippet): (.*?)\n(.*?)\n```',
+                r'```\1: \2',
+                sanitized_response,
+                flags=re.DOTALL)
 
             loading = False  # This makes the loading indicator stop
             loading_thread.join()
@@ -329,7 +341,7 @@ def cli():
     if args.directory:
         os.chdir(args.directory)
 
-    coding_repl(resume=args.resume, subject=args.subject, interactive=args.interactive)
+    coding_repl(resume=args.resume, subject=args.subject, interactive=args.interactive, writeable=args.writeable)
 
 if __name__ == "__main__":
     cli()
