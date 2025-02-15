@@ -4,6 +4,6 @@ cwd=$(pwd)
 
 cd "$(dirname "$0")/.."
 
-pipenv --quiet run python src/chat.py -d "$cwd" $@
+pipenv --quiet run python -m src.cli -d "$cwd" $@
 
 trap 'cd - >> /dev/null' EXIT
