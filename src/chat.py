@@ -8,6 +8,7 @@ import uuid
 import argparse
 import pathspec
 import prompt_toolkit
+import difflib
 from datetime import datetime, timezone
 from collections import deque
 from dotenv import load_dotenv
@@ -206,6 +207,21 @@ def cli_parser():
 
     return parser
 
+def generate_diff(file_path, current_content):
+    try:
+        with open(file_path, 'r') as f:
+            file_content = f.readlines()
+    except FileNotFoundError:
+        return current_content  # If file not found, return current content
+
+    diff = difflib.unified_diff(
+        file_content,
+        current_content.splitlines(keepends=True),
+        fromfile=f"{file_path} (disk)",
+        tofile=f"{file_path} (context)"
+    )
+    return ''.join(diff)
+
 def coding_repl(resume=False, subject=None, interactive=False, writeable=True):
     os.mkdir('tmp') if not os.path.exists('tmp') else None
 
@@ -268,13 +284,6 @@ def coding_repl(resume=False, subject=None, interactive=False, writeable=True):
             response = model.generate_content(''.join(history))
             history.append('\nLinus: ' + response.text + '\n')
 
-            # Parse and update files if response.text contains file references
-            file_references = re.findall(r'```file: (.*?)\n(.*?)\n```', response.text, re.DOTALL)
-            if writeable:
-                for file_path, file_content in file_references:
-                    with open(file_path, 'w') as f:
-                        f.write(file_content)
-
             if first_message and not history_filename:
                 if subject:
                     chat_subject = '_'.join(subject)
@@ -290,16 +299,23 @@ def coding_repl(resume=False, subject=None, interactive=False, writeable=True):
                 with open(history_filename, 'w') as f:
                     f.write(''.join(history))
 
-            sanitized_response = re.sub(
-                r'([^\d][\.\!\?\)\*])\s\s',
-                r'\1\n\n',
-                response.text)
+            file_references = re.findall(
+                    r'```file: (.*?)\n(.*?)\n```',
+                    response.text,
+                    re.DOTALL)
+
+            def replace_with_diff(match):
+                file_path = match.group(1)
+                file_content = match.group(2)
+                diff = generate_diff(file_path, file_content)
+                return f'```file: {file_path}\n{diff}\n```'
 
             redacted_response = re.sub(
-                r'```(file|snippet): (.*?)\n(.*?)\n```',
-                r'```\1: \2',
-                sanitized_response,
-                flags=re.DOTALL)
+                r'```file: (.*?)\n(.*?)\n```',
+                replace_with_diff,
+                response.text,
+                flags=re.DOTALL
+            )
 
             loading = False  # This makes the loading indicator stop
             loading_thread.join()
@@ -307,6 +323,13 @@ def coding_repl(resume=False, subject=None, interactive=False, writeable=True):
             print()
             # type_response_out(sanitized_response.split('\n'))
             print(redacted_response)
+
+            # NOTE: do this after generating the diffs above
+            file_references = re.findall(r'```file: (.*?)\n(.*?)\n```', response.text, re.DOTALL)
+            if writeable:
+                for file_path, file_content in file_references:
+                    with open(file_path, 'w') as f:
+                        f.write(file_content)
 
         except KeyboardInterrupt:
             if input("\nReally quit? (y/n) ").lower() == 'y':
