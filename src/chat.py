@@ -227,6 +227,9 @@ def coding_repl(resume=False, subject=None, interactive=False, writeable=True):
             if prompt_text == 'exit':
                 break
 
+            if prompt_text == '':
+                continue
+
             global loading
             loading = True
             loading_thread = threading.Thread(target=loading_indicator, daemon=True)
