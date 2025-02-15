@@ -9,9 +9,12 @@ pygments = "~=2.18.0"
 python-dotenv = "~=1.0.1"
 grpcio = "==1.60.1"
 prompt-toolkit = "~=3.0.48"
-pathspec = "*"
+pathspec = "~=0.12.1"
 
 [dev-packages]
+watchdog = "*"
+pylint = "*"
+honcho = "*"
 
 [requires]
 python_version = "3.11"

@@ -29,11 +29,6 @@ It can help you write code, debug, and even refactor your code.
     bin/ai -h
     ```
 
-## Usage
-
-*   Start a new session: `bin/ai`
-*   Resume a previous session: `bin/ai -r` or `bin/ai --resume`
-
 ## Feature Ideas
 
 *   Cleanup the way gemini responses have extra newlines and extra spaces
