@@ -31,6 +31,7 @@ It can help you write code, debug, and even refactor your code.
 
 ## Feature Ideas
 
+*   Add repomap, and update background to tell AI to ask to send that file if they need it
 *   Cleanup the way gemini responses have extra newlines and extra spaces
 *   Support having a tmux session log to reference (ex: errors, etc)
 *   Use a context cache and update it as you go (once file is >32K chars)?
