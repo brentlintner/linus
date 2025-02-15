@@ -278,16 +278,12 @@ def coding_repl(resume=False, subject=None, interactive=False, writeable=True):
                 if subject:
                     chat_subject = '_'.join(subject)
                 else:
-                    chat_subject_response = model.generate_content(
-                        'Summarize the following piece of text in a file name compatible string:\n\n' + prompt_text)
-                    chat_subject = chat_subject_response.text.strip()
+                    chat_subject = f"working-in-{os.path.basename(os.getcwd())}"
 
                 history_filename = os.path.join(
                     os.path.dirname(__file__), f"../tmp/linus-{chat_subject}-{generate_timestamped_uuid()}.txt")
 
                 first_message = False
-
-                time.sleep(0.1)
 
             if history_filename:
                 with open(history_filename, 'w') as f:
