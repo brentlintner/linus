@@ -1,66 +1,67 @@
 import argparse
 import os
 import sys
-from .chat import coding_repl, verbose_logging, print_history, check_if_env_vars_set
+import shutil
+from .chat import coding_repl, debug_logging, verbose_logging, print_history, check_if_env_vars_set
 
-def cli_parser():
+def create_parser():
     parser = argparse.ArgumentParser(
-        prog="ai-chat", add_help=False,
-        description="Chat with a Gemini AI based pair programming assistant.")
+        prog="ai-chat",
+        description="Chat with a Gemini AI based pair programming assistant.",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-    parser.add_argument(
-        "--resume", "-r", nargs="?", const=True, default=False,
-        help="Resume a previous conversation. Will use last created session if no argument is provided.")
-
-    parser.add_argument(
-        "--subject", "-s", nargs="+",
-        help="Overrides the subject instead of generating one from the first message")
-
-    parser.add_argument(
-        "--help", "-h", action="store_true",
-        help="Print this help message")
-
-    parser.add_argument(
-        "--history", "-l", action="store_true",
-        help="Show a list of previous conversations")
-
-    parser.add_argument(
-        "--verbose", "-v", action="store_true",
-        help="Log verbose output")
-
-    parser.add_argument(
-        "--interactive", "-i", action="store_true",
-        help="Enable the ability to fuzzy find and reference files for the AI to read using the @ symbol")
-
-    parser.add_argument(
-        "--writeable", "-w", action="store_true",
-        help="Enable the ability to automatically write to files based on the AI's responses")
-
-    parser.add_argument('--directory', '-d', type=str, help='Specify cwd for file reference completion')
+    # fmt: off
+    parser.add_argument("-r", "--resume", nargs="?", const=True, default=False, help="Resume previous conversation.")
+    parser.add_argument("-s", "--subject", nargs="+", help="Override subject; otherwise generate from first message.")
+    parser.add_argument("-l", "--history", action="store_true", help="Show previous conversations.")
+    parser.add_argument("-v", "--verbose", action="store_true", help="Log verbose output.")
+    parser.add_argument("-V", "--debug", action="store_true", help="Log debug output.")
+    parser.add_argument("-i", "--interactive", action="store_true", help="Enable fuzzy file finding with @ symbol.")
+    parser.add_argument("-w", "--writeable", action="store_true", help="Enable auto-writing to files from AI responses.")
+    parser.add_argument("-d", "--directory", type=str, default=os.getcwd(), help="Specify working directory.")
+    parser.add_argument("-g", "--ignore", type=str, help="Comma-separated list of additional ignore patterns.")
+    parser.add_argument("-c", "--clean", action="store_true", help="Remove all history files in the tmp/ directory.")
+    # fmt: on
 
     return parser
 
-def cli():
-    parser = cli_parser()
+def clean_history_files(tmp_dir='tmp'):
+    """Remove all history files in the specified directory."""
+    if os.path.exists(tmp_dir):
+        try:
+            shutil.rmtree(tmp_dir)
+            os.makedirs(tmp_dir)
+            print(f"Cleaned history files in {tmp_dir}/")
+        except Exception as e:
+            print(f"Error cleaning history files: {e}")
+    else:
+        print(f"{tmp_dir}/ directory does not exist.")
+
+def main():
+    parser = create_parser()
     args = parser.parse_args()
 
+    if args.debug:
+        debug_logging()
     if args.verbose:
         verbose_logging()
-
     if args.history:
         print_history()
         sys.exit(0)
-
-    if args.help:
-        parser.print_help()
-        sys.exit(0)
+    if args.clean:
+        clean_history_files()
 
     check_if_env_vars_set()
 
-    if args.directory:
-        os.chdir(args.directory)
+    os.chdir(args.directory)
 
-    coding_repl(resume=args.resume, subject=args.subject, interactive=args.interactive, writeable=args.writeable)
+    coding_repl(
+        resume=args.resume,
+        subject=args.subject,
+        interactive=args.interactive,
+        writeable=args.writeable,
+        ignore_patterns=args.ignore,
+    )
 
 if __name__ == "__main__":
-    cli()
+    main()

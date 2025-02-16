@@ -1,8 +1,19 @@
-# Coding Partner
+# AI Coding Partner
 
-CLI tool that uses the Gemini API to provide you with a full-featured AI coding partner.
+Linus is an CLI based AI coding assistant you can xtreme program with.
 
-It can help you write code, debug, and even refactor your code.
+He can code with you for as long as you need, and you won't even realize he's not human!
+
+Well, almost. But it's pretty good!
+
+## Features
+
+*   **Interactive Code Generation:**  Generates code snippets and full files based on natural language prompts within a CLI environment.
+*   **Context-Aware Assistance:**  Maintains session history and project context for consistent, relevant suggestions.
+*   **File System Integration:**  Reads and writes directly to project files, allowing for seamless integration and modification (opt-in).
+*   **Fuzzy File Referencing:** Use `@` symbol to fuzzy search and reference project files.
+*   **Diff View:** Edits to files are shown as unified diffs instead of the entire file contents.
+*   **Customizable Ignored Files**: Supports `.gitignore` and `.ignore` files for customizing ignored files.
 
 ## Dependencies
 
@@ -29,13 +40,39 @@ It can help you write code, debug, and even refactor your code.
     bin/ai -h
     ```
 
-## Feature Ideas
+## FAQ
 
-*   Ensure that mdir -p is used when creating a new file
-*   Add repomap, and update background to tell AI to ask to send that file if they need it
-*   Cleanup the way gemini responses have extra newlines and extra spaces
-*   Support having a tmux session log to reference (ex: errors, etc)
-*   Use a context cache and update it as you go (once file is >32K chars)?
-*   Prune history of duplicate file or snippets versions when history is too long
+*   **Why was this created?**
+
+    I wanted to create a coding assistant that could help me code in a more natural, streamlined way,
+    all without having to switch between windows or use a mouse.
+
+## Project Management
+
+### Features
+
+*   Handle renaming or deleting file references, for example when refactoring
+*   Be able to look at a tmux session so the recent log to reference (ex: errors, etc)
 *   Support more advanced REPL (arrow keys, multi-line input, etc.) once shift+enter or cmd+enter is pressed
+*   Add a command complete "@@refresh" manual refresh (files, project, etc) and reset (ai memory wipe + refresh) command
+*   Update a file reference when it is saved
+*   Update the project file structure when new files are added
+*   Only show the loader spinner if it takes longer than a certain amount of time
+*   Be able to possibly get the reply quickly, then send again to get code written (ex: like copilot chat)
+*   Consider using advanced VertexAI APIs (ex: [code execution](https://cloud.google.com/vertex-ai/generative-ai/docs/multimodal/code-execution#googlegenaisdk_tools_code_exec_with_txt-python_genai_sdk), [function calling](https://cloud.google.com/vertex-ai/generative-ai/docs/multimodal/function-calling) and [search grounding](https://ai.google.dev/gemini-api/docs/grounding?lang=python))
+*   Be able to shrewdly translate natural language commands and run them using the local user shell (i.e. --shell connect mode) (via function calling)
 *   Support text to speech output for responses
+
+### Bugs
+
+*   Fix not saving a session if resume is set but no sessions exist
+*   Ensure that mdir -p is used when creating a new file from a file reference
+
+### Chores
+
+*   For very long conversation histories, consider summarizing earlier parts of the conversation.
+*   Use a context cache and update it as you go (once file is >32K chars)?
+*   For very large projects, consider using an external memory mechanism like a vector database (with embeddings generated).
+*   If you have exceptionally large files, consider breaking them into smaller chunks and providing them to the LLM separately.
+*   You could add more metadata to your JSON directory structure, such as timestamps, types, function/class summaries.
+*   Add a cli flag to make the AI verbose or compact (i.e. the output formatting and character)
