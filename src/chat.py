@@ -156,24 +156,6 @@ def last_session():
     else:
         return None
 
-def print_history():
-    directory = os.path.join(os.path.dirname(__file__), '../tmp')
-
-    files_with_timestamps = []
-
-    for filename in os.listdir(directory):
-        if filename.endswith(".txt"):
-            # Keep compatibility with old timestamped files, for now.
-            timestamp = extract_timestamp(filename)  # Try to extract for older files
-            if not timestamp: # If no timestamp, use "now" to put at top of sort.
-                timestamp = datetime.now()
-            files_with_timestamps.append((filename, timestamp))
-
-    files_with_timestamps.sort(key=lambda item: item[1], reverse=True)
-
-    for filename, timestamp in files_with_timestamps:
-        console.print(f"{timestamp} - {filename}")
-
 def loading_indicator():
     thinking_message = "Linus is thinking"
     while True:

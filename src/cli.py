@@ -2,7 +2,7 @@ import argparse
 import os
 import sys
 import shutil
-from .chat import coding_repl, debug_logging, verbose_logging, print_history, check_if_env_vars_set, list_available_models, history_filename_for_directory
+from .chat import coding_repl, debug_logging, verbose_logging, check_if_env_vars_set, list_available_models, history_filename_for_directory
 
 def create_parser():
     parser = argparse.ArgumentParser(
@@ -13,7 +13,6 @@ def create_parser():
     # fmt: off
     parser.add_argument("-n", "--no-resume", action="store_true", help="Do not resume previous conversation. Start a new chat.")
     parser.add_argument("-s", "--subject", nargs="+", help="Override subject; otherwise generate from first message.")
-    parser.add_argument("-l", "--history", action="store_true", help="Show previous conversations.")
     parser.add_argument("-v", "--verbose", action="store_true", help="Log verbose output.")
     parser.add_argument("-V", "--debug", action="store_true", help="Log debug output.")
     parser.add_argument("-i", "--interactive", action="store_true", help="Enable fuzzy file finding with @ symbol.")
@@ -44,9 +43,6 @@ def main():
         debug_logging()
     if args.verbose:
         verbose_logging()
-    if args.history:
-        print_history()
-        sys.exit(0)
     if args.clean:
         clean_history_files()
         sys.exit(0)  # Exit after cleaning, as requested
