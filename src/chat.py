@@ -254,41 +254,44 @@ def generate_project_structure(extra_ignore_patterns=None):
         ignore_patterns.extend(extra_ignore_patterns)
 
     spec = pathspec.PathSpec.from_lines('gitwildmatch', ignore_patterns)
-    file_tree = []
+
+    file_tree = [{
+        "id": "$root",
+        "name": os.path.basename(os.getcwd()),
+        "parent": None,
+        "type": "directory"
+    }]
 
     for root, dirs, files in os.walk(os.getcwd()):
         relative_path = os.path.relpath(root, os.getcwd())
         relative_path = '' if relative_path == '.' else relative_path
-
-        file_tree.append({
-            "id": "root",
-            "name": relative_path,
-            "parent": None,
-            "type": "directory"
-        })
 
         dirs[:] = [dir for dir in dirs if not spec.match_file(os.path.join(relative_path, dir))]
         files[:] = [file for file in files if not spec.match_file(os.path.join(relative_path, file))]
 
         for dir in dirs:
             dir_path = os.path.join(relative_path, dir)
+            dir_parent = os.path.dirname(dir_path)
 
             file_tree.append({
                 "id": dir_path,
                 "name": os.path.basename(dir_path),
-                "parent": os.path.dirname(dir_path),
+                "parent": dir_parent != '.' and dir_parent or "$root",
                 "type": "directory"
             })
 
         for file in files:
             file_path = os.path.join(relative_path, file)
+            file_parent = os.path.dirname(file_path)
 
             file_tree.append({
                 "id": file_path,
                 "name": os.path.basename(file),
-                "parent": os.path.dirname(file_path),
+                "parent": file_parent != '.' and file_parent or "$root",
                 "type": "file"
             })
+
+    file_tree = sorted(file_tree, key=lambda x: x['id'])
 
     return json.dumps(file_tree, indent=2)
 
