@@ -65,7 +65,6 @@ Well, almost. But it's pretty good!
 
 ### Bugs
 
-*   Fix not saving a session if resume is set but no sessions exist
 *   Ensure that mdir -p is used when creating a new file from a file reference
 
 ### Chores

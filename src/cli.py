@@ -2,7 +2,7 @@ import argparse
 import os
 import sys
 import shutil
-from .chat import coding_repl, debug_logging, verbose_logging, print_history, check_if_env_vars_set, list_available_models
+from .chat import coding_repl, debug_logging, verbose_logging, print_history, check_if_env_vars_set, list_available_models, history_filename_for_directory
 
 def create_parser():
     parser = argparse.ArgumentParser(
@@ -11,7 +11,7 @@ def create_parser():
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
     # fmt: off
-    parser.add_argument("-r", "--resume", nargs="?", const=True, default=False, help="Resume previous conversation.")
+    parser.add_argument("-n", "--no-resume", action="store_true", help="Do not resume previous conversation. Start a new chat.")
     parser.add_argument("-s", "--subject", nargs="+", help="Override subject; otherwise generate from first message.")
     parser.add_argument("-l", "--history", action="store_true", help="Show previous conversations.")
     parser.add_argument("-v", "--verbose", action="store_true", help="Log verbose output.")
@@ -35,8 +35,6 @@ def clean_history_files(tmp_dir='tmp'):
             print(f"Cleaned history files in {tmp_dir}/")
         except Exception as e:
             print(f"Error cleaning history files: {e}")
-    else:
-        print(f"{tmp_dir}/ directory does not exist.")
 
 def main():
     parser = create_parser()
@@ -51,6 +49,7 @@ def main():
         sys.exit(0)
     if args.clean:
         clean_history_files()
+        sys.exit(0)  # Exit after cleaning, as requested
 
     check_if_env_vars_set()
 
@@ -60,8 +59,10 @@ def main():
 
     os.chdir(args.directory)
 
+    resume = not args.no_resume  # Resume unless --no-resume is specified
+
     coding_repl(
-        resume=args.resume,
+        resume=resume,
         subject=args.subject,
         interactive=args.interactive,
         writeable=args.writeable,

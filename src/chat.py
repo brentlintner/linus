@@ -138,32 +138,23 @@ def extract_timestamp(filename):
         error("Timestamp not found in filename")
         return None
 
-def previous_history(resume_from=None):
-    if resume_from and resume_from is not True:
-        timestamp = extract_timestamp(resume_from)
-        if timestamp:
-            return (os.path.basename(resume_from), timestamp)
-        else:
-            error("Invalid history file")
-            return None
+def history_filename_for_directory(directory):
+    """Generates a unique, consistent filename for the given directory."""
+    # Use a hash of the absolute directory path for consistency.
+    dir_hash = str(hash(os.path.abspath(directory)))
+    filename = f"linus-history-{dir_hash}.txt"
+    return os.path.join(os.path.dirname(__file__), '../tmp', filename)
 
+def previous_history(resume_from=None):
+    # NOTE: resume_from should not be used in this refactored version
     return last_session()
 
 def last_session():
-    directory = os.path.join(os.path.dirname(__file__), '../tmp')
-    files_with_timestamps = []
-    for filename in os.listdir(directory):
-        if filename.endswith(".txt"):
-            timestamp = extract_timestamp(filename)
-            if timestamp:  # Only add files with valid timestamps
-                files_with_timestamps.append((filename, timestamp))
-
-    # Sort the files by timestamp in descending order
-    files_with_timestamps.sort(key=lambda item: item[1], reverse=True)
-
-    latest_file = files_with_timestamps[0] if files_with_timestamps else None
-
-    return latest_file if latest_file else None
+    history_file = history_filename_for_directory(os.getcwd())
+    if os.path.exists(history_file):
+        return (os.path.basename(history_file), datetime.now())  # Return a dummy timestamp, not used for sorting now
+    else:
+        return None
 
 def print_history():
     directory = os.path.join(os.path.dirname(__file__), '../tmp')
@@ -172,9 +163,11 @@ def print_history():
 
     for filename in os.listdir(directory):
         if filename.endswith(".txt"):
-            timestamp = extract_timestamp(filename)
-            if timestamp:
-                files_with_timestamps.append((filename, timestamp))
+            # Keep compatibility with old timestamped files, for now.
+            timestamp = extract_timestamp(filename)  # Try to extract for older files
+            if not timestamp: # If no timestamp, use "now" to put at top of sort.
+                timestamp = datetime.now()
+            files_with_timestamps.append((filename, timestamp))
 
     files_with_timestamps.sort(key=lambda item: item[1], reverse=True)
 
@@ -365,9 +358,10 @@ def coding_repl(resume=False, subject=None, interactive=False, writeable=False, 
     # Split the comma-separated ignore patterns into a list
     extra_ignore_patterns = ignore_patterns.split(',') if ignore_patterns else None
 
-    previous_session = previous_history(resume) if resume else None
+    history_filename = history_filename_for_directory(os.getcwd())
+    previous_session = previous_history()
 
-    if previous_session:
+    if resume and previous_session:
         session_file = os.path.join(os.path.dirname(__file__), f"../tmp/{previous_session[0]}")
         with open(session_file, 'r') as f:
             recap = f.read()
@@ -383,12 +377,19 @@ def coding_repl(resume=False, subject=None, interactive=False, writeable=False, 
             history.append(f.read())
     else:
         debug("No previous session found. Starting a new session.") if resume else None
-        history.append(prompt_prefix(extra_ignore_patterns))
+        # Start fresh, but *only* if no history file exists *and* resume is true.  Otherwise, we're in a new session.
+        if not previous_session and resume:
+            history.append(prompt_prefix(extra_ignore_patterns))
+        elif previous_session and not resume:
+            # New session requested, but a history file exists:  Delete it!
+            try:
+              os.remove(history_filename)
+            except:
+              pass # Don't error if we can't remove it for some reason
+            history.append(prompt_prefix(extra_ignore_patterns)) # and then start fresh
+
 
     first_message = False if resume else True
-    history_filename = None
-    if resume and previous_session:
-        history_filename = os.path.join(os.path.dirname(__file__), f"../tmp/{previous_session[0]}")
 
     prompt_style = prompt_toolkit.styles.Style.from_dict({ '': '#8CB9B3 bold' })
 
@@ -467,17 +468,6 @@ def coding_repl(resume=False, subject=None, interactive=False, writeable=False, 
                 prune_file_history(file_path)
 
             history.append('\nLinus:\n\n' + response_text + '\n')
-
-            if first_message and not history_filename:
-                if subject:
-                    chat_subject = '_'.join(subject)
-                else:
-                    chat_subject = f"working-in-{os.path.basename(os.getcwd())}"
-
-                history_filename = os.path.join(
-                    os.path.dirname(__file__), f"../tmp/linus-{chat_subject}-{generate_timestamped_uuid()}.txt")
-
-                first_message = False
 
             loading = False  # This makes the loading indicator stop
             loading_thread.join()
