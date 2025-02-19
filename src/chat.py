@@ -161,7 +161,6 @@ def last_session():
 
 def loading_indicator():
     thinking_message = "Linus is thinking"
-    print()
     while True:
         for i in range(4):  # Animate 3 dots
             dots = "." * i
@@ -358,7 +357,6 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
 
         markdown = Markdown(recap)
 
-        console.print()
         console.print(markdown)
         console.print()
 
@@ -458,10 +456,10 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
 
             loading = False  # This makes the loading indicator stop
             loading_thread.join()
+            print()
 
             markdown = Markdown(redacted_response)  # Convert response to Markdown
 
-            console.print()
             console.print(markdown)
             console.print()
 
