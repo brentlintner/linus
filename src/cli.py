@@ -2,7 +2,7 @@ import argparse
 import os
 import sys
 import shutil
-from .chat import coding_repl, debug_logging, verbose_logging, print_history, check_if_env_vars_set
+from .chat import coding_repl, debug_logging, verbose_logging, print_history, check_if_env_vars_set, list_available_models
 
 def create_parser():
     parser = argparse.ArgumentParser(
@@ -21,6 +21,7 @@ def create_parser():
     parser.add_argument("-d", "--directory", type=str, default=os.getcwd(), help="Specify working directory.")
     parser.add_argument("-g", "--ignore", type=str, help="Comma-separated list of additional ignore patterns.")
     parser.add_argument("-c", "--clean", action="store_true", help="Remove all history files in the tmp/ directory.")
+    parser.add_argument("-m", "--models", action="store_true", help="List available generative AI models.")
     # fmt: on
 
     return parser
@@ -52,6 +53,10 @@ def main():
         clean_history_files()
 
     check_if_env_vars_set()
+
+    if args.models:
+        list_available_models()
+        sys.exit(0)
 
     os.chdir(args.directory)
 

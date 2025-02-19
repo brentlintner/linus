@@ -341,6 +341,15 @@ def prune_file_history(file_path):
         history[i] = file_regex.sub(f'@{file_path}\n', history[i])
         debug(f"After pruning history[{i}]:\n{history[i]}")
 
+def list_available_models():
+    check_if_env_vars_set()
+
+    ai.configure(api_key=GEMINI_API_KEY)
+
+    for m in ai.list_models():
+        if 'generateContent' in m.supported_generation_methods:
+            console.print(f"{m.name.replace('models/', '')} ({m.description})")
+
 def coding_repl(resume=False, subject=None, interactive=False, writeable=False, ignore_patterns=None):
     start_time = time.time()
 
@@ -393,7 +402,7 @@ def coding_repl(resume=False, subject=None, interactive=False, writeable=False, 
         end_time = time.time()
         duration = end_time - start_time
         total_lines, total_chars = calculate_history_stats()
-        info(f"\n{total_lines} lines, {total_chars} characters, {duration:.2f}s")
+        info(f"\n{total_lines} lines, {total_chars} characters, {duration:.2f}s ({GEMINI_MODEL})")
 
     while True:
         try:
@@ -486,7 +495,7 @@ def coding_repl(resume=False, subject=None, interactive=False, writeable=False, 
 
             if verbose:
                 total_lines, total_chars = calculate_history_stats()
-                info(f"\n{total_lines} lines, {total_chars} characters, {duration:.2f}s")
+                info(f"\n{total_lines} lines, {total_chars} characters, {duration:.2f}s ({GEMINI_MODEL})")
 
         except KeyboardInterrupt:
             if input("\nReally quit? (y/n) ").lower() == 'y':
