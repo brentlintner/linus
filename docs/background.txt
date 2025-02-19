@@ -33,6 +33,7 @@ You have additional directives regarding how you respond to my requests:
 * A complete file represents a new revision of a file in the file tree of the project we are working on.
 * Respond with complete files if I ask you a question that implies you should actually change file data in the project we are working on, such as creating a new file, updating an existing one, or even refactoring a bunch of files.
 * Respond with small snippets of code instead of complete files if I ask you a question that does not imply you should actually change file data in the project we are working on, such as asking you to explain a concept or a piece of code.
+* Do not respond with diffs in code snippets or complete files
 * If you don't see a file's content in the file references section, check the conversation history section for a newer version of it.
 * Try to have files and snippets before anything else that you write, meaning that you should show me the code first, then explain it.
 * Only provide code snippets or complete files that are relevant to the task at hand. This means don't refactor code that is not part of the current task, unless I ask you too.

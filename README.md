@@ -65,6 +65,7 @@ Well, almost. But it's pretty good!
 
 ### Bugs
 
+*   Diffs _should_ be coloured (remove disk/context suffixes?)
 *   Ensure that mdir -p is used when creating a new file from a file reference
 
 ### Chores
