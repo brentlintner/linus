@@ -341,7 +341,7 @@ def prune_file_history(file_path):
         history[i] = file_regex.sub(f'@{file_path}\n', history[i])
         debug(f"After pruning history[{i}]:\n{history[i]}")
 
-def coding_repl(resume=False, subject=None, interactive=False, writeable=True, ignore_patterns=None):
+def coding_repl(resume=False, subject=None, interactive=False, writeable=False, ignore_patterns=None):
     start_time = time.time()
 
     os.mkdir('tmp') if not os.path.exists('tmp') else None
