@@ -12,7 +12,6 @@ def create_parser():
 
     # fmt: off
     parser.add_argument("-n", "--no-resume", action="store_true", help="Do not resume previous conversation. Start a new chat.")
-    parser.add_argument("-s", "--subject", nargs="+", help="Override subject; otherwise generate from first message.")
     parser.add_argument("-v", "--verbose", action="store_true", help="Log verbose output.")
     parser.add_argument("-V", "--debug", action="store_true", help="Log debug output.")
     parser.add_argument("-i", "--interactive", action="store_true", help="Enable fuzzy file finding with @ symbol.")
@@ -59,7 +58,6 @@ def main():
 
     coding_repl(
         resume=resume,
-        subject=args.subject,
         interactive=args.interactive,
         writeable=args.writeable,
         ignore_patterns=args.ignore,

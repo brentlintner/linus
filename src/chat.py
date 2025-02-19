@@ -152,6 +152,7 @@ def previous_history(resume_from=None):
 def last_session():
     history_file = history_filename_for_directory(os.getcwd())
     if os.path.exists(history_file):
+        info(f"Resuming from {history_file}")
         return (os.path.basename(history_file), datetime.now())  # Return a dummy timestamp, not used for sorting now
     else:
         return None
@@ -328,7 +329,7 @@ def list_available_models():
         if 'generateContent' in m.supported_generation_methods:
             console.print(f"{m.name.replace('models/', '')} ({m.description})")
 
-def coding_repl(resume=False, subject=None, interactive=False, writeable=False, ignore_patterns=None):
+def coding_repl(resume=False, interactive=False, writeable=False, ignore_patterns=None):
     start_time = time.time()
 
     os.mkdir('tmp') if not os.path.exists('tmp') else None
