@@ -154,7 +154,7 @@ def history_filename_for_directory(directory):
 def last_session():
     history_file = history_filename_for_directory(os.getcwd())
     if os.path.exists(history_file):
-        info(f"Resuming from {history_file}")
+        info(f"Resuming from:\n\n {history_file}\n")
         return (os.path.basename(history_file), datetime.now())  # Return a dummy timestamp, not used for sorting now
     else:
         return None
