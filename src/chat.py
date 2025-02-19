@@ -140,9 +140,11 @@ def extract_timestamp(filename):
 
 def history_filename_for_directory(directory):
     """Generates a unique, consistent filename for the given directory."""
-    # Use a hash of the absolute directory path for consistency.
-    dir_hash = str(hash(os.path.abspath(directory)))
-    filename = f"linus-history-{dir_hash}.txt"
+    # Use a hash of the absolute directory path *and* include the directory name
+    abs_dir = os.path.abspath(directory)
+    dir_name = os.path.basename(abs_dir)  # Get just the directory name
+    dir_hash = str(hash(abs_dir))
+    filename = f"linus-history-{dir_name}-{dir_hash}.txt"
     return os.path.join(os.path.dirname(__file__), '../tmp', filename)
 
 def previous_history(resume_from=None):
