@@ -63,7 +63,5 @@ def main():
         ignore_patterns=args.ignore,
     )
 
-    print("This is a test line.")
-
 if __name__ == "__main__":
     main()
