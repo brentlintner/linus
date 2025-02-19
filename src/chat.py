@@ -3,6 +3,7 @@ import os
 import sys
 import threading
 import time
+import hashlib
 import re
 import uuid
 import pathspec
@@ -143,13 +144,12 @@ def history_filename_for_directory(directory):
     # Use a hash of the absolute directory path *and* include the directory name
     abs_dir = os.path.abspath(directory)
     dir_name = os.path.basename(abs_dir)  # Get just the directory name
-    dir_hash = str(hash(abs_dir))
+    file_path_bytes = abs_dir.encode('utf-8')
+    hasher = hashlib.sha256()
+    hasher.update(file_path_bytes)
+    dir_hash = hasher.hexdigest()
     filename = f"linus-history-{dir_name}-{dir_hash}.txt"
     return os.path.join(os.path.dirname(__file__), '../tmp', filename)
-
-def previous_history(resume_from=None):
-    # NOTE: resume_from should not be used in this refactored version
-    return last_session()
 
 def last_session():
     history_file = history_filename_for_directory(os.getcwd())
@@ -344,7 +344,7 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
     extra_ignore_patterns = ignore_patterns.split(',') if ignore_patterns else None
 
     history_filename = history_filename_for_directory(os.getcwd())
-    previous_session = previous_history()
+    previous_session = last_session()
 
     if resume and previous_session:
         session_file = os.path.join(os.path.dirname(__file__), f"../tmp/{previous_session[0]}")
