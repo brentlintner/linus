@@ -161,6 +161,7 @@ def last_session():
 
 def loading_indicator():
     thinking_message = "Linus is thinking"
+    print()
     while True:
         for i in range(4):  # Animate 3 dots
             dots = "." * i
@@ -209,8 +210,8 @@ def generate_diff(file_path, current_content):
     diff = difflib.unified_diff(
         file_content,
         current_content.splitlines(keepends=True),
-        fromfile=f"{file_path} (disk)",
-        tofile=f"{file_path} (context)"
+        fromfile=file_path, # Just the file path!
+        tofile=file_path    # Same here.
     )
 
     stringifed_diff = ''.join(diff)
@@ -356,7 +357,10 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
         recap = re.sub(rf'^{FILE_PREFIX}(.*?)$', rf'#### \1\n\n{FILE_PREFIX}', recap, flags=re.MULTILINE)
 
         markdown = Markdown(recap)
+
+        console.print()
         console.print(markdown)
+        console.print()
 
         with open(session_file, 'r') as f:
             history.append(f.read())
@@ -373,8 +377,6 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
               pass # Don't error if we can't remove it for some reason
             history.append(prompt_prefix(extra_ignore_patterns)) # and then start fresh
 
-
-    first_message = False if resume else True
 
     prompt_style = prompt_toolkit.styles.Style.from_dict({ '': '#8CB9B3 bold' })
 
@@ -457,9 +459,11 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
             loading = False  # This makes the loading indicator stop
             loading_thread.join()
 
-            console.print()
             markdown = Markdown(redacted_response)  # Convert response to Markdown
+
+            console.print()
             console.print(markdown)
+            console.print()
 
             # TODO: don't wastefully update a file if the diff was empty earlier on
             if writeable:

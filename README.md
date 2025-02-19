@@ -52,6 +52,7 @@ Well, almost. But it's pretty good!
 ### Features
 
 *   Handle renaming or deleting file references, for example when refactoring
+*   Be able to see the git history
 *   Be able to look at a tmux session so the recent log to reference (ex: errors, etc)
 *   Support more advanced REPL (arrow keys, multi-line input, etc.) once shift+enter or cmd+enter is pressed
 *   Add a command complete "@@refresh" manual refresh (files, project, etc) and reset (ai memory wipe + refresh) command
