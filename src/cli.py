@@ -7,8 +7,8 @@ from .__version__ import __version__
 
 def create_parser():
     parser = argparse.ArgumentParser(
-        prog="ai-chat",
-        description="Chat with a Gemini AI based pair programming assistant.",
+        prog="ai-code",
+        description="Pair program with a Gemini AI based assistant.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
     # fmt: off
