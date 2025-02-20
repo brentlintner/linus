@@ -371,6 +371,7 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
         markdown = Markdown(recap)
 
         console.print(markdown)
+        console.print()
     else:
         debug("No previous session found. Starting a new session.") if resume else None
         # Start fresh, but *only* if no history file exists *and* resume is true.  Otherwise, we're in a new session.
@@ -414,7 +415,7 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
         end_time = time.time()
         duration = end_time - start_time
         total_lines, total_chars = calculate_history_stats()
-        info(f"\n{total_lines} lines, {total_chars} characters, {duration:.2f}s ({GEMINI_MODEL})")
+        info(f"{total_lines} lines, {total_chars} characters, {duration:.2f}s ({GEMINI_MODEL})")
 
     def reset_history():
         global history
@@ -511,6 +512,7 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
             markdown = Markdown(redacted_response)  # Convert response to Markdown
 
             console.print(markdown)
+            console.print()
 
             # TODO: don't wastefully update a file if the diff was empty earlier on
             if writeable:
