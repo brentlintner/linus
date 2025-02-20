@@ -3,6 +3,7 @@ import os
 import sys
 import shutil
 from .chat import coding_repl, debug_logging, verbose_logging, check_if_env_vars_set, list_available_models, history_filename_for_directory
+from .__version__ import __version__
 
 def create_parser():
     parser = argparse.ArgumentParser(
@@ -21,6 +22,8 @@ def create_parser():
     parser.add_argument("-c", "--clean", action="store_true", help="Remove all history files in the tmp/ directory.")
     parser.add_argument("-m", "--models", action="store_true", help="List available generative AI models.")
     # fmt: on
+
+    parser.add_argument('--version', action='version', version=f'%(prog)s {__version__}')
 
     return parser
 
