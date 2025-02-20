@@ -14,7 +14,7 @@ def create_parser():
     parser.add_argument("-n", "--no-resume", action="store_true", help="Do not resume previous conversation. Start a new chat.")
     parser.add_argument("-v", "--verbose", action="store_true", help="Log verbose output.")
     parser.add_argument("-V", "--debug", action="store_true", help="Log debug output.")
-    parser.add_argument("-i", "--interactive", action="store_true", help="Enable fuzzy file finding with @ symbol.")
+    parser.add_argument("-i", "--interactive", action="store_true", help="Enable fuzzy file finding with @ symbol, and commands with the $ symbol.")
     parser.add_argument("-w", "--writeable", action="store_true", help="Enable auto-writing to files from AI responses.")
     parser.add_argument("-d", "--directory", type=str, default=os.getcwd(), help="Specify working directory.")
     parser.add_argument("-g", "--ignore", type=str, help="Comma-separated list of additional ignore patterns.")

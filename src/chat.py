@@ -107,8 +107,6 @@ def prompt_prefix(extra_ignore_patterns=None):
     prefix = prefix.replace(FILE_TREE_PLACEHOLDER, f'\n{project_structure}\n')
     prefix = prefix.replace(FILES_PLACEHOLDER, f'\n{project_files}\n')
 
-    debug(prefix)
-
     return prefix
 
 def check_if_env_vars_set():
@@ -198,6 +196,20 @@ class FilePathCompleter(Completer):
                 path = re.sub(r'^\./', '', os.path.relpath(os.path.join(root, item)))
                 if not self.is_ignored(path) and item.startswith(word_before_cursor[1:]):  # Skip the '@' character
                     yield Completion(path, start_position=-len(word_before_cursor) + 1)
+
+class CommandCompleter(Completer):
+    def __init__(self, commands):
+        self.commands = commands
+
+    def get_completions(self, document, complete_event):
+        word_before_cursor = document.get_word_before_cursor()
+
+        if '$' not in word_before_cursor:
+            return
+
+        for command in self.commands:
+            if command.startswith(word_before_cursor[1:]):
+                yield Completion(command, start_position=-len(word_before_cursor) + 1)
 
 def generate_diff(file_path, current_content):
     try:
@@ -349,24 +361,25 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
     if resume and previous_session:
         session_file = os.path.join(os.path.dirname(__file__), f"../tmp/{previous_session[0]}")
         with open(session_file, 'r') as f:
-            recap = f.read()
+            session_history = f.read()
 
-        # HACK: need to centralize this logic with the one inside the user input loop
-        recap = re.sub(rf'(.*?){CONVERSATION_START_SEP}\n+', '', recap, flags=re.DOTALL)
+        history.append(session_history)
+
+        recap = re.sub(rf'(.*?){CONVERSATION_START_SEP}\n+', '', session_history, flags=re.DOTALL)
         recap = re.sub(rf'^{FILE_PREFIX}(.*?)$', rf'#### \1\n\n{FILE_PREFIX}', recap, flags=re.MULTILINE)
 
         markdown = Markdown(recap)
 
         console.print(markdown)
         console.print()
-
-        with open(session_file, 'r') as f:
-            history.append(f.read())
     else:
         debug("No previous session found. Starting a new session.") if resume else None
         # Start fresh, but *only* if no history file exists *and* resume is true.  Otherwise, we're in a new session.
         if not previous_session and resume:
             history.append(prompt_prefix(extra_ignore_patterns))
+            if history_filename:
+                with open(history_filename, 'w') as f:
+                    f.write(''.join(history))
         elif previous_session and not resume:
             # New session requested, but a history file exists:  Delete it!
             try:
@@ -374,13 +387,24 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
             except:
               pass # Don't error if we can't remove it for some reason
             history.append(prompt_prefix(extra_ignore_patterns)) # and then start fresh
-
+            if history_filename:
+                with open(history_filename, 'w') as f:
+                    f.write(''.join(history))
 
     prompt_style = prompt_toolkit.styles.Style.from_dict({ '': '#8CB9B3 bold' })
 
-    completer = FuzzyCompleter(FilePathCompleter()) if interactive else None
+    file_completer = FuzzyCompleter(FilePathCompleter()) if interactive else None
+    command_completer = FuzzyCompleter(CommandCompleter(['reset', 'refresh', 'exit']))
+    # Combine completers
+    class CombinedCompleter(Completer):
+        def get_completions(self, document, complete_event):
+            # Use file completer if '@' detected, otherwise use command completer
+            if '@' in document.text:
+                yield from file_completer.get_completions(document, complete_event)
+            elif '$' in document.text:
+                yield from command_completer.get_completions(document, complete_event)
 
-    session = PromptSession(style=prompt_style, multiline=True, completer=completer, complete_style=CompleteStyle.MULTI_COLUMN)
+    session = PromptSession(style=prompt_style, multiline=True, completer=CombinedCompleter(), complete_style=CompleteStyle.MULTI_COLUMN)
 
     def calculate_history_stats():
         total_lines = sum(len(entry.splitlines()) for entry in history)
@@ -393,11 +417,38 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
         total_lines, total_chars = calculate_history_stats()
         info(f"\n{total_lines} lines, {total_chars} characters, {duration:.2f}s ({GEMINI_MODEL})")
 
+    def reset_history():
+        global history
+        history.clear()
+        history.append(prompt_prefix(extra_ignore_patterns))
+        if history_filename:
+            with open(history_filename, 'w') as f:
+                f.write(''.join(history))
+        print(' ', flush=True)
+        console.print("History reset.", style="bold yellow")
+
+    def refresh_project_context():
+        global history
+        history[0] = prompt_prefix(extra_ignore_patterns)
+        if history_filename:
+            with open(history_filename, 'w') as f:
+                f.write(''.join(history))
+        print(' ', flush=True)
+        console.print("Project context refreshed.", style="bold yellow")
+
     while True:
         try:
             prompt_text = session.prompt("> ")
-            if prompt_text == 'exit':
+            if prompt_text.startswith('$exit'):
                 break
+
+            if prompt_text.startswith('$reset'):
+                reset_history()
+                continue
+
+            if prompt_text.startswith('$refresh'):
+                refresh_project_context()
+                continue
 
             if prompt_text == '':
                 continue
