@@ -51,15 +51,12 @@ Well, almost. But it's pretty good!
 
 ### Features
 
-*   Handle renaming or deleting file references, for example when refactoring
 *   Be able to see the git history
 *   Be able to look at a tmux session so the recent log to reference (ex: errors, etc)
-*   Support more advanced REPL (arrow keys, multi-line input, etc.) once shift+enter or cmd+enter is pressed
-*   Add a command complete "@@refresh" manual refresh (files, project, etc) and reset (ai memory wipe + refresh) command
-*   Update a file reference when it is saved
-*   Update the project file structure when new files are added
-*   Only show the loader spinner if it takes longer than a certain amount of time
-*   Be able to possibly get the reply quickly, then send again to get code written (ex: like copilot chat)
+    *   Or: Be able to wrap processes in a tmux session, i.e. supervisor mode
+*   Handle renaming or deleting file references, for example when refactoring
+*   Auto update the project file structure when new files are added or updated
+*   Be able to possibly get the reply quickly, then send again to get code written (ex: like copilot chat - there is a gemini API method for this?)
 *   Consider using advanced VertexAI APIs (ex: [code execution](https://cloud.google.com/vertex-ai/generative-ai/docs/multimodal/code-execution#googlegenaisdk_tools_code_exec_with_txt-python_genai_sdk), [function calling](https://cloud.google.com/vertex-ai/generative-ai/docs/multimodal/function-calling) and [search grounding](https://ai.google.dev/gemini-api/docs/grounding?lang=python))
 *   Be able to shrewdly translate natural language commands and run them using the local user shell (i.e. --shell connect mode) (via function calling)
 *   Support text to speech output for responses
