@@ -66,7 +66,7 @@ Well, almost. But it's pretty good!
 
 ### Bugs
 
-*   Diffs _should_ be coloured (remove disk/context suffixes?)
+*   Syntax highlighting should work but file: and snippet: format are not standard
 *   Ensure that mdir -p is used when creating a new file from a file reference
 
 ### Chores
