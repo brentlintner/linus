@@ -39,6 +39,19 @@ Well, almost. But it's pretty good!
     ```sh
     bin/ai -h
     ```
+## Example Usage
+
+Open up a simple chat repl:
+
+```sh
+ai
+```
+
+Start a fully featured chat repl with file system integrations:
+
+```sh
+ai -iwf
+```
 
 ## FAQ
 
@@ -61,6 +74,7 @@ Well, almost. But it's pretty good!
 *   Consider using advanced VertexAI APIs (ex: [code execution](https://cloud.google.com/vertex-ai/generative-ai/docs/multimodal/code-execution#googlegenaisdk_tools_code_exec_with_txt-python_genai_sdk), [function calling](https://cloud.google.com/vertex-ai/generative-ai/docs/multimodal/function-calling) and [search grounding](https://ai.google.dev/gemini-api/docs/grounding?lang=python))
 *   Be able to shrewdly translate natural language commands and run them using the local user shell (i.e. --shell connect mode) (via function calling)
 *   Support text to speech output for responses
+*   Have privacy confirmation for file system integration, and other sensitive data or destructive operations
 
 ### Bugs
 
