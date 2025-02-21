@@ -103,7 +103,7 @@ def type_response_out(lines, delay=0.01):
             time.sleep(delay)
         print()  # Newline after each string
 
-def prompt_prefix(extra_ignore_patterns=None):
+def prompt_prefix(extra_ignore_patterns=None, include_files=True):
     prompt_prefix_file = os.path.join(os.path.dirname(__file__), '../docs/background.txt')
     try:
         with open(prompt_prefix_file, 'r') as f:
@@ -111,11 +111,15 @@ def prompt_prefix(extra_ignore_patterns=None):
     except FileNotFoundError:
         return "Could not find background.txt"
 
-    project_structure = generate_project_structure(extra_ignore_patterns)
-    project_files = generate_project_file_contents(extra_ignore_patterns)
+    if include_files:
+        project_structure = generate_project_structure(extra_ignore_patterns)
+        project_files = generate_project_file_contents(extra_ignore_patterns)
 
-    prefix = prefix.replace(FILE_TREE_PLACEHOLDER, f'\n{project_structure}\n')
-    prefix = prefix.replace(FILES_PLACEHOLDER, f'\n{project_files}\n')
+        prefix = prefix.replace(FILE_TREE_PLACEHOLDER, f'\n{project_structure}\n')
+        prefix = prefix.replace(FILES_PLACEHOLDER, f'\n{project_files}\n')
+    else:
+        prefix = prefix.replace(FILE_TREE_PLACEHOLDER, '')
+        prefix = prefix.replace(FILES_PLACEHOLDER, '')
 
     return prefix
 
@@ -356,7 +360,7 @@ def list_available_models():
         if 'generateContent' in m.supported_generation_methods:
             console.print(f"{m.name.replace('models/', '')} ({m.description})")
 
-def coding_repl(resume=False, interactive=False, writeable=False, ignore_patterns=None):
+def coding_repl(resume=False, interactive=False, writeable=False, ignore_patterns=None, include_files=False):
     start_time = time.time()
 
     os.mkdir('tmp') if not os.path.exists('tmp') else None
@@ -389,7 +393,7 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
         debug("No previous session found. Starting a new session.") if resume else None
         # Start fresh, but *only* if no history file exists *and* resume is true.  Otherwise, we're in a new session.
         if not previous_session and resume:
-            history.append(prompt_prefix(extra_ignore_patterns))
+            history.append(prompt_prefix(extra_ignore_patterns, include_files))
             if history_filename:
                 with open(history_filename, 'w') as f:
                     f.write(''.join(history))
@@ -399,7 +403,7 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
               os.remove(history_filename)
             except:
               pass # Don't error if we can't remove it for some reason
-            history.append(prompt_prefix(extra_ignore_patterns)) # and then start fresh
+            history.append(prompt_prefix(extra_ignore_patterns, include_files)) # and then start fresh
             if history_filename:
                 with open(history_filename, 'w') as f:
                     f.write(''.join(history))
@@ -433,7 +437,7 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
     def reset_history():
         global history
         history.clear()
-        history.append(prompt_prefix(extra_ignore_patterns))
+        history.append(prompt_prefix(extra_ignore_patterns, include_files))
         if history_filename:
             with open(history_filename, 'w') as f:
                 f.write(''.join(history))
@@ -442,7 +446,7 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
 
     def refresh_project_context():
         global history
-        history[0] = prompt_prefix(extra_ignore_patterns)
+        history[0] = prompt_prefix(extra_ignore_patterns, include_files)
         if history_filename:
             with open(history_filename, 'w') as f:
                 f.write(''.join(history))

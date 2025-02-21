@@ -12,16 +12,17 @@ def create_parser():
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
     # fmt: off
-    parser.add_argument("-n", "--no-resume", action="store_true", help="Do not resume previous conversation. Start a new chat.")
-    parser.add_argument("-v", "--verbose", action="store_true", help="Log verbose output.")
-    parser.add_argument("-V", "--debug", action="store_true", help="Log debug output.")
+    parser.add_argument("-f", "--files", action="store_true", help="Include project files in the prompt.")
     parser.add_argument("-i", "--interactive", action="store_true", help="Enable fuzzy file finding with @ symbol, and commands with the $ symbol.")
     parser.add_argument("-w", "--writeable", action="store_true", help="Enable auto-writing to files from AI responses.")
-    parser.add_argument("-d", "--directory", type=str, default=os.getcwd(), help="Specify working directory.")
-    parser.add_argument("-g", "--ignore", type=str, help="Comma-separated list of additional ignore patterns.")
-    parser.add_argument("-c", "--clean", action="store_true", help="Remove all history files in the tmp/ directory.")
+    parser.add_argument("-n", "--no-resume", action="store_true", help="Do not resume previous conversation. Start a new chat.")
     parser.add_argument("-m", "--models", action="store_true", help="List available generative AI models.")
-    parser.add_argument("-l", "--list-files", action="store_true", help="List all files included in the prompt and exit.")
+    parser.add_argument("-l", "--list-files", action="store_true", help="List all files that will be included if -f is set.")
+    parser.add_argument("-c", "--clean", action="store_true", help="Remove all history files in the tmp/ directory.")
+    parser.add_argument("-V", "--debug", action="store_true", help="Log debug output.")
+    parser.add_argument("-v", "--verbose", action="store_true", help="Log verbose output.")
+    parser.add_argument("-g", "--ignore", type=str, help="Comma-separated list of additional ignore patterns.")
+    parser.add_argument("-d", "--directory", type=str, default=os.getcwd(), help="Specify working directory.")
     # fmt: on
 
     parser.add_argument('--version', action='version', version=f'%(prog)s {__version__}')
@@ -72,6 +73,7 @@ def main():
         interactive=args.interactive,
         writeable=args.writeable,
         ignore_patterns=args.ignore,
+        include_files=args.files, # Now directly use args.files
     )
 
 if __name__ == "__main__":
