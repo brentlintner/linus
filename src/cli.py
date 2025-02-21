@@ -2,7 +2,7 @@ import argparse
 import os
 import sys
 import shutil
-from .chat import coding_repl, debug_logging, verbose_logging, check_if_env_vars_set, list_available_models, history_filename_for_directory
+from .chat import coding_repl, debug_logging, verbose_logging, check_if_env_vars_set, list_available_models, history_filename_for_directory, generate_project_file_contents
 from .__version__ import __version__
 
 def create_parser():
@@ -21,6 +21,7 @@ def create_parser():
     parser.add_argument("-g", "--ignore", type=str, help="Comma-separated list of additional ignore patterns.")
     parser.add_argument("-c", "--clean", action="store_true", help="Remove all history files in the tmp/ directory.")
     parser.add_argument("-m", "--models", action="store_true", help="List available generative AI models.")
+    parser.add_argument("-l", "--list-files", action="store_true", help="List all files included in the prompt and exit.")
     # fmt: on
 
     parser.add_argument('--version', action='version', version=f'%(prog)s {__version__}')
@@ -56,6 +57,13 @@ def main():
         sys.exit(0)
 
     os.chdir(args.directory)
+
+    if args.list_files:
+        # Split the comma-separated ignore patterns into a list
+        extra_ignore_patterns = args.ignore.split(',') if args.ignore else None
+        files = generate_project_file_contents(extra_ignore_patterns, True)
+        print(files)
+        sys.exit(0)
 
     resume = not args.no_resume  # Resume unless --no-resume is specified
 

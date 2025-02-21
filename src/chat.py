@@ -295,7 +295,7 @@ def generate_project_structure(extra_ignore_patterns=None):
 
     return json.dumps(file_tree, indent=2)
 
-def generate_project_file_contents(extra_ignore_patterns=None):
+def generate_project_file_contents(extra_ignore_patterns=None, list_only=False):
     ignore_patterns = ['.*']  # Ignore dotfiles by default
     for ignore_file in ['.gitignore', '.ignore']:
         if os.path.exists(ignore_file):
@@ -317,7 +317,10 @@ def generate_project_file_contents(extra_ignore_patterns=None):
         for file in files:
             file_path = os.path.join(relative_path, file)
             if not spec.match_file(file_path):
-                output += get_file_contents(file_path)
+                if list_only:
+                    output += f"{file_path}\n"
+                else:
+                    output += get_file_contents(file_path)
 
     return output
 
