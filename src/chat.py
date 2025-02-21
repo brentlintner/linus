@@ -10,6 +10,8 @@ import pathspec
 import prompt_toolkit
 import difflib
 import json
+import pygments.util
+from pygments.lexers import get_lexer_for_filename
 from datetime import datetime, timezone
 from collections import deque
 from dotenv import load_dotenv
@@ -76,6 +78,14 @@ def info(message):
 
 def error(message):
     console.print(message, style="bold red")
+
+def get_language_from_extension(filename):
+    try:
+        lexer = get_lexer_for_filename(filename)
+        # TODO: check the file for a shebang
+        return lexer.name.lower() or 'txt'  # Get the language name
+    except pygments.util.ClassNotFound:
+        return "txt"
 
 def tail(filename, n=10):
     try:

@@ -46,11 +46,11 @@ print('Hello, world!')
 
 You have access to the entire directory tree structure of the project we are working on, represented in JSON format:
 
-{{{FILE_TREE_JSON START}}}
+{{{JSON START}}}
 
 {{{FILE_TREE_JSON}}}
 
-{{{FILE_TREE_JSON END}}}
+{{{JSON END}}}
 
 You have detailed references to project files and their data:
 

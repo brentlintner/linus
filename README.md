@@ -51,6 +51,7 @@ Well, almost. But it's pretty good!
 
 ### Features
 
+*   Be able to export as pip package, so can we can use it on WIP branches for itself!
 *   Be able to see the git history
 *   Be able to look at a tmux session so the recent log to reference (ex: errors, etc)
     *   Or: Be able to wrap processes in a tmux session, i.e. supervisor mode
@@ -63,6 +64,7 @@ Well, almost. But it's pretty good!
 
 ### Bugs
 
+*   Check a file for a shebang if pygments can't detect type
 *   Syntax highlighting should work but file: and snippet: format are not standard
 *   Ensure that mdir -p is used when creating a new file from a file reference
 
