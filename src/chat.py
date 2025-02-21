@@ -491,8 +491,6 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
 
             request_text = ''.join(history) + f'\n{CONVERSATION_END_SEP}\n'
 
-            debug(request_text)
-
             start_time = time.time()
             response = model.generate_content(request_text)
             end_time = time.time()
@@ -516,20 +514,18 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
             # NOTE: do this after generating the diffs above
             file_references = re.findall(rf'{FILE_PREFIX}(.*?)\n(.*?)\n```', response_text, re.DOTALL)
 
-            # Prune previous versions of the file
             for file_path, _ in file_references:
                 prune_file_history(file_path)
 
             history.append('\nLinus:\n\n' + response_text + '\n')
 
-            loading = False  # This makes the loading indicator stop
+            loading = False
             loading_thread.join()
             print()
 
-            markdown = Markdown(redacted_response)  # Convert response to Markdown
+            markdown = Markdown(redacted_response)
 
             console.print(markdown)
-            console.print()
 
             # TODO: don't wastefully update a file if the diff was empty earlier on
             if writeable:
