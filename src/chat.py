@@ -13,7 +13,6 @@ import difflib
 import json
 import pygments.util
 from pygments.lexers import get_lexer_for_filename
-from pygments.styles import get_style_by_name
 from datetime import datetime, timezone
 from collections import deque
 from dotenv import load_dotenv
@@ -589,7 +588,7 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
             loading_thread = threading.Thread(target=loading_indicator, daemon=True)
             loading_thread.start()
 
-            history.append('\nBrent:\n\n' + prompt_text + '\n')
+            history.append(f'\n**Brent:**\n\n' + prompt_text + '\n')
 
             # Handle multiple file references
             file_references = re.findall(r'@(\S+)', prompt_text)
@@ -631,7 +630,7 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
             for file_path, _ in file_references:
                 prune_file_history(file_path)
 
-            history.append('\nLinus:\n\n' + response_text + '\n')
+            history.append(f'\n**Linus:**\n\n' + response_text + '\n')
 
             loading = False
             loading_thread.join()
@@ -640,16 +639,20 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
             markdown = Markdown(redacted_response)
 
             console.print(markdown)
+            console.print()
 
             if writeable:
                 for file_path, file_content in file_references:
-                    info(f"Writing to {file_path}")
+                    info(f":w {file_path}")
                     directory = os.path.dirname(file_path)
                     if directory and not os.path.exists(directory):
                         os.makedirs(directory)
 
                     with open(file_path, 'w') as f:
                         f.write(file_content)
+
+                if len(file_references) > 0:
+                    print()
 
             if history_filename:
                 with open(history_filename, 'w') as f:
