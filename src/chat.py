@@ -11,11 +11,13 @@ import prompt_toolkit
 import difflib
 import json
 import pygments.util
-from pygments.lexers import get_lexer_for_filename, guess_lexer_for_filename
+from pygments.lexers import get_lexer_for_filename
 from datetime import datetime, timezone
 from collections import deque
 from dotenv import load_dotenv
 from prompt_toolkit import PromptSession
+from prompt_toolkit.key_binding import KeyBindings
+from prompt_toolkit.keys import Keys
 from prompt_toolkit.completion import FuzzyCompleter, Completer, Completion
 from prompt_toolkit.shortcuts import CompleteStyle
 from rich.console import Console
@@ -57,6 +59,16 @@ custom_theme = Theme({
 })
 
 console = Console(theme=custom_theme)  # Initialize Rich Console with custom theme
+
+key_bindings = KeyBindings()
+
+@key_bindings.add(Keys.Up)
+def _(event):
+    event.current_buffer.history_backward()
+
+@key_bindings.add(Keys.Down)
+def _(event):
+    event.current_buffer.history_forward()
 
 def verbose_logging():
     global verbose
@@ -462,7 +474,12 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
             elif '$' in document.text:
                 yield from command_completer.get_completions(document, complete_event)
 
-    session = PromptSession(style=prompt_style, multiline=True, completer=CombinedCompleter(), complete_style=CompleteStyle.MULTI_COLUMN)
+    session = PromptSession(
+        style=prompt_style,
+        multiline=True,
+        key_bindings=key_bindings,
+        completer=CombinedCompleter(),
+        complete_style=CompleteStyle.MULTI_COLUMN)
 
     def calculate_history_stats():
         total_lines = sum(len(entry.splitlines()) for entry in history)
