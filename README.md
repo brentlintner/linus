@@ -1,18 +1,15 @@
 # AI Coding Partner
 
-Linus is an CLI based AI coding assistant you can xtreme program with.
-
-He can code with you for as long as you need, and you won't even realize he's not human!
-
-Well, almost. But it's pretty good!
+Linus is a CLI based coding assistant you can extreme program with.
 
 ## Features
 
 *   **Interactive Code Generation:**  Generates code snippets and full files based on natural language prompts within a CLI environment.
+*   **Mouse-Free Navigation:**  Use keyboard shortcuts to navigate and interact with the CLI.
 *   **Context-Aware Assistance:**  Maintains session history and project context for consistent, relevant suggestions.
-*   **File System Integration:**  Reads and writes directly to project files, allowing for seamless integration and modification (opt-in).
-*   **Fuzzy File Referencing:** Use `@` symbol to fuzzy search and reference project files.
+*   **File System Integration:**  Reads and writes directly to project files, allowing for seamless integration and modification.
 *   **Diff View:** Edits to files are shown as unified diffs instead of the entire file contents.
+*   **Fuzzy File Referencing:** Use `@` symbol to fuzzy search and reference project files.
 *   **Customizable Ignored Files**: Supports `.gitignore` and `.ignore` files for customizing ignored files.
 
 ## Dependencies
@@ -74,13 +71,10 @@ ai -iwf
 *   Consider using advanced VertexAI APIs (ex: [code execution](https://cloud.google.com/vertex-ai/generative-ai/docs/multimodal/code-execution#googlegenaisdk_tools_code_exec_with_txt-python_genai_sdk), [function calling](https://cloud.google.com/vertex-ai/generative-ai/docs/multimodal/function-calling) and [search grounding](https://ai.google.dev/gemini-api/docs/grounding?lang=python))
 *   Be able to shrewdly translate natural language commands and run them using the local user shell (i.e. --shell connect mode) (via function calling)
 *   Support text to speech output for responses
+*   Auto ignore binary files as well as other common files that are not code (don't assume your large .ignore/.gitignore is present)
 *   Have privacy confirmation for file system integration, and other sensitive data or destructive operations
 
 ### Bugs
-
-*   Check a file for a shebang if pygments can't detect type
-*   Syntax highlighting should work but file: and snippet: format are not standard
-*   Ensure that mdir -p is used when creating a new file from a file reference
 
 ### Chores
 
