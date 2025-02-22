@@ -12,7 +12,7 @@ def add_general_args(parser):
     group.add_argument("-m", "--models", action="store_true", help="List available generative AI models.")
     group.add_argument("-c", "--clean", action="store_true", help="Remove all history files in the tmp/ directory.")
     group.add_argument("-v", "--verbose", action="store_true", help="Log verbose output.")
-    group.add_argument('--version', action='version', version=f'%(prog)s {__version__}')
+    group.add_argument('--version', action='version', version=f'%(prog)s {__version__}', help="Show the version number and exit.")
     # fmt: on
 
 def add_repl_args(parser):
@@ -52,8 +52,7 @@ def create_parser():
     add_general_args(parser)
     add_debug_args(parser)
 
-    parser._optionals.title = "Help" # Rename "optional arguments" to Help
-    parser._optionals.description = "Show this help message and exit."
+    parser._optionals.title = "Help Options"
 
     return parser
 
