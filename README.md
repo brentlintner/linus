@@ -9,7 +9,7 @@ Linus is a CLI based coding assistant you can extreme program with.
 *   **Context-Aware Assistance:**  Maintains session history and project context for consistent, relevant suggestions.
 *   **File System Integration:**  Reads and writes directly to project files, allowing for seamless integration and modification.
 *   **Diff View:** Edits to files are shown as unified diffs instead of the entire file contents.
-*   **Fuzzy File Referencing:** Use `@` symbol to fuzzy search and reference project files.
+*   **Fuzzy File Referencing:** Use `@` symbol to fuzzy search and attach project files to the current messaeg.
 *   **Customizable Ignored Files**: Supports `.gitignore` and `.ignore` files for customizing ignored files.
 
 ## Dependencies
@@ -55,7 +55,8 @@ ai -iwf
 *   **Why was this created?**
 
     I wanted to create a coding assistant that could help me code in a more natural, streamlined way,
-    all without having to switch between windows or use a mouse.
+    all without having to switch between windows or use a mouse. Essentially a pair programming tool
+    that I can have in the terminal beside my code editor (neovim), without needing to be coupled to any editor.
 
 ## Project Management
 
@@ -63,13 +64,12 @@ ai -iwf
 
 *   Be able to export as pip package, so can we can use it on WIP branches for itself!
 *   Be able to see the git history
-*   Be able to look at a tmux session so the recent log to reference (ex: errors, etc)
-    *   Or: Be able to wrap processes in a tmux session, i.e. supervisor mode
+*   Be able to look at consolel history (ex: a tmux session so the recent log to reference (ex: errors, etc))
 *   Handle renaming or deleting file references, for example when refactoring
 *   Auto update the project file structure when new files are added or updated
 *   Be able to possibly get the reply quickly, then send again to get code written (ex: like copilot chat - there is a gemini API method for this?)
 *   Consider using advanced VertexAI APIs (ex: [code execution](https://cloud.google.com/vertex-ai/generative-ai/docs/multimodal/code-execution#googlegenaisdk_tools_code_exec_with_txt-python_genai_sdk), [function calling](https://cloud.google.com/vertex-ai/generative-ai/docs/multimodal/function-calling) and [search grounding](https://ai.google.dev/gemini-api/docs/grounding?lang=python))
-*   Be able to shrewdly translate natural language commands and run them using the local user shell (i.e. --shell connect mode) (via function calling)
+*   Be able to allow the ai to run certain cli commands
 *   Support text to speech output for responses
 *   Auto ignore binary files as well as other common files that are not code (don't assume your large .ignore/.gitignore is present)
 *   Have privacy confirmation for file system integration, and other sensitive data or destructive operations
