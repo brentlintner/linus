@@ -21,6 +21,7 @@ Anything related to the project management of the project, such as tracking issu
 
 ### Chores
 
+*   Look into leveraging [explain reasoning](https://cloud.google.com/vertex-ai/generative-ai/docs/learn/prompts/explain-reasoning)
 *   Migrate to google-genai (https://github.com/googleapis/python-genai)
 *   Consider using advanced VertexAI APIs (ex: [code execution](https://cloud.google.com/vertex-ai/generative-ai/docs/multimodal/code-execution#googlegenaisdk_tools_code_exec_with_txt-python_genai_sdk), [function calling](https://cloud.google.com/vertex-ai/generative-ai/docs/multimodal/function-calling) and [search grounding](https://ai.google.dev/gemini-api/docs/grounding?lang=python))
 *   For very long conversation histories, consider summarizing earlier parts of the conversation.
@@ -29,3 +30,4 @@ Anything related to the project management of the project, such as tracking issu
 *   If you have exceptionally large files, consider breaking them into smaller chunks and providing them to the LLM separately.
 *   You could add more metadata to your JSON directory structure, such as timestamps, types, function/class summaries.
 *   Add a cli flag to make the AI verbose or compact (i.e. the output formatting and character)
+*   Experiment with [perimiter values](https://cloud.google.com/vertex-ai/generative-ai/docs/learn/prompts/adjust-parameter-values)
