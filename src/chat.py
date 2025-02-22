@@ -11,7 +11,7 @@ import prompt_toolkit
 import difflib
 import json
 import pygments.util
-from pygments.lexers import get_lexer_for_filename
+from pygments.lexers import get_lexer_for_filename, guess_lexer_for_filename
 from datetime import datetime, timezone
 from collections import deque
 from dotenv import load_dotenv
@@ -21,6 +21,7 @@ from prompt_toolkit.shortcuts import CompleteStyle
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.theme import Theme
+import shlex
 
 from .chat_prefix import FILE_PREFIX, FILE_TREE_PLACEHOLDER, FILES_PLACEHOLDER, CONVERSATION_START_SEP, CONVERSATION_END_SEP, FILES_END_SEP
 
@@ -79,13 +80,46 @@ def info(message):
 def error(message):
     console.print(message, style="bold red")
 
+def get_program_from_shebang(shebang_line):
+    if not shebang_line.startswith("#!"):
+        return None
+
+    lexer = shlex.shlex(shebang_line)
+    lexer.wordchars += ".-"
+    try:
+        lexer.get_token()  # Skip "#!"
+        program = lexer.get_token()
+        if program == "env":
+            program = lexer.get_token() # Get the *next* token after 'env'
+        return os.path.basename(program) if program else None
+    except EOFError:
+        return None
+
 def get_language_from_extension(filename):
     try:
-        lexer = get_lexer_for_filename(filename)
-        # TODO: check the file for a shebang
-        return lexer.name.lower() or 'txt'  # Get the language name
+        _, ext = os.path.splitext(filename)
+        if ext:
+            lexer = get_lexer_for_filename(filename)
+            return lexer.name.lower()
+        else:
+            with open(filename, 'r') as f:
+                first_line = f.readline()
+            program = get_program_from_shebang(first_line)
+            if program:
+                if program == "python3" or program == "python":
+                    return "python"
+                elif program == "bash":
+                    return "bash"
+                elif program == "sh":
+                    return "sh"
+                # Could add more mappings here, but keep it minimal
+            return "text" # Fallback
     except pygments.util.ClassNotFound:
-        return "txt"
+        return "text"
+    except FileNotFoundError:
+        return "text"
+    except Exception:
+        return 'text'
 
 def tail(filename, n=10):
     try:
@@ -235,8 +269,8 @@ def generate_diff(file_path, current_content):
     diff = difflib.unified_diff(
         file_content,
         current_content.splitlines(keepends=True),
-        fromfile=f"{file_path} (context)",
-        tofile=f"{file_path} (disk)",
+        fromfile=f"{file_path} (disk)",
+        tofile=f"{file_path} (context)",
     )
 
     stringifed_diff = ''.join(diff)
