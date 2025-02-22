@@ -27,8 +27,9 @@ from rich.markdown import Markdown
 from rich.theme import Theme
 from rich.text import Text  # Import the Text class
 import shlex
+import subprocess
 
-from .chat_prefix import FILE_PREFIX, FILE_TREE_PLACEHOLDER, FILES_PLACEHOLDER, CONVERSATION_START_SEP, CONVERSATION_END_SEP, FILES_END_SEP
+from .chat_prefix import FILE_PREFIX, FILE_TREE_PLACEHOLDER, FILES_PLACEHOLDER, CONVERSATION_START_SEP, CONVERSATION_END_SEP, FILES_END_SEP, TERMINAL_LOGS_PLACEHOLDER
 
 load_dotenv()
 
@@ -153,6 +154,52 @@ def type_response_out(lines, delay=0.01):
 
             time.sleep(delay)
         print()  # Newline after each string
+
+def get_tmux_pane_content(session_name, pane_id):
+    """Captures the entire content of a tmux pane."""
+    command = ["tmux", "capture-pane", "-p", "-t", f"{pane_id}", "-S", "-"]
+    result = subprocess.run(command, capture_output=True, text=True)
+    if result.returncode != 0:
+        error(f"Error capturing pane {pane_id}: {result.stderr}")
+        return ""  # Return empty string on error
+    return result.stdout
+
+def get_tmux_pane_ids(session_name, pane_id):
+    """Gets a list of pane IDs in a tmux session."""
+    command = ["tmux", "list-panes", "-s", "-F", "#{pane_id}", "-t", session_name]
+    result = subprocess.run(command, capture_output=True, text=True)
+    if result.returncode != 0:
+        error(f"Error listing panes for {session_name}: {result.stderr}")
+        return [] # Return empty list on error.  Important!
+    return result.stdout.strip().splitlines()
+
+def get_current_tmux_pane_id():
+    """Gets the current tmux pane ID."""
+    try:
+        return os.environ.get('TMUX_PANE')
+    except KeyError:
+        return None
+
+def get_tmux_logs():
+    """Gets the content of all tmux panes *except* the current one."""
+    current_pane_id = get_current_tmux_pane_id()
+    if not current_pane_id:
+        return "No tmux session detected.\n"
+
+    try:
+        session_name = subprocess.run(["tmux", "display-message", "-p", "#S"], capture_output=True, text=True, check=True).stdout.strip()
+    except subprocess.CalledProcessError as e:
+        error(f"Error getting tmux session name: {e}")
+        return f"Error getting tmux session name: {e}\n"
+
+    pane_ids = get_tmux_pane_ids(session_name, current_pane_id)
+    all_logs = ""
+
+    for pane_id in pane_ids:
+        if pane_id != current_pane_id:
+            content = get_tmux_pane_content(session_name, pane_id)
+            all_logs += f"```text\n{content}```\n"
+    return all_logs
 
 def prompt_prefix(extra_ignore_patterns=None, include_files=True):
     prompt_prefix_file = os.path.join(os.path.dirname(__file__), '../docs/background.txt')
