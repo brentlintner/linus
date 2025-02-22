@@ -1,5 +1,6 @@
 import google.generativeai as ai
 import os
+import traceback
 import sys
 import threading
 import time
@@ -12,6 +13,7 @@ import difflib
 import json
 import pygments.util
 from pygments.lexers import get_lexer_for_filename
+from pygments.styles import get_style_by_name
 from datetime import datetime, timezone
 from collections import deque
 from dotenv import load_dotenv
@@ -23,6 +25,7 @@ from prompt_toolkit.shortcuts import CompleteStyle
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.theme import Theme
+from rich.text import Text  # Import the Text class
 import shlex
 
 from .chat_prefix import FILE_PREFIX, FILE_TREE_PLACEHOLDER, FILES_PLACEHOLDER, CONVERSATION_START_SEP, CONVERSATION_END_SEP, FILES_END_SEP
@@ -42,23 +45,25 @@ debug_mode = False
 
 loading = False
 
-# Define a custom theme for Markdown
+# Define a custom theme for Markdown *and* diffs
 custom_theme = Theme({
-    "markdown.code": "green",  # Style for inline code
-    "markdown.code_block": "bright_green",  # Style for code blocks
-    "markdown.h1": "bold #FFFFFF",  # Style for H1 headers
-    "markdown.h2": "bold #AAAAAA",  # Style for H2 headers
-    "markdown.h3": "bold #BBBBBB",  # Style for H3 headers
-    "markdown.h4": "bold #CCCCCC",  # Style for H4 headers
-    "markdown.h5": "bold #DDDDDD",  # Style for H5 headers
-    "markdown.h6": "bold #EEEEEE",  # Style for H6 headers
+    "markdown.code": "green",
+    "markdown.code_block": "bright_green",
+    "markdown.h1": "bold #FFFFFF",
+    "markdown.h2": "bold #AAAAAA",
+    "markdown.h3": "bold #BBBBBB",
+    "markdown.h4": "bold #CCCCCC",
+    "markdown.h5": "bold #DDDDDD",
+    "markdown.h6": "bold #EEEEEE",
     "markdown.strong": "bold",
     "markdown.em": "italic",
     "markdown.alert": "bold red",
-    # You can add more styles as needed
+    "diff.add": "green",      # Style for added lines in diffs
+    "diff.remove": "red",     # Style for removed lines in diffs
+    "diff.header": "yellow",  # Style for diff headers
 })
 
-console = Console(theme=custom_theme)  # Initialize Rich Console with custom theme
+console = Console(theme=custom_theme)
 
 key_bindings = KeyBindings()
 
@@ -464,15 +469,17 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
     prompt_style = prompt_toolkit.styles.Style.from_dict({ '': '#8CB9B3 bold' })
 
     file_completer = FuzzyCompleter(FilePathCompleter()) if interactive else None
-    command_completer = FuzzyCompleter(CommandCompleter(['reset', 'refresh', 'exit']))
+    command_completer = FuzzyCompleter(CommandCompleter(['reset', 'refresh', 'exit'])) if interactive else None
     # Combine completers
     class CombinedCompleter(Completer):
         def get_completions(self, document, complete_event):
             # Use file completer if '@' detected, otherwise use command completer
             if '@' in document.text:
-                yield from file_completer.get_completions(document, complete_event)
+                if file_completer:
+                    yield from file_completer.get_completions(document, complete_event)
             elif '$' in document.text:
-                yield from command_completer.get_completions(document, complete_event)
+                if command_completer:
+                    yield from command_completer.get_completions(document, complete_event)
 
     session = PromptSession(
         style=prompt_style,
@@ -510,6 +517,8 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
                 f.write(''.join(history))
         print(' ', flush=True)
         console.print("Project context refreshed.", style="bold yellow")
+
+    loading_thread = None
 
     while True:
         try:
@@ -608,5 +617,10 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
         except EOFError:  # Ctrl+D exits
             if input("\nReally quit? (y/n) ").lower() == 'y':
                 break
-        # except Exception as e:
-            # print(f"Linus has glitched. {e}")
+        except Exception as e:
+            if loading and loading_thread and loading_thread.is_alive():
+                loading = False
+                loading_thread.join()
+                print()
+            print("Linus has glitched!\n")
+            print(traceback.format_exc())
