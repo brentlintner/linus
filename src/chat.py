@@ -574,6 +574,10 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
             # TODO: don't wastefully update a file if the diff was empty earlier on
             if writeable:
                 for file_path, file_content in file_references:
+                    directory = os.path.dirname(file_path)
+                    if not os.path.exists(directory):
+                        os.makedirs(directory)
+
                     with open(file_path, 'w') as f:
                         f.write(file_content)
 
