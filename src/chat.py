@@ -235,8 +235,8 @@ def generate_diff(file_path, current_content):
     diff = difflib.unified_diff(
         file_content,
         current_content.splitlines(keepends=True),
-        fromfile=file_path, # Just the file path!
-        tofile=file_path    # Same here.
+        fromfile=f"{file_path} (context)",
+        tofile=f"{file_path} (disk)",
     )
 
     stringifed_diff = ''.join(diff)
@@ -383,7 +383,17 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
         history.append(session_history)
 
         recap = re.sub(rf'(.*?){CONVERSATION_START_SEP}\n+', '', session_history, flags=re.DOTALL)
-        recap = re.sub(rf'^{FILE_PREFIX}(.*?)$', rf'#### \1\n\n{FILE_PREFIX}', recap, flags=re.MULTILINE)
+
+        matches = re.finditer(rf'^{FILE_PREFIX}(.*?)$', recap, flags=re.MULTILINE)
+
+        for match in matches:
+            file_path = match.group(1)
+
+            recap = re.sub(
+                rf'^{FILE_PREFIX}{re.escape(file_path)}$',
+                rf'#### {file_path}\n\n```{get_language_from_extension(file_path)}',
+                recap,
+                flags=re.MULTILINE)
 
         markdown = Markdown(recap)
 
@@ -502,7 +512,7 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
                 file_path = match.group(1)
                 file_content = match.group(2)
                 diff = generate_diff(file_path, file_content)
-                return f'#### {file_path}\n\n{FILE_PREFIX}{file_path}\n{diff}\n```'
+                return f'#### {file_path}\n\n```{get_language_from_extension(file_path)}\n{diff}\n```'
 
             redacted_response = re.sub(
                 rf'{FILE_PREFIX}(.*?)\n(.*?)\n```',
