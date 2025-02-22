@@ -6,6 +6,31 @@ from .chat import coding_repl, debug_logging, verbose_logging, check_if_env_vars
 from .__version__ import __version__
 import google.generativeai as ai
 
+def add_general_args(parser):
+    group = parser.add_argument_group(title="General Options")
+    # fmt: off
+    group.add_argument("-m", "--models", action="store_true", help="List available generative AI models.")
+    group.add_argument("-c", "--clean", action="store_true", help="Remove all history files in the tmp/ directory.")
+    group.add_argument("-v", "--verbose", action="store_true", help="Log verbose output.")
+    group.add_argument('--version', action='version', version=f'%(prog)s {__version__}')
+    # fmt: on
+
+def add_repl_args(parser):
+    group = parser.add_argument_group(title="REPL Options")
+    # fmt: off
+    group.add_argument("-f", "--files", action="store_true", help="Include project files in the prompt.")
+    group.add_argument("-i", "--interactive", action="store_true", help="Enable fuzzy file finding with @ symbol, and commands with the $ symbol.")
+    group.add_argument("-w", "--writeable", action="store_true", help="Enable auto-writing to files from AI responses.")
+    group.add_argument("-n", "--no-resume", action="store_true", help="Do not resume previous conversation. Start a new chat.")
+    # fmt: on
+
+def add_debug_args(parser):
+    group = parser.add_argument_group(title="Debug Options")
+    # fmt: off
+    group.add_argument("-V", "--debug", action="store_true", help="Log debug output.")
+    group.add_argument("-d", "--directory", type=str, default=os.getcwd(), help="Specify working directory.")
+    # fmt: on
+
 def add_file_listing_args(parser):
     group = parser.add_argument_group(title="File Listing Options")
     # fmt: off
@@ -14,30 +39,21 @@ def add_file_listing_args(parser):
     group.add_argument("-g", "--ignore", type=str, help="Comma-separated list of additional ignore patterns.")
     # fmt: on
 
-def add_general_args(parser):
-    group = parser.add_argument_group(title="General Options")
-    # fmt: off
-    group.add_argument("-f", "--files", action="store_true", help="Include project files in the prompt.")
-    group.add_argument("-i", "--interactive", action="store_true", help="Enable fuzzy file finding with @ symbol, and commands with the $ symbol.")
-    group.add_argument("-w", "--writeable", action="store_true", help="Enable auto-writing to files from AI responses.")
-    group.add_argument("-n", "--no-resume", action="store_true", help="Do not resume previous conversation. Start a new chat.")
-    group.add_argument("-m", "--models", action="store_true", help="List available generative AI models.")
-    group.add_argument("-c", "--clean", action="store_true", help="Remove all history files in the tmp/ directory.")
-    group.add_argument("-V", "--debug", action="store_true", help="Log debug output.")
-    group.add_argument("-v", "--verbose", action="store_true", help="Log verbose output.")
-    group.add_argument("-d", "--directory", type=str, default=os.getcwd(), help="Specify working directory.")
-    # fmt: on
-
 def create_parser():
     parser = argparse.ArgumentParser(
         prog="ai-code",
         description="Pair program with a Gemini AI based assistant.",
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        add_help=True
+    )
 
-    add_general_args(parser)
+    add_repl_args(parser)
     add_file_listing_args(parser)
+    add_general_args(parser)
+    add_debug_args(parser)
 
-    parser.add_argument('--version', action='version', version=f'%(prog)s {__version__}')
+    parser._optionals.title = "Help" # Rename "optional arguments" to Help
+    parser._optionals.description = "Show this help message and exit."
 
     return parser
 
@@ -53,7 +69,7 @@ def clean_history_files(tmp_dir='tmp'):
 
 def handle_list_files(args):
     extra_ignore_patterns = args.ignore.split(',') if args.ignore else None
-    files = generate_project_file_list(extra_ignore_patterns) # Changed to _list
+    files = generate_project_file_list(extra_ignore_patterns)
     print(files)
 
 def handle_tokens(args):
@@ -61,9 +77,9 @@ def handle_tokens(args):
     model = ai.GenerativeModel('models/' + os.getenv('GEMINI_MODEL'))
 
     extra_ignore_patterns = args.ignore.split(',') if args.ignore else None
-    file_paths = generate_project_file_list(extra_ignore_patterns) # Changed to _list, and store as file_paths
+    file_paths = generate_project_file_list(extra_ignore_patterns)
     total_tokens = 0
-    for file_path in file_paths.splitlines(): # Iterate through file paths, not file contents
+    for file_path in file_paths.splitlines():
         try:
             with open(file_path, 'r') as f:
                 content = f.read()
@@ -73,7 +89,7 @@ def handle_tokens(args):
         except FileNotFoundError:
             print(f"{file_path}: NOT FOUND", file=sys.stderr)
         except Exception as e:
-            print(f"Error with {file_path}: {e}", file=sys.stderr) # Catch other exceptions
+            print(f"Error with {file_path}: {e}", file=sys.stderr)
 
     print(f"\nTotal tokens: {total_tokens}")
 
