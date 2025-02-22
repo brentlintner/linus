@@ -536,15 +536,9 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
         complete_style=CompleteStyle.MULTI_COLUMN)
 
     def calculate_history_stats():
+        token_count = model.count_tokens(''.join(history))
         total_lines = sum(len(entry.splitlines()) for entry in history)
-        total_chars = sum(len(entry) for entry in history)
-        return total_lines, total_chars
-
-    if verbose:
-        end_time = time.time()
-        duration = end_time - start_time
-        total_lines, total_chars = calculate_history_stats()
-        info(f"{total_lines} lines, {total_chars} characters, {duration:.2f}s ({GEMINI_MODEL})")
+        return token_count.total_tokens, total_lines
 
     def reset_history():
         global history
@@ -564,6 +558,12 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
                 f.write(''.join(history))
         print(' ', flush=True)
         console.print("Project context refreshed.", style="bold yellow")
+
+    if verbose:
+        end_time = time.time()
+        duration = end_time - start_time
+        total_tokens, total_lines = calculate_history_stats()
+        info(f"{total_lines} lines, {total_tokens} tokens, {duration:.2f}s ({GEMINI_MODEL})")
 
     loading_thread = None
 
@@ -655,8 +655,8 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
                     f.write(''.join(history))
 
             if verbose:
-                total_lines, total_chars = calculate_history_stats()
-                info(f"\n{total_lines} lines, {total_chars} characters, {duration:.2f}s ({GEMINI_MODEL})")
+                total_tokens, total_lines = calculate_history_stats()
+                info(f"{total_lines} lines, {total_tokens} tokens, {duration:.2f}s ({GEMINI_MODEL})")
 
         except KeyboardInterrupt:
             if input("\nReally quit? (y/n) ").lower() == 'y':
