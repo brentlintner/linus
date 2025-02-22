@@ -643,8 +643,9 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
 
             if writeable:
                 for file_path, file_content in file_references:
+                    info(f"Writing to {file_path}")
                     directory = os.path.dirname(file_path)
-                    if not os.path.exists(directory):
+                    if directory and not os.path.exists(directory):
                         os.makedirs(directory)
 
                     with open(file_path, 'w') as f:
