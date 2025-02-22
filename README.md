@@ -1,6 +1,6 @@
-# AI Coding Partner
+# Coding Partner
 
-Linus is a CLI based coding assistant you can extreme program with.
+Linus is a CLI based coding assistant that can be the passenger or the driver in a pair programming session.
 
 ## Features
 
@@ -9,7 +9,7 @@ Linus is a CLI based coding assistant you can extreme program with.
 *   **Context-Aware Assistance:**  Maintains session history and project context for consistent, relevant suggestions.
 *   **File System Integration:**  Reads and writes directly to project files, allowing for seamless integration and modification.
 *   **Diff View:** Edits to files are shown as unified diffs instead of the entire file contents.
-*   **Fuzzy File Referencing:** Use `@` symbol to fuzzy search and attach project files to the current messaeg.
+*   **Fuzzy File Referencing:** Use `@` symbol to fuzzy search and attach project files to the current message.
 *   **Customizable Ignored Files**: Supports `.gitignore` and `.ignore` files for customizing ignored files.
 
 ## Dependencies
@@ -20,23 +20,26 @@ Linus is a CLI based coding assistant you can extreme program with.
 
 ## Setup
 
-1.  Install dependencies:
+```sh
+pipenv install
+cp .env.example .env
+open .env # Edit .env and set your API key and model (ex: 'gemini-flash-2.0')
+bin/ai -h
+```
 
-    ```sh
-    pipenv install
-    ```
-2.  Copy the example environment file and set your Gemini API key:
+## Using
 
-    ```sh
-    cp .env.example .env
-    # Edit .env and set GEMINI_API_KEY
-    ```
-3.  Run the script:
+List all available model ids:
 
-    ```sh
-    bin/ai -h
-    ```
-## Example Usage
+```sh
+bin/ai -m
+```
+
+List the files the model can access if `-w` is enabled:
+
+```sh
+bin/ai -l
+```
 
 Open up a simple chat repl:
 
@@ -48,6 +51,12 @@ Start a fully featured chat repl with file system integrations:
 
 ```sh
 ai -iwf
+```
+
+Show detailed stats about the current session:
+
+```sh
+ai -iwf -v
 ```
 
 ## FAQ
