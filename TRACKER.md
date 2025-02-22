@@ -6,13 +6,15 @@ Anything related to the project management of the project, such as tracking issu
 
 ### Features
 
-*   Be able to export as pip package, so can we can use it on WIP branches for itself!
 *   Be able to see the git history
-*   Be able to look at consolel history (ex: a tmux session so the recent log to reference (ex: errors, etc))
+*   Be able to look at console history (ex: a tmux session so the recent log to reference (ex: errors, etc))
+*   Be able to possibly get the reply quickly (ex: [streaming](https://github.com/googleapis/python-genai?tab=readme-ov-file#streaming))
+
+*   Be able to export as pip package, so can we can use it on WIP branches for itself!
 *   Handle renaming or deleting file references, for example when refactoring
 *   Auto update the project file structure when new files are added or updated
-*   Be able to possibly get the reply quickly (ex: [streaming](https://github.com/googleapis/python-genai?tab=readme-ov-file#streaming))
 *   Be able to allow the ai to run certain cli commands
+*   Support versions of files (need to use local db setup for this)
 *   Support text to speech output for responses
 *   Auto ignore binary files as well as other common files that are not code (don't assume your large .ignore/.gitignore is present)
 *   Have privacy confirmation for file system integration, and other sensitive data or destructive operations
