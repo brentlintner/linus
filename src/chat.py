@@ -186,7 +186,6 @@ def extract_timestamp(filename):
         return None
 
 def history_filename_for_directory(directory):
-    """Generates a unique, consistent filename for the given directory."""
     # Use a hash of the absolute directory path *and* include the directory name
     abs_dir = os.path.abspath(directory)
     dir_name = os.path.basename(abs_dir)  # Get just the directory name
@@ -397,8 +396,6 @@ def list_available_models():
 def coding_repl(resume=False, interactive=False, writeable=False, ignore_patterns=None, include_files=False):
     start_time = time.time()
 
-    os.mkdir('tmp') if not os.path.exists('tmp') else None
-
     ai.configure(api_key=GEMINI_API_KEY)
 
     model = ai.GenerativeModel('models/' + GEMINI_MODEL)
@@ -571,7 +568,6 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
 
             console.print(markdown)
 
-            # TODO: don't wastefully update a file if the diff was empty earlier on
             if writeable:
                 for file_path, file_content in file_references:
                     directory = os.path.dirname(file_path)
