@@ -29,18 +29,6 @@ bin/ai -h
 
 ## Using
 
-List all available model ids:
-
-```sh
-bin/ai -m
-```
-
-List the files the model can access if `-w` is enabled:
-
-```sh
-bin/ai -l
-```
-
 Open up a simple chat repl:
 
 ```sh
@@ -53,10 +41,16 @@ Start a fully featured chat repl with file system integrations:
 ai -iwf
 ```
 
+List the files the model can access if `-w` is enabled:
+
+```sh
+bin/ai -l
+```
+
 Show detailed stats about the current session:
 
 ```sh
-ai -iwf -v
+ai -iwfv
 ```
 
 ## FAQ
