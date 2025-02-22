@@ -395,7 +395,7 @@ def generate_project_structure(extra_ignore_patterns=None):
 
     return json.dumps(file_tree, indent=2)
 
-def generate_project_file_contents(extra_ignore_patterns=None, list_only=False):
+def generate_project_file_contents(extra_ignore_patterns=None):
     ignore_patterns = ['.*']  # Ignore dotfiles by default
     for ignore_file in ['.gitignore', '.ignore']:
         if os.path.exists(ignore_file):
@@ -417,12 +417,32 @@ def generate_project_file_contents(extra_ignore_patterns=None, list_only=False):
         for file in files:
             file_path = os.path.join(relative_path, file)
             if not spec.match_file(file_path):
-                if list_only:
-                    output += f"{file_path}\n"
-                else:
-                    output += get_file_contents(file_path)
+                output += get_file_contents(file_path)
 
     return output
+
+def generate_project_file_list(extra_ignore_patterns=None):
+    ignore_patterns = ['.*']
+    for ignore_file in ['.gitignore', '.ignore']:
+        if os.path.exists(ignore_file):
+            with open(ignore_file) as f:
+                ignore_patterns.extend([line.strip() for line in f if line.strip() and not line.startswith('#')])
+    if extra_ignore_patterns:
+        ignore_patterns.extend(extra_ignore_patterns)
+
+    spec = pathspec.PathSpec.from_lines('gitwildmatch', ignore_patterns)
+    output = []  # Use a list to store file names
+
+    for root, _, files in os.walk(os.getcwd()):
+        relative_path = os.path.relpath(root, os.getcwd())
+        if relative_path == '.':
+            relative_path = ''
+        for file in files:
+            file_path = os.path.join(relative_path, file)
+            if not spec.match_file(file_path):
+                output.append(file_path)  # Append file path to the list
+
+    return "\n".join(output)  # Join with newlines
 
 def get_file_contents(file_path):
     try:

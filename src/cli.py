@@ -2,8 +2,31 @@ import argparse
 import os
 import sys
 import shutil
-from .chat import coding_repl, debug_logging, verbose_logging, check_if_env_vars_set, list_available_models, history_filename_for_directory, generate_project_file_contents
+from .chat import coding_repl, debug_logging, verbose_logging, check_if_env_vars_set, list_available_models, history_filename_for_directory, generate_project_file_contents, generate_project_file_list
 from .__version__ import __version__
+import google.generativeai as ai
+
+def add_file_listing_args(parser):
+    group = parser.add_argument_group(title="File Listing Options")
+    # fmt: off
+    group.add_argument("-l", "--list-files", action="store_true", help="List all files that will be included if -f is set.")
+    group.add_argument("-t", "--tokens", action="store_true", help="List all files, their token counts, and the total token count.")
+    group.add_argument("-g", "--ignore", type=str, help="Comma-separated list of additional ignore patterns.")
+    # fmt: on
+
+def add_general_args(parser):
+    group = parser.add_argument_group(title="General Options")
+    # fmt: off
+    group.add_argument("-f", "--files", action="store_true", help="Include project files in the prompt.")
+    group.add_argument("-i", "--interactive", action="store_true", help="Enable fuzzy file finding with @ symbol, and commands with the $ symbol.")
+    group.add_argument("-w", "--writeable", action="store_true", help="Enable auto-writing to files from AI responses.")
+    group.add_argument("-n", "--no-resume", action="store_true", help="Do not resume previous conversation. Start a new chat.")
+    group.add_argument("-m", "--models", action="store_true", help="List available generative AI models.")
+    group.add_argument("-c", "--clean", action="store_true", help="Remove all history files in the tmp/ directory.")
+    group.add_argument("-V", "--debug", action="store_true", help="Log debug output.")
+    group.add_argument("-v", "--verbose", action="store_true", help="Log verbose output.")
+    group.add_argument("-d", "--directory", type=str, default=os.getcwd(), help="Specify working directory.")
+    # fmt: on
 
 def create_parser():
     parser = argparse.ArgumentParser(
@@ -11,19 +34,8 @@ def create_parser():
         description="Pair program with a Gemini AI based assistant.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-    # fmt: off
-    parser.add_argument("-f", "--files", action="store_true", help="Include project files in the prompt.")
-    parser.add_argument("-i", "--interactive", action="store_true", help="Enable fuzzy file finding with @ symbol, and commands with the $ symbol.")
-    parser.add_argument("-w", "--writeable", action="store_true", help="Enable auto-writing to files from AI responses.")
-    parser.add_argument("-n", "--no-resume", action="store_true", help="Do not resume previous conversation. Start a new chat.")
-    parser.add_argument("-m", "--models", action="store_true", help="List available generative AI models.")
-    parser.add_argument("-l", "--list-files", action="store_true", help="List all files that will be included if -f is set.")
-    parser.add_argument("-c", "--clean", action="store_true", help="Remove all history files in the tmp/ directory.")
-    parser.add_argument("-V", "--debug", action="store_true", help="Log debug output.")
-    parser.add_argument("-v", "--verbose", action="store_true", help="Log verbose output.")
-    parser.add_argument("-g", "--ignore", type=str, help="Comma-separated list of additional ignore patterns.")
-    parser.add_argument("-d", "--directory", type=str, default=os.getcwd(), help="Specify working directory.")
-    # fmt: on
+    add_general_args(parser)
+    add_file_listing_args(parser)
 
     parser.add_argument('--version', action='version', version=f'%(prog)s {__version__}')
 
@@ -39,6 +51,32 @@ def clean_history_files(tmp_dir='tmp'):
         except Exception as e:
             print(f"Error cleaning history files: {e}")
 
+def handle_list_files(args):
+    extra_ignore_patterns = args.ignore.split(',') if args.ignore else None
+    files = generate_project_file_list(extra_ignore_patterns) # Changed to _list
+    print(files)
+
+def handle_tokens(args):
+    ai.configure(api_key=os.getenv('GEMINI_API_KEY'))
+    model = ai.GenerativeModel('models/' + os.getenv('GEMINI_MODEL'))
+
+    extra_ignore_patterns = args.ignore.split(',') if args.ignore else None
+    file_paths = generate_project_file_list(extra_ignore_patterns) # Changed to _list, and store as file_paths
+    total_tokens = 0
+    for file_path in file_paths.splitlines(): # Iterate through file paths, not file contents
+        try:
+            with open(file_path, 'r') as f:
+                content = f.read()
+            tokens = model.count_tokens(content).total_tokens
+            total_tokens += tokens
+            print(f"{file_path}: {tokens}")
+        except FileNotFoundError:
+            print(f"{file_path}: NOT FOUND", file=sys.stderr)
+        except Exception as e:
+            print(f"Error with {file_path}: {e}", file=sys.stderr) # Catch other exceptions
+
+    print(f"\nTotal tokens: {total_tokens}")
+
 def main():
     parser = create_parser()
     args = parser.parse_args()
@@ -49,7 +87,7 @@ def main():
         verbose_logging()
     if args.clean:
         clean_history_files()
-        sys.exit(0)  # Exit after cleaning, as requested
+        sys.exit(0)
 
     check_if_env_vars_set()
 
@@ -60,20 +98,20 @@ def main():
     os.chdir(args.directory)
 
     if args.list_files:
-        # Split the comma-separated ignore patterns into a list
-        extra_ignore_patterns = args.ignore.split(',') if args.ignore else None
-        files = generate_project_file_contents(extra_ignore_patterns, True)
-        print(files)
+        handle_list_files(args)
+        sys.exit(0)
+    elif args.tokens:
+        handle_tokens(args)
         sys.exit(0)
 
-    resume = not args.no_resume  # Resume unless --no-resume is specified
+    resume = not args.no_resume
 
     coding_repl(
         resume=resume,
         interactive=args.interactive,
         writeable=args.writeable,
         ignore_patterns=args.ignore,
-        include_files=args.files, # Now directly use args.files
+        include_files=args.files,
     )
 
 if __name__ == "__main__":
