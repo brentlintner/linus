@@ -4,6 +4,7 @@
 #       If you change this file name, change the hardcoded file name in the rest of the code.
 #
 FILE_PREFIX = '```file: '
+SNIPPET_PREFIX = '```snippet: '
 
 FILE_TREE_PLACEHOLDER = '{{{FILE_TREE_JSON}}}'
 FILES_PLACEHOLDER = '{{{FILE_REFERENCES}}}'

@@ -84,13 +84,12 @@ def handle_tokens(args):
                 content = f.read()
             tokens = client.models.count_tokens(model=os.getenv('GEMINI_MODEL') or '', contents=content).total_tokens
             total_tokens += tokens or 0
-            print(f"{file_path}: {tokens}")
         except FileNotFoundError:
             print(f"{file_path}: NOT FOUND", file=sys.stderr)
         except Exception as e:
             print(f"Error with {file_path}: {e}", file=sys.stderr)
 
-    print(f"\nTotal tokens: {total_tokens}")
+    print(f"Total tokens: {total_tokens}")
 
 def main():
     parser = create_parser()

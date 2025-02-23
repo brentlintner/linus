@@ -13,6 +13,7 @@ import json
 import pygments.util
 import shlex
 import subprocess
+from pygments.styles import STYLE_MAP, get_style_by_name
 from pygments.lexers import get_lexer_for_filename
 from datetime import datetime, timezone
 from collections import deque
@@ -25,10 +26,11 @@ from prompt_toolkit.shortcuts import CompleteStyle
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.theme import Theme
+from rich.syntax import Syntax
 from google import genai
 from google.genai import types
 
-from .chat_prefix import FILE_PREFIX, FILE_TREE_PLACEHOLDER, FILES_PLACEHOLDER, CONVERSATION_START_SEP, CONVERSATION_END_SEP, FILES_END_SEP, TERMINAL_LOGS_PLACEHOLDER
+from .chat_prefix import FILE_PREFIX, SNIPPET_PREFIX, FILE_TREE_PLACEHOLDER, FILES_PLACEHOLDER, CONVERSATION_START_SEP, CONVERSATION_END_SEP, FILES_END_SEP, TERMINAL_LOGS_PLACEHOLDER
 
 load_dotenv()
 
@@ -139,8 +141,6 @@ def get_language_from_extension(filename):
         return "text"
     except FileNotFoundError:
         return "text"
-    except Exception:
-        return 'text'
 
 def tail(filename, n=10):
     try:
@@ -461,7 +461,7 @@ def prune_file_history(file_path):
     # Refined regex to match content only between FILE_PREFIX and the next FILE_PREFIX or FILES_END_SEP
     file_regex = re.compile(
         rf'{FILE_PREFIX}{re.escape(file_path)}\n(.*?)(?=(?:{FILE_PREFIX}|{FILES_END_SEP}|{CONVERSATION_END_SEP}|$))',
-        re.DOTALL
+        flags=re.DOTALL
     )
 
     debug(f"Regex being used: {file_regex.pattern}")
@@ -479,6 +479,14 @@ def list_available_models():
 
     for m in client.models.list():
         console.print(f"{(m.name or '').replace('models/', '')} ({m.description})")
+
+def split_at(delimiter, input_string):
+    parts = input_string.split(delimiter, 1)  # Split at most once
+
+    if len(parts) < 2:  # No delimiter found
+        return input_string, ""
+    else:
+        return parts[0], parts[1]
 
 def coding_repl(resume=False, interactive=False, writeable=False, ignore_patterns=None, include_files=False):
     start_time = time.time()
@@ -516,7 +524,6 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
         console.print(markdown)
         console.print()
     else:
-        debug("No previous session found. Starting a new session.") if resume else None
         # Start fresh, but *only* if no history file exists *and* resume is true.  Otherwise, we're in a new session.
         if not previous_session and resume:
             history.append(prompt_prefix(extra_ignore_patterns, include_files))
@@ -524,11 +531,7 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
                 with open(history_filename, 'w') as f:
                     f.write(''.join(history))
         elif previous_session and not resume:
-            # New session requested, but a history file exists:  Delete it!
-            try:
-              os.remove(history_filename)
-            except:
-              pass # Don't error if we can't remove it for some reason
+            os.remove(history_filename)
             history.append(prompt_prefix(extra_ignore_patterns, include_files)) # and then start fresh
             if history_filename:
                 with open(history_filename, 'w') as f:
@@ -557,9 +560,11 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
         complete_style=CompleteStyle.MULTI_COLUMN)
 
     def calculate_history_stats():
-        token_count = client.models.count_tokens(model=GEMINI_MODEL, contents=''.join(history))
+        # token_count = client.models.count_tokens(model=GEMINI_MODEL, contents=''.join(history))
+        total_characters = sum(len(entry) for entry in history)
         total_lines = sum(len(entry.splitlines()) for entry in history)
-        return token_count.total_tokens, total_lines
+        # return token_count.total_tokens, total_lines
+        return total_characters, total_lines
 
     def reset_history():
         global history
@@ -583,8 +588,8 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
     if verbose:
         end_time = time.time()
         duration = end_time - start_time
-        total_tokens, total_lines = calculate_history_stats()
-        info(f"{total_lines} lines, {total_tokens} tokens, {duration:.2f}s ({GEMINI_MODEL})")
+        total_characters, total_lines = calculate_history_stats()
+        info(f"{total_lines} lines, {total_characters} characters, {duration:.2f}s ({GEMINI_MODEL})")
 
     loading_thread = None
 
@@ -617,7 +622,6 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
             file_references = [re.sub(r"[^\w\s]+$", '', file_reference) for file_reference in file_references]
             for file_path in file_references:
                 if os.path.isfile(file_path):
-                    # Prune previous versions of the file
                     prune_file_history(file_path)
 
                     with open(file_path, 'r') as f:
@@ -630,42 +634,109 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
             contents = [types.Part.from_text(text=request_text)]
 
             start_time = time.time()
-            response = client.models.generate_content(model=GEMINI_MODEL, contents=contents)
+            # Use generate_content_stream instead of generate_content
+            stream = client.models.generate_content_stream(model=GEMINI_MODEL, contents=contents)
+
+            full_response_text = ""
+            queued_response_text = ""
+
+            for chunk in stream:
+                if not chunk.text: continue
+
+                full_response_text += chunk.text
+                queued_response_text += chunk.text
+
+                # TODO: switch back and forth to loader, but have "typing furiously" message if writing a file or snippet and it's been more than a few seconds
+                # TODO: print the file name first as the h4 header, then the code block
+
+                sections = re.split(r"(```.*?\n.*?\n```)", queued_response_text, flags=re.DOTALL)
+
+                if len(sections) == 1 and not queued_response_text.startswith("```"): continue
+
+                if loading:
+                    loading = False
+                    loading_thread.join()
+                    print()  # Ensure a newline after loading indicator
+
+                for index, section in enumerate(sections):
+                    is_code_block = section.startswith("```")
+                    is_last_section = index == len(sections) - 1
+
+                    if not is_code_block and is_last_section:
+                        # TODO: split the last section on \n\n and print the first part, then queue the second part
+                        queued_response_text = section
+                        continue
+
+                    if is_code_block:
+                        file_path_match = re.search(rf'^{FILE_PREFIX}(.*?)\n', section)
+                        is_file = bool(file_path_match)
+
+                        content_match = re.match(rf'^```.*?\n(.*?)\n```', section, flags=re.DOTALL)
+                        content = content_match.group(1) if content_match else ""
+
+                        if is_file:
+                            file_path = file_path_match.group(1)
+                            code = generate_diff(file_path, content)
+                            is_diff = os.path.exists(file_path) and content != code
+                            language = "diff" if is_diff else get_language_from_extension(file_path)
+
+                            console.print(Markdown(f"#### {file_path}"))
+                        else:
+                            code = content
+                            language_match = re.match(rf'^{SNIPPET_PREFIX}(.*?)\n', section)
+                            language = language_match.group(1) if language_match else 'text'
+
+                            console.print(Markdown(f"#### {language}")) # Keep this
+
+                        console.print()
+
+                        section = f"```{language if language != 'text' else ''}\n{code}\n```"
+
+                    console.print(Markdown(section))
+                    console.print()
+
+                if not loading:
+                    loading = True
+                    loading_thread = threading.Thread(target=loading_indicator, daemon=True)
+                    loading_thread.start()
+
+            if loading:
+                loading = False
+                loading_thread.join()
+                print()  # Ensure a newline after loading indicator
+
+            # Handle any remaining text in the queue
+            if queued_response_text:
+                markdown = Markdown(queued_response_text)
+                console.print(markdown)
+                console.print()
+                queued_response_text = ""
+
             end_time = time.time()
             duration = end_time - start_time
 
+            # --- Post-processing after the entire response is received ---
 
-            response_text = response.text
-
-            def replace_with_diff(match):
+            # Now we process the *entire* response for file writes, pruning, and history
+            def replace_with_diff_for_history(match):
                 file_path = match.group(1)
                 file_content = match.group(2)
-                diff = generate_diff(file_path, file_content)
-                return f'#### {file_path}\n\n```{get_language_from_extension(file_path)}\n{diff}\n```'
+                return f'{FILE_PREFIX}{file_path}\n{file_content}\n```'
 
-            redacted_response = re.sub(
+            # Prepare for history (don't show diffs in history, just the final content)
+            history_response = re.sub(
                 rf'{FILE_PREFIX}(.*?)\n(.*?)\n```',
-                replace_with_diff,
-                response_text,
+                replace_with_diff_for_history,
+                full_response_text,
                 flags=re.DOTALL
             )
 
-            # NOTE: do this after generating the diffs above
-            file_references = re.findall(rf'{FILE_PREFIX}(.*?)\n(.*?)\n```', response_text, re.DOTALL)
-
+            # Prune file history *after* the entire response is received, but before history is appended
+            file_references = re.findall(rf'{FILE_PREFIX}(.*?)\n(.*?)\n```', full_response_text, flags=re.DOTALL)
             for file_path, _ in file_references:
                 prune_file_history(file_path)
 
-            history.append(f'\n**Linus:**\n\n' + response_text + '\n')
-
-            loading = False
-            loading_thread.join()
-            print()
-
-            markdown = Markdown(redacted_response)
-
-            console.print(markdown)
-            console.print()
+            history.append(f'\n**Linus:**\n\n' + history_response + '\n')
 
             if writeable:
                 for file_path, file_content in file_references:
@@ -685,8 +756,8 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
                     f.write(''.join(history))
 
             if verbose:
-                total_tokens, total_lines = calculate_history_stats()
-                info(f"{total_lines} lines, {total_tokens} tokens, {duration:.2f}s ({GEMINI_MODEL})")
+                total_characters, total_lines = calculate_history_stats()
+                info(f"{total_lines} lines, {total_characters} characters, {duration:.2f}s ({GEMINI_MODEL})")
 
         except KeyboardInterrupt:
             if input("\nReally quit? (y/n) ").lower() == 'y':
