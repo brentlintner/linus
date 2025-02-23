@@ -4,8 +4,9 @@ Anything related to the project management of the project, such as tracking issu
 
 ## Current
 
-*   Be able to possibly get the reply quickly (ex: [streaming](https://github.com/googleapis/python-genai?tab=readme-ov-file#streaming))
 *   Migrate to [google-genai](https://github.com/googleapis/python-genai)
+*   Be able to possibly get the reply quickly (ex: [streaming](https://github.com/googleapis/python-genai?tab=readme-ov-file#streaming))
+*   Try to be more explicit about using the entire project and looking at related files
 
 ## Backlog
 

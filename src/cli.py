@@ -4,7 +4,8 @@ import sys
 import shutil
 from .chat import coding_repl, debug_logging, verbose_logging, check_if_env_vars_set, list_available_models, history_filename_for_directory, generate_project_file_contents, generate_project_file_list
 from .__version__ import __version__
-import google.generativeai as ai
+from google import genai
+from google.genai import types
 
 def add_general_args(parser):
     group = parser.add_argument_group(title="General Options")
@@ -72,8 +73,7 @@ def handle_list_files(args):
     print(files)
 
 def handle_tokens(args):
-    ai.configure(api_key=os.getenv('GEMINI_API_KEY'))
-    model = ai.GenerativeModel('models/' + os.getenv('GEMINI_MODEL'))
+    client = genai.Client(api_key=os.getenv('GOOGLE_API_KEY'))
 
     extra_ignore_patterns = args.ignore.split(',') if args.ignore else None
     file_paths = generate_project_file_list(extra_ignore_patterns)
@@ -82,8 +82,8 @@ def handle_tokens(args):
         try:
             with open(file_path, 'r') as f:
                 content = f.read()
-            tokens = model.count_tokens(content).total_tokens
-            total_tokens += tokens
+            tokens = client.models.count_tokens(model=os.getenv('GEMINI_MODEL') or '', contents=content).total_tokens
+            total_tokens += tokens or 0
             print(f"{file_path}: {tokens}")
         except FileNotFoundError:
             print(f"{file_path}: NOT FOUND", file=sys.stderr)

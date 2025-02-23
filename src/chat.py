@@ -1,4 +1,3 @@
-import google.generativeai as ai
 import os
 import traceback
 import sys
@@ -12,6 +11,8 @@ import prompt_toolkit
 import difflib
 import json
 import pygments.util
+import shlex
+import subprocess
 from pygments.lexers import get_lexer_for_filename
 from datetime import datetime, timezone
 from collections import deque
@@ -24,16 +25,19 @@ from prompt_toolkit.shortcuts import CompleteStyle
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.theme import Theme
-from rich.text import Text  # Import the Text class
-import shlex
-import subprocess
+from google import genai
+from google.genai import types
 
 from .chat_prefix import FILE_PREFIX, FILE_TREE_PLACEHOLDER, FILES_PLACEHOLDER, CONVERSATION_START_SEP, CONVERSATION_END_SEP, FILES_END_SEP, TERMINAL_LOGS_PLACEHOLDER
 
 load_dotenv()
 
-GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
-GEMINI_MODEL = os.getenv('GEMINI_MODEL')
+# Use environment variables for configuration (following the new docs)
+GOOGLE_API_KEY = os.getenv('GOOGLE_API_KEY') or ''
+#GOOGLE_GENAI_USE_VERTEXAI = os.getenv('GOOGLE_GENAI_USE_VERTEXAI')  # We'll assume Gemini API for now
+#GOOGLE_CLOUD_PROJECT = os.getenv('GOOGLE_CLOUD_PROJECT')
+#GOOGLE_CLOUD_LOCATION = os.getenv('GOOGLE_CLOUD_LOCATION')
+GEMINI_MODEL = os.getenv('GEMINI_MODEL') or '' # Keep this, but will use a different format later
 
 PARSER_DEFINITION_FILE = 'src/chat_prefix.py'
 
@@ -221,12 +225,12 @@ def prompt_prefix(extra_ignore_patterns=None, include_files=True):
     return prefix
 
 def check_if_env_vars_set():
-    if not GEMINI_API_KEY:
-        error("Please set the GEMINI_API_KEY environment variable.")
+    if not GOOGLE_API_KEY:
+        error("Please set the GOOGLE_API_KEY environment variable.")
         sys.exit(1)
 
     if not GEMINI_MODEL:
-        error("Please set the GEMINI_MODEL environment variable (ex: GEMINI_MODEL=gemini-1.5-pro")
+        error("Please set the GEMINI_MODEL environment variable (ex: GEMINI_MODEL=gemini-1.5-pro-002)")
         sys.exit(1)
 
 def generate_timestamped_uuid():
@@ -470,18 +474,16 @@ def prune_file_history(file_path):
 def list_available_models():
     check_if_env_vars_set()
 
-    ai.configure(api_key=GEMINI_API_KEY)
+    # Configure the client (using environment variables)
+    client = genai.Client(api_key=GOOGLE_API_KEY)
 
-    for m in ai.list_models():
-        if 'generateContent' in m.supported_generation_methods:
-            console.print(f"{m.name.replace('models/', '')} ({m.description})")
+    for m in client.models.list():
+        console.print(f"{(m.name or '').replace('models/', '')} ({m.description})")
 
 def coding_repl(resume=False, interactive=False, writeable=False, ignore_patterns=None, include_files=False):
     start_time = time.time()
 
-    ai.configure(api_key=GEMINI_API_KEY)
-
-    model = ai.GenerativeModel('models/' + GEMINI_MODEL)
+    client = genai.Client(api_key=GOOGLE_API_KEY)
 
     # Split the comma-separated ignore patterns into a list
     extra_ignore_patterns = ignore_patterns.split(',') if ignore_patterns else None
@@ -555,7 +557,7 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
         complete_style=CompleteStyle.MULTI_COLUMN)
 
     def calculate_history_stats():
-        token_count = model.count_tokens(''.join(history))
+        token_count = client.models.count_tokens(model=GEMINI_MODEL, contents=''.join(history))
         total_lines = sum(len(entry.splitlines()) for entry in history)
         return token_count.total_tokens, total_lines
 
@@ -624,10 +626,14 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
 
             request_text = ''.join(history) + f'\n{CONVERSATION_END_SEP}\n'
 
+            # Prepare contents for generate_content
+            contents = [types.Part.from_text(text=request_text)]
+
             start_time = time.time()
-            response = model.generate_content(request_text)
+            response = client.models.generate_content(model=GEMINI_MODEL, contents=contents)
             end_time = time.time()
             duration = end_time - start_time
+
 
             response_text = response.text
 
