@@ -1,6 +1,6 @@
 # Deep Thought
 
-Deep Thought is a terminal-based AI coding assistant that helps you code faster and more efficiently.
+A terminal-based AI coding partner that helps you write software more efficiently.
 
 ## Features
 
