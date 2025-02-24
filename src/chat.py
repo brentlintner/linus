@@ -653,10 +653,11 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
                             continue
 
                         if is_code_block:
-                            file_path_match = re.search(rf'^{FILE_PREFIX}(.*?)\n', section)
+                            file_path_match = re.search(rf'^{FILE_PREFIX}(.*)\n', section)
                             is_file = bool(file_path_match)
 
-                            content_match = re.match(rf'^```.*?\n(.*?)\n```', section, flags=re.DOTALL)
+                            # Be greedy here since it's just a section
+                            content_match = re.match(rf'^```.*\n(.*)\n```', section, flags=re.DOTALL)
                             content = content_match.group(1) if content_match else ""
 
                             if is_file:
