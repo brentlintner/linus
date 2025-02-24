@@ -4,12 +4,13 @@ Anything related to the project management of the project, such as tracking issu
 
 ## Current
 
-*   Support streaming with proper pretty printing (like gemini or copilot UX)
+*   Streaming case: when code snippets are tabbed (i.e. inside a markdown list)
+*   Remove the background from highlighted code
+*   Get around 8K output token limit (tell AI to write diffs + summarize->file-by-file)
 
 ## Backlog
 
 *   Show the token output count for each final response if verbose
-*   Get around 8K output token limit (tell AI to write diffs + summarize->file-by-file)
 *   Be able to look at console history (ex: a tmux session so the recent log to reference (ex: errors, etc))
 *   Support versions of files (need to use local db setup + function calling for this)
 *   Auto update the project file structure when new files are added or updated (db setup + function calling for this?)
