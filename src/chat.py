@@ -508,9 +508,9 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
 
         recap = re.sub(rf'(.*?){CONVERSATION_START_SEP}\n+', '', session_history, flags=re.DOTALL)
 
-        matches = re.finditer(rf'^{FILE_PREFIX}(.*?)$', recap, flags=re.MULTILINE)
+        file_matches = re.finditer(rf'^{FILE_PREFIX}(.*?)$', recap, flags=re.MULTILINE)
 
-        for match in matches:
+        for match in file_matches:
             file_path = match.group(1)
 
             recap = re.sub(
@@ -518,6 +518,12 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
                 rf'#### {file_path}\n\n```{get_language_from_extension(file_path)}',
                 recap,
                 flags=re.MULTILINE)
+
+        recap = re.sub(
+            rf'^{SNIPPET_PREFIX}(.*?)$',
+            rf'#### \1\n\n```\1',
+            recap,
+            flags=re.MULTILINE)
 
         markdown = Markdown(recap)
 
