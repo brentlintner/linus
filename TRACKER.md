@@ -17,6 +17,7 @@ Anything related to the project management of the project, such as tracking issu
 
 *   Bug: Snippets and files that are inside markdown blocks (ex: lists) are not being highlighted properly
 *   Bug: Any source code file with backticks in it breaks the pretty printing in the terminal
+*   Bug: Files and tree data should be refreshed every time the project is loaded, depending on the flags enabled
 *   Support versions of files (need to use local db setup + function calling for this)
 *   Handle renaming or deleting file references, for example when refactoring
 *   Show the token output count for each final response if verbose
