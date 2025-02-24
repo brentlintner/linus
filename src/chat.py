@@ -279,7 +279,7 @@ class FilePathCompleter(Completer):
 
     def load_ignore_patterns(self):
         ignore_patterns = []
-        for ignore_file in ['.gitignore', '.ignore']:
+        for ignore_file in ['.gitignore']:
             if os.path.exists(ignore_file):
                 with open(ignore_file) as f:
                     ignore_patterns.extend([line.strip() for line in f if line.strip() and not line.startswith('#')])
@@ -338,7 +338,7 @@ def generate_diff(file_path, current_content):
 
 def generate_project_structure(extra_ignore_patterns=None):
     ignore_patterns = ['.*']  # Ignore dotfiles by default
-    for ignore_file in ['.gitignore', '.ignore']:
+    for ignore_file in ['.gitignore']:
         if os.path.exists(ignore_file):
             with open(ignore_file) as f:
                 ignore_patterns.extend([line.strip() for line in f if line.strip() and not line.startswith('#')])
@@ -390,7 +390,7 @@ def generate_project_structure(extra_ignore_patterns=None):
 
 def generate_project_file_contents(extra_ignore_patterns=None):
     ignore_patterns = ['.*']  # Ignore dotfiles by default
-    for ignore_file in ['.gitignore', '.ignore']:
+    for ignore_file in ['.gitignore']:
         if os.path.exists(ignore_file):
             with open(ignore_file) as f:
                 ignore_patterns.extend([line.strip() for line in f if line.strip() and not line.startswith('#')])
@@ -416,7 +416,7 @@ def generate_project_file_contents(extra_ignore_patterns=None):
 
 def generate_project_file_list(extra_ignore_patterns=None):
     ignore_patterns = ['.*']
-    for ignore_file in ['.gitignore', '.ignore']:
+    for ignore_file in ['.gitignore']:
         if os.path.exists(ignore_file):
             with open(ignore_file) as f:
                 ignore_patterns.extend([line.strip() for line in f if line.strip() and not line.startswith('#')])

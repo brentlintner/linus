@@ -10,7 +10,7 @@ A terminal-based AI coding partner that helps you write software more efficientl
 *   **Fast Responses:** Outputs are streamed to the terminal in real-time.
 *   **Diff View:** Edits to files are shown as unified diffs.
 *   **Fuzzy File Referencing:** Fuzzy search and attach project files to the current message.
-*   **Customizable Ignored Files**: Supports `.gitignore` and `.ignore` files for customizing ignored files.
+*   **Customizable Ignored Files**: Supports `.gitignore` files for customizing ignored files.
 
 ## Dependencies
 
