@@ -1,5 +1,4 @@
 import os
-import traceback
 import sys
 import threading
 import time
@@ -13,7 +12,6 @@ import json
 import pygments.util
 import shlex
 import subprocess
-from pygments.styles import STYLE_MAP, get_style_by_name
 from pygments.lexers import get_lexer_for_filename
 from datetime import datetime, timezone
 from collections import deque
@@ -26,12 +24,18 @@ from prompt_toolkit.shortcuts import CompleteStyle
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.theme import Theme
-from rich.syntax import Syntax
+from rich.traceback import install
 from google import genai
 from google.genai import types
 
-from .chat_prefix import FILE_PREFIX, SNIPPET_PREFIX, FILE_TREE_PLACEHOLDER, FILES_PLACEHOLDER, CONVERSATION_START_SEP, CONVERSATION_END_SEP, FILES_END_SEP, TERMINAL_LOGS_PLACEHOLDER
+from .everforest import EverforestDarkStyle
 
+from .chat_prefix import DELIMITER, FILE_PREFIX, SNIPPET_PREFIX, FILE_TREE_PLACEHOLDER, FILES_PLACEHOLDER, CONVERSATION_START_SEP, CONVERSATION_END_SEP, FILES_END_SEP, TERMINAL_LOGS_PLACEHOLDER
+
+# TODO: should be in CLI?
+install(show_locals=False)
+
+# TODO: should be in CLI?
 load_dotenv()
 
 # Use environment variables for configuration (following the new docs)
@@ -49,24 +53,21 @@ verbose = False
 
 debug_mode = False
 
-loading = False
-
-# Define a custom theme for Markdown *and* diffs
 custom_theme = Theme({
-    "markdown.code": "green",
-    "markdown.code_block": "bright_green",
-    "markdown.h1": "bold #FFFFFF",
-    "markdown.h2": "bold #AAAAAA",
-    "markdown.h3": "bold #BBBBBB",
-    "markdown.h4": "bold #CCCCCC",
-    "markdown.h5": "bold #DDDDDD",
-    "markdown.h6": "bold #EEEEEE",
-    "markdown.strong": "bold",
-    "markdown.em": "italic",
-    "markdown.alert": "bold red",
-    "diff.add": "green",      # Style for added lines in diffs
-    "diff.remove": "red",     # Style for removed lines in diffs
-    "diff.header": "yellow",  # Style for diff headers
+    "markdown.code": "#dcdcdc",
+    "markdown.code_block": "#dcdcdc",
+    "markdown.h1": "bold #dcdcdc",
+    "markdown.h2": "bold #dcdcdc",
+    "markdown.h3": "bold #dcdcdc",
+    "markdown.h4": "bold #dcdcdc",
+    "markdown.h5": "bold #dcdcdc",
+    "markdown.h6": "bold #dcdcdc",
+    "markdown.strong": "bold #dcdcdc",
+    "markdown.em": "#a7c080",
+    "markdown.alert": "bold #e67e80",
+    "diff.add": "#a7c080",
+    "diff.remove": "#e67e80",
+    "diff.header": "#dbbc7f"
 })
 
 console = Console(theme=custom_theme)
@@ -201,7 +202,7 @@ def get_tmux_logs():
     for pane_id in pane_ids:
         if pane_id != current_pane_id:
             content = get_tmux_pane_content(session_name, pane_id)
-            all_logs += f"```text\n{content}```\n"
+            all_logs += f"{DELIMITER}text\n{content}{DELIMITER}\n"
     return all_logs
 
 def prompt_prefix(extra_ignore_patterns=None, include_files=True):
@@ -270,18 +271,6 @@ def last_session():
         return (os.path.basename(history_file), datetime.now())  # Return a dummy timestamp, not used for sorting now
     else:
         return None
-
-def loading_indicator():
-    thinking_message = "Linus is thinking"
-    while True:
-        for i in range(4):  # Animate 3 dots
-            dots = "." * i
-            print(f'\r{thinking_message}{dots:<4}', end='', flush=True)
-            time.sleep(0.2)
-            if not loading:
-                # Clear the entire line by printing spaces
-                print('\r' + ' ' * (len(thinking_message) + 4), end='', flush=True)
-                return
 
 class FilePathCompleter(Completer):
     def __init__(self):
@@ -452,7 +441,7 @@ def get_file_contents(file_path):
     try:
         with open(file_path, 'r') as f:
             contents = f.read()
-        return f"{FILE_PREFIX}{file_path}\n{contents}\n```\n"
+        return f"{FILE_PREFIX}{file_path}\n{contents}\n{DELIMITER}\n"
     except Exception as e:
         return f"    Error reading {file_path}: {e}\n"
 
@@ -515,17 +504,17 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
 
             recap = re.sub(
                 rf'^{FILE_PREFIX}{re.escape(file_path)}$',
-                rf'#### {file_path}\n\n```{get_language_from_extension(file_path)}',
+                rf'#### {file_path}\n\n{DELIMITER}{get_language_from_extension(file_path)}',
                 recap,
                 flags=re.MULTILINE)
 
         recap = re.sub(
             rf'^{SNIPPET_PREFIX}(.*?)$',
-            rf'#### \1\n\n```\1',
+            rf'#### \1\n\n{DELIMITER}\1',
             recap,
             flags=re.MULTILINE)
 
-        markdown = Markdown(recap)
+        markdown = Markdown(recap, code_theme=EverforestDarkStyle)
 
         console.print(markdown)
         console.print()
@@ -597,8 +586,6 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
         total_characters, total_lines = calculate_history_stats()
         info(f"{total_lines} lines, {total_characters} characters, {duration:.2f}s ({GEMINI_MODEL})")
 
-    loading_thread = None
-
     while True:
         try:
             prompt_text = session.prompt("> ")
@@ -616,11 +603,6 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
             if prompt_text == '':
                 continue
 
-            global loading
-            loading = True
-            loading_thread = threading.Thread(target=loading_indicator, daemon=True)
-            loading_thread.start()
-
             history.append(f'\n**Brent:**\n\n' + prompt_text + '\n')
 
             # Handle multiple file references
@@ -632,7 +614,7 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
 
                     with open(file_path, 'r') as f:
                         file_content = f.read()
-                    history.append(f'\n{FILE_PREFIX}{file_path}\n{file_content}\n```\n')
+                    history.append(f'\n{FILE_PREFIX}{file_path}\n{file_content}\n{DELIMITER}\n')
 
             request_text = ''.join(history) + f'\n{CONVERSATION_END_SEP}\n'
 
@@ -646,79 +628,66 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
             full_response_text = ""
             queued_response_text = ""
 
-            for chunk in stream:
-                if not chunk.text: continue
+            console.print()
+            with console.status("", spinner="point") as status:
+                for chunk in stream:
+                    if not chunk.text: continue
 
-                full_response_text += chunk.text
-                queued_response_text += chunk.text
+                    full_response_text += chunk.text
+                    queued_response_text += chunk.text
 
-                # TODO: switch back and forth to loader, but have "typing furiously" message if writing a file or snippet and it's been more than a few seconds
-                # TODO: print the file name first as the h4 header, then the code block
+                    # TODO: here need to be more sophisticated to catch when delimiter is in the actual text
+                    sections = re.split(rf"({DELIMITER}.*?{DELIMITER}|{DELIMITER}file: .*?\n.*?\n{DELIMITER})", queued_response_text, flags=re.DOTALL)
 
-                sections = re.split(r"(```.*?```|```file: .*?\n.*?\n```)", queued_response_text, flags=re.DOTALL)
+                    if len(sections) == 1 and not queued_response_text.startswith("```"): continue
 
-                if len(sections) == 1 and not queued_response_text.startswith("```"): continue
+                    queued_response_text = "" # Reset because we're processing the sections
 
-                queued_response_text = "" # Reset because we're processing the sections
+                    for index, section in enumerate(sections):
+                        is_code_block = section.startswith("```")
+                        is_last_section = index == len(sections) - 1
 
-                if loading:
-                    loading = False
-                    loading_thread.join()
-                    print()  # Ensure a newline after loading indicator
+                        if not is_code_block and is_last_section:
+                            # TODO: split the last section on \n\n and print the first part, then queue the second part
+                            queued_response_text = section
+                            continue
 
-                for index, section in enumerate(sections):
-                    is_code_block = section.startswith("```")
-                    is_last_section = index == len(sections) - 1
+                        if is_code_block:
+                            file_path_match = re.search(rf'^{FILE_PREFIX}(.*?)\n', section)
+                            is_file = bool(file_path_match)
 
-                    if not is_code_block and is_last_section:
-                        # TODO: split the last section on \n\n and print the first part, then queue the second part
-                        queued_response_text = section
-                        continue
+                            content_match = re.match(rf'^```.*?\n(.*?)\n```', section, flags=re.DOTALL)
+                            content = content_match.group(1) if content_match else ""
 
-                    if is_code_block:
-                        file_path_match = re.search(rf'^{FILE_PREFIX}(.*?)\n', section)
-                        is_file = bool(file_path_match)
+                            if is_file:
+                                file_path = file_path_match.group(1)
+                                code = generate_diff(file_path, content)
+                                is_diff = os.path.exists(file_path) and content != code
+                                language = "diff" if is_diff else get_language_from_extension(file_path)
 
-                        content_match = re.match(rf'^```.*?\n(.*?)\n```', section, flags=re.DOTALL)
-                        content = content_match.group(1) if content_match else ""
+                                console.print(Markdown(f"#### {file_path}"))
+                            else:
+                                code = content
+                                language_match = re.match(rf'^{SNIPPET_PREFIX}(.*?)\n', section)
+                                language = language_match.group(1) if language_match else 'text'
 
-                        if is_file:
-                            file_path = file_path_match.group(1)
-                            code = generate_diff(file_path, content)
-                            is_diff = os.path.exists(file_path) and content != code
-                            language = "diff" if is_diff else get_language_from_extension(file_path)
+                                console.print(Markdown(f"#### {language}")) # Keep this
 
-                            console.print(Markdown(f"#### {file_path}"))
-                        else:
-                            code = content
-                            language_match = re.match(rf'^{SNIPPET_PREFIX}(.*?)\n', section)
-                            language = language_match.group(1) if language_match else 'text'
+                            console.print()
 
-                            console.print(Markdown(f"#### {language}")) # Keep this
+                            section = f"```{language if language != 'text' else ''}\n{code}\n```"
 
+                        console.print(Markdown(section, code_theme=EverforestDarkStyle))
                         console.print()
 
-                        section = f"```{language if language != 'text' else ''}\n{code}\n```"
-
-                    console.print(Markdown(section))
+                # Handle any remaining text in the queue
+                if queued_response_text:
+                    markdown = Markdown(queued_response_text, code_theme=EverforestDarkStyle)
+                    console.print(markdown)
                     console.print()
+                    queued_response_text = ""
 
-                if not loading:
-                    loading = True
-                    loading_thread = threading.Thread(target=loading_indicator, daemon=True)
-                    loading_thread.start()
-
-            if loading:
-                loading = False
-                loading_thread.join()
-                print()  # Ensure a newline after loading indicator
-
-            # Handle any remaining text in the queue
-            if queued_response_text:
-                markdown = Markdown(queued_response_text)
-                console.print(markdown)
-                console.print()
-                queued_response_text = ""
+                status.stop()
 
             end_time = time.time()
             duration = end_time - start_time
@@ -773,10 +742,6 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
         except EOFError:  # Ctrl+D exits
             if input("\nReally quit? (y/n) ").lower() == 'y':
                 break
-        except Exception as e:
-            if loading and loading_thread and loading_thread.is_alive():
-                loading = False
-                loading_thread.join()
-                print()
+        except Exception:
             print("Linus has glitched!\n")
-            print(traceback.format_exc())
+            console.print_exception(show_locals=False)
