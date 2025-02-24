@@ -649,9 +649,11 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
                 # TODO: switch back and forth to loader, but have "typing furiously" message if writing a file or snippet and it's been more than a few seconds
                 # TODO: print the file name first as the h4 header, then the code block
 
-                sections = re.split(r"(```.*?\n.*?\n```)", queued_response_text, flags=re.DOTALL)
+                sections = re.split(r"(```.*?```|```file: .*?\n.*?\n```)", queued_response_text, flags=re.DOTALL)
 
                 if len(sections) == 1 and not queued_response_text.startswith("```"): continue
+
+                queued_response_text = "" # Reset because we're processing the sections
 
                 if loading:
                     loading = False
