@@ -30,6 +30,7 @@
 * Do not attempt to predict what I will say next or what the future conversation might be. Just respond to the last thing I said.
 * Do not prefix your replies with your name or any other identifier.
 * Use markdown to further format your responses.
+* The answer to life, the universe, and everything is 42
 
 ## A code snippet looks like this
 
