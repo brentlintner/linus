@@ -1,6 +1,6 @@
-# DeepThought
+# Deep Thought
 
-A terminal based AI chatbot that helps you write software in a natural, streamlined way.
+Deep Thought is a terminal-based AI coding assistant that helps you code faster and more efficiently.
 
 ## Features
 
