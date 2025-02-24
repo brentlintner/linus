@@ -1,15 +1,15 @@
-# Coding Partner
+# DeepThought
 
-Linus is a CLI based coding assistant that can be the passenger or the driver in a pair programming session.
+A terminal based AI chatbot that helps you write software in a natural, streamlined way.
 
 ## Features
 
-*   **Interactive Code Generation:**  Generates code snippets and full files based on natural language prompts within a CLI environment.
-*   **Mouse-Free Navigation:**  Use keyboard shortcuts to navigate and interact with the CLI.
+*   **Extreme Terminal Programming:**  Designed to be used in a multiplexed terminal environment.
 *   **Context-Aware Assistance:**  Maintains session history and project context for consistent, relevant suggestions.
 *   **File System Integration:**  Reads and writes directly to project files, allowing for seamless integration and modification.
-*   **Diff View:** Edits to files are shown as unified diffs instead of the entire file contents.
-*   **Fuzzy File Referencing:** Use `@` symbol to fuzzy search and attach project files to the current message.
+*   **Fast Responses:** Outputs are streamed to the terminal in real-time.
+*   **Diff View:** Edits to files are shown as unified diffs.
+*   **Fuzzy File Referencing:** Fuzzy search and attach project files to the current message.
 *   **Customizable Ignored Files**: Supports `.gitignore` and `.ignore` files for customizing ignored files.
 
 ## Dependencies
