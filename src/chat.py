@@ -637,14 +637,14 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
                     queued_response_text += chunk.text
 
                     # TODO: here need to be more sophisticated to catch when delimiter is in the actual text
-                    sections = re.split(rf"({DELIMITER}.*?{DELIMITER}|{DELIMITER}file: .*?\n.*?\n{DELIMITER})", queued_response_text, flags=re.DOTALL)
+                    sections = re.split(rf"({DELIMITER}.*?{DELIMITER}|{FILE_PREFIX}.*?\n.*?\n{DELIMITER})", queued_response_text, flags=re.DOTALL)
 
-                    if len(sections) == 1 and not queued_response_text.startswith("```"): continue
+                    if len(sections) == 1 and not queued_response_text.startswith(DELIMITER): continue
 
                     queued_response_text = "" # Reset because we're processing the sections
 
                     for index, section in enumerate(sections):
-                        is_code_block = section.startswith("```")
+                        is_code_block = section.startswith(DELIMITER)
                         is_last_section = index == len(sections) - 1
 
                         if not is_code_block and is_last_section:
@@ -657,7 +657,7 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
                             is_file = bool(file_path_match)
 
                             # Be greedy here since it's just a section
-                            content_match = re.match(rf'^```.*\n(.*)\n```', section, flags=re.DOTALL)
+                            content_match = re.match(rf'^{DELIMITER}.*\n(.*)\n{DELIMITER}', section, flags=re.DOTALL)
                             content = content_match.group(1) if content_match else ""
 
                             if is_file:
@@ -669,14 +669,15 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
                                 console.print(Markdown(f"#### {file_path}"))
                             else:
                                 code = content
-                                language_match = re.match(rf'^{SNIPPET_PREFIX}(.*?)\n', section)
+                                # Be greedy here since it's just a section
+                                language_match = re.match(rf'^{SNIPPET_PREFIX}(.*)\n', section)
                                 language = language_match.group(1) if language_match else 'text'
 
                                 console.print(Markdown(f"#### {language}")) # Keep this
 
                             console.print()
 
-                            section = f"```{language if language != 'text' else ''}\n{code}\n```"
+                            section = f"{DELIMITER}{language if language != 'text' else ''}\n{code}\n{DELIMITER}"
 
                         console.print(Markdown(section, code_theme=EverforestDarkStyle))
                         console.print()
@@ -699,18 +700,18 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
             def replace_with_diff_for_history(match):
                 file_path = match.group(1)
                 file_content = match.group(2)
-                return f'{FILE_PREFIX}{file_path}\n{file_content}\n```'
+                return f'{FILE_PREFIX}{file_path}\n{file_content}\n{DELIMITER}'
 
             # Prepare for history (don't show diffs in history, just the final content)
             history_response = re.sub(
-                rf'{FILE_PREFIX}(.*?)\n(.*?)\n```',
+                rf'{FILE_PREFIX}(.*?)\n(.*?)\n{DELIMITER}',
                 replace_with_diff_for_history,
                 full_response_text,
                 flags=re.DOTALL
             )
 
             # Prune file history *after* the entire response is received, but before history is appended
-            file_references = re.findall(rf'{FILE_PREFIX}(.*?)\n(.*?)\n```', full_response_text, flags=re.DOTALL)
+            file_references = re.findall(rf'{FILE_PREFIX}(.*?)\n(.*?)\n{DELIMITER}', full_response_text, flags=re.DOTALL)
             for file_path, _ in file_references:
                 prune_file_history(file_path)
 
