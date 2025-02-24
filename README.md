@@ -32,13 +32,13 @@ bin/ai -h
 Open up a simple chat repl:
 
 ```sh
-ai
+bin/ai
 ```
 
 Start a fully featured chat repl with file system integrations:
 
 ```sh
-ai -iwf
+bin/ai -iwf
 ```
 
 List the files the model can access if `-w` is enabled:
@@ -50,7 +50,7 @@ bin/ai -l
 Show detailed stats about the current session:
 
 ```sh
-ai -iwfv
+bin/ai -iwfv
 ```
 
 ## FAQ
