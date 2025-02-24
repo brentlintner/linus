@@ -8,16 +8,21 @@ Anything related to the project management of the project, such as tracking issu
 
 *   Get around 8K output token limit by summarizing then doing file-to-file
 *   Get around 8K output token limit by asking for diffs instead of full files
+*   Only ignore from gitignore
+*   Easier ways to provide supplemental files that are huge ex: readme docs, terminal logs
 *   Be able to look at console history with @symbol lookup (ex: a tmux session so the recent log to reference (ex: errors, etc))
-*   Auto update the project file structure when new files are added or updated (db setup + function calling for this?)
-*   Use a vector database to store embeddings of files and their contents, and optimize prompt generation for large projects and files
-*   Auto ignore binary files as well as other common files that are not code (don't assume your large .ignore/.gitignore is present)
+*   Use sqlite to store history, file, and project data
 
 ## Icebox
 
 *   Bug: Snippets and files that are inside markdown blocks (ex: lists) are not being highlighted properly
 *   Bug: Any source code file with backticks in it breaks the pretty printing in the terminal
 *   Bug: Files and tree data should be refreshed every time the project is loaded, depending on the flags enabled
+*   Bug: Resume is really slow for giant files
+
+*   Auto update the project file structure when new files are added or updated (db setup + function calling for this?)
+*   Use a vector database to store embeddings of files and their contents, and optimize prompt generation for large projects and files
+*   Auto ignore binary files as well as other common files that are not code (don't assume your large .ignore/.gitignore is present)
 *   Support versions of files (need to use local db setup + function calling for this)
 *   Handle renaming or deleting file references, for example when refactoring
 *   Show the token output count for each final response if verbose
@@ -28,7 +33,6 @@ Anything related to the project management of the project, such as tracking issu
 *   Be able to see the git history of a file (useful when able to actually commit?)
 *   Consider using advanced APIs like function calling and search grounding
 *   Have privacy confirmation for file system integration, and other sensitive data or destructive operations
-*   Easier ways to provide supplementat doc files or will search grounding solve that?
 
 ### Performance
 
@@ -37,4 +41,4 @@ Anything related to the project management of the project, such as tracking issu
 *   If you have exceptionally large files, consider breaking them into smaller chunks and providing them to the LLM separately.
 *   You could add more metadata to your JSON directory structure, such as timestamps, types, function/class summaries.
 *   Look into leveraging [explain reasoning](https://cloud.google.com/vertex-ai/generative-ai/docs/learn/prompts/explain-reasoning)
-*   Experiment with parameter values (temperature etc)
+*   Experiment with parameter values (ex: lower temperature for more focused responses)
