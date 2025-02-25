@@ -6,12 +6,15 @@ Anything related to the project management of the project, such as tracking issu
 
 ## Backlog
 
-*   Get around 8K output token limit by summarizing then doing file-to-file
-*   Get around 8K output token limit by asking for diffs instead of full files
+*   Optimize output token limit by showing plan first, then file-to-file and part-by-part (no show code first)
 *   Only ignore from gitignore
-*   Easier ways to provide supplemental files that are huge ex: readme docs, terminal logs
 *   Be able to look at console history with @symbol lookup (ex: a tmux session so the recent log to reference (ex: errors, etc))
 *   Use sqlite to store history, file, and project data
+*   Easier ways to provide supplemental files that are huge ex: readme docs, terminal logs
+    Just show a Part: 1, and tell LLM to ask for more, then for now manual @ load it all
+*   Keep two versions not pruned instead of only one
+*   Be able to allow the ai to writing command blocks (whitelist each command) that run in a subshell.
+    We then take the sliced output and show it to the llm as a log file linked to the command. It then can then continue on.
 
 ## Icebox
 
@@ -24,11 +27,10 @@ Anything related to the project management of the project, such as tracking issu
 *   Auto update the project file structure when new files are added or updated (db setup + function calling for this?)
 *   Use a vector database to store embeddings of files and their contents, and optimize prompt generation for large projects and files
 *   Auto ignore binary files as well as other common files that are not code (don't assume your large .ignore/.gitignore is present)
-*   Support versions of files (need to use local db setup + function calling for this)
+*   Support versions of files (need to use local db setup + function calling for this?)
 *   Handle renaming or deleting file references, for example when refactoring
 *   Show the token output count for each final response if verbose
 *   Remember input prompt history inbetween sessions
-*   Be able to allow the ai to run certain cli commands
 *   Support text to speech output for responses
 *   Show better progress bars, notably when writing a file (extract from file or diff the line and compare to current version)
 *   Be able to see the git history of a file (useful when able to actually commit?)
@@ -39,6 +41,7 @@ Anything related to the project management of the project, such as tracking issu
 
 *   For very long conversation histories, consider summarizing earlier parts of the conversation.
 *   For very large projects, consider using an external memory mechanism like a vector database (with embeddings generated).
+*   Potentiall start asking for diffs instead of full files, if file-by-file + part-by-part isn't feasible enough)
 *   If you have exceptionally large files, consider breaking them into smaller chunks and providing them to the LLM separately.
 *   You could add more metadata to your JSON directory structure, such as timestamps, types, function/class summaries.
 *   Look into leveraging [explain reasoning](https://cloud.google.com/vertex-ai/generative-ai/docs/learn/prompts/explain-reasoning)
