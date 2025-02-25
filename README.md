@@ -1,4 +1,4 @@
-# Deep Thought
+# Linus
 
 A terminal-based AI coding partner that helps you write software more efficiently.
 

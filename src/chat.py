@@ -1,6 +1,5 @@
 import os
 import sys
-import threading
 import time
 import hashlib
 import re
@@ -15,7 +14,6 @@ import subprocess
 from pygments.lexers import get_lexer_for_filename
 from datetime import datetime, timezone
 from collections import deque
-from dotenv import load_dotenv
 from prompt_toolkit import PromptSession
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.keys import Keys
@@ -24,26 +22,15 @@ from prompt_toolkit.shortcuts import CompleteStyle
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.theme import Theme
-from rich.traceback import install
 from google import genai
 from google.genai import types
 
 from .everforest import EverforestDarkStyle
 
-from .chat_prefix import DELIMITER, FILE_PREFIX, SNIPPET_PREFIX, FILE_TREE_PLACEHOLDER, FILES_PLACEHOLDER, CONVERSATION_START_SEP, CONVERSATION_END_SEP, FILES_END_SEP, TERMINAL_LOGS_PLACEHOLDER
+from . import chat_prefix as parser
 
-# TODO: should be in CLI?
-install(show_locals=False)
-
-# TODO: should be in CLI?
-load_dotenv()
-
-# Use environment variables for configuration (following the new docs)
 GOOGLE_API_KEY = os.getenv('GOOGLE_API_KEY') or ''
-#GOOGLE_GENAI_USE_VERTEXAI = os.getenv('GOOGLE_GENAI_USE_VERTEXAI')  # We'll assume Gemini API for now
-#GOOGLE_CLOUD_PROJECT = os.getenv('GOOGLE_CLOUD_PROJECT')
-#GOOGLE_CLOUD_LOCATION = os.getenv('GOOGLE_CLOUD_LOCATION')
-GEMINI_MODEL = os.getenv('GEMINI_MODEL') or '' # Keep this, but will use a different format later
+GEMINI_MODEL = os.getenv('GEMINI_MODEL') or ''
 
 PARSER_DEFINITION_FILE = 'src/chat_prefix.py'
 
@@ -217,11 +204,11 @@ def prompt_prefix(extra_ignore_patterns=None, include_files=True):
         project_structure = generate_project_structure(extra_ignore_patterns)
         project_files = generate_project_file_contents(extra_ignore_patterns)
 
-        prefix = prefix.replace(FILE_TREE_PLACEHOLDER, f'\n{project_structure}\n')
-        prefix = prefix.replace(FILES_PLACEHOLDER, f'\n{project_files}\n')
+        prefix = prefix.replace(parser.FILE_TREE_PLACEHOLDER, f'\n{project_structure}\n')
+        prefix = prefix.replace(parser.FILES_PLACEHOLDER, f'\n{project_files}\n')
     else:
-        prefix = prefix.replace(FILE_TREE_PLACEHOLDER, '')
-        prefix = prefix.replace(FILES_PLACEHOLDER, '')
+        prefix = prefix.replace(parser.FILE_TREE_PLACEHOLDER, '')
+        prefix = prefix.replace(parser.FILES_PLACEHOLDER, '')
 
     return prefix
 
@@ -495,7 +482,9 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
 
         history.append(session_history)
 
-        recap = re.sub(rf'(.*?){CONVERSATION_START_SEP}\n+', '', session_history, flags=re.DOTALL)
+        recap = re.sub(rf'(.*?){parser.CONVERSATION_START_SEP}\n+', '', session_history, flags=re.DOTALL)
+
+        ### all file stuff here
 
         file_matches = re.finditer(rf'^{FILE_PREFIX}(.*?)$', recap, flags=re.MULTILINE)
 
@@ -514,6 +503,7 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
             recap,
             flags=re.MULTILINE)
 
+        ### done file stuff here
         markdown = Markdown(recap, code_theme=EverforestDarkStyle)
 
         console.print(markdown)

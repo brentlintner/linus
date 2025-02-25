@@ -2,10 +2,16 @@ import argparse
 import os
 import sys
 import shutil
-from .chat import coding_repl, debug_logging, verbose_logging, check_if_env_vars_set, list_available_models, history_filename_for_directory, generate_project_file_contents, generate_project_file_list
-from .__version__ import __version__
+from rich.traceback import install
+from dotenv import load_dotenv
 from google import genai
-from google.genai import types
+from .__version__ import __version__
+
+load_dotenv()
+
+install(show_locals=False)
+
+from .chat import coding_repl, debug_logging, verbose_logging, check_if_env_vars_set, list_available_models, history_filename_for_directory, generate_project_file_contents, generate_project_file_list
 
 def add_general_args(parser):
     group = parser.add_argument_group(title="General Options")
