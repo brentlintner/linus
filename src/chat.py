@@ -34,6 +34,8 @@ GEMINI_MODEL = os.getenv('GEMINI_MODEL') or ''
 
 PARSER_DEFINITION_FILE = 'src/chat_prefix.py'
 
+DEFAULT_IGNORE_PATTERNS = ['.git*']
+
 history = []
 
 verbose = False
@@ -265,7 +267,7 @@ class FilePathCompleter(Completer):
         self.spec = pathspec.PathSpec.from_lines('gitwildmatch', self.ignore_patterns)
 
     def load_ignore_patterns(self):
-        ignore_patterns = []
+        ignore_patterns = [] + DEFAULT_IGNORE_PATTERNS
         for ignore_file in ['.gitignore']:
             if os.path.exists(ignore_file):
                 with open(ignore_file) as f:
@@ -324,7 +326,8 @@ def generate_diff(file_path, current_content):
     return stringifed_diff
 
 def generate_project_structure(extra_ignore_patterns=None):
-    ignore_patterns = ['.*']  # Ignore dotfiles by default
+    # ignore_patterns = ['.*']  # Ignore dotfiles by default
+    ignore_patterns = [] + DEFAULT_IGNORE_PATTERNS
     for ignore_file in ['.gitignore']:
         if os.path.exists(ignore_file):
             with open(ignore_file) as f:
@@ -364,6 +367,7 @@ def generate_project_structure(extra_ignore_patterns=None):
             file_path = os.path.join(relative_path, file)
             file_parent = os.path.dirname(file_path)
 
+            print(f"Checking {file_path} with parent {file_parent}")
             file_tree.append({
                 "id": file_path,
                 "name": os.path.basename(file),
@@ -376,7 +380,8 @@ def generate_project_structure(extra_ignore_patterns=None):
     return json.dumps(file_tree, indent=2)
 
 def generate_project_file_contents(extra_ignore_patterns=None):
-    ignore_patterns = ['.*']  # Ignore dotfiles by default
+    # ignore_patterns = ['.*']  # Ignore dotfiles by default
+    ignore_patterns = [] + DEFAULT_IGNORE_PATTERNS
     for ignore_file in ['.gitignore']:
         if os.path.exists(ignore_file):
             with open(ignore_file) as f:
@@ -402,7 +407,8 @@ def generate_project_file_contents(extra_ignore_patterns=None):
     return output
 
 def generate_project_file_list(extra_ignore_patterns=None):
-    ignore_patterns = ['.*']
+    # ignore_patterns = ['.*']
+    ignore_patterns = DEFAULT_IGNORE_PATTERNS
     for ignore_file in ['.gitignore']:
         if os.path.exists(ignore_file):
             with open(ignore_file) as f:
@@ -413,6 +419,7 @@ def generate_project_file_list(extra_ignore_patterns=None):
     spec = pathspec.PathSpec.from_lines('gitwildmatch', ignore_patterns)
     output = []  # Use a list to store file names
 
+    # TODO: ignore certain directories so we don't go into them (ex: .git)
     for root, _, files in os.walk(os.getcwd()):
         relative_path = os.path.relpath(root, os.getcwd())
         if relative_path == '.':

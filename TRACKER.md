@@ -9,17 +9,21 @@ Anything related to the project management of the project, such as tracking issu
 
 ## Backlog
 
-* Have own .linignore file to ignore files and directories
-* Auto ignore non text files (get a list from AI)
-* Be able to look at console history with @symbol lookup (ex: a tmux session so the recent log to reference (ex: errors, etc))
 * Use sqlite to store history, file, and project data
-* Easier ways to provide supplemental files that are huge ex: readme docs, terminal logs
-  * Just show a Chunk: 1/2 (Or Preview: True), and tell LLM to ask for more if they need tha file (for now manual @ load it all)
-* Keep two versions not pruned instead of only one
-* Be able to allow the ai to writing command blocks (whitelist each command) that run in a subshell.
-  * We then take the sliced output and show it to the llm as a log file linked to the command. It then can then continue on.
-  * Whitelist once per directory for each command? (needs db)
-* Before writing files ask for confirmation to accept changes (needs db)
+* Ignoring Files
+    * Only ignore from gitignore (and DRY up ignore code)
+    * Auto ignore binary files as well as other common files/dirs that are not code (get list from AI)
+    * Have own .linignore file to ignore files and directories
+* Terminal Integration
+    * Be able to look at console history with @symbol lookup (ex: a tmux session so the recent log to reference (ex: errors, etc))
+    * Be able to allow the ai to writing command blocks (whitelist each command) that run in a subshell.
+      * We then take the sliced output and show it to the llm as a log file linked to the command. It then can then continue on.
+      * Whitelist once per directory for each command? (needs db)
+* File Integration
+    * Easier ways to provide supplemental files that are huge ex: readme docs, terminal logs
+      * Just show a Chunk: 1/2 (Or Preview: True), and tell LLM to ask for more if they need tha file (for now manual @ load it all)
+    * Keep two versions not pruned instead of only one
+    * Before writing files ask for confirmation to accept changes (needs db)
 
 ## Icebox
 
@@ -32,6 +36,7 @@ Anything related to the project management of the project, such as tracking issu
 * Auto update the project file structure when new files are added or updated (db setup + function calling for this?)
 * Use a vector database to store embeddings of files and their contents, and optimize prompt generation for large projects and files
 * Support versions of files (need to use local db setup + function calling for this?)
+* Support adding files like PDFs and images to the project (binary files add via file upload vs inline)
 * Handle renaming or deleting file references, for example when refactoring
 * Show the token output count for each final response if verbose
 * Remember input prompt history inbetween sessions
