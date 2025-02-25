@@ -432,6 +432,12 @@ def get_file_contents(file_path):
     except Exception as e:
         return f"    Error reading {file_path}: {e}\n"
 
+
+
+
+
+# --- PARSER STUFF ---
+
 def prune_file_history(file_path):
     global history
     # Refined regex to match content only between FILE_PREFIX and the next FILE_PREFIX or FILES_END_SEP
@@ -446,6 +452,16 @@ def prune_file_history(file_path):
         debug(f"Before pruning history[{i}]:\n{history[i]}")
         history[i] = file_regex.sub(f'@{file_path}\n', history[i])
         debug(f"After pruning history[{i}]:\n{history[i]}")
+
+# --- PARSER STUFF ---
+
+
+
+
+
+
+
+
 
 def list_available_models():
     check_if_env_vars_set()
@@ -482,9 +498,18 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
 
         history.append(session_history)
 
-        recap = re.sub(rf'(.*?){parser.CONVERSATION_START_SEP}\n+', '', session_history, flags=re.DOTALL)
 
-        ### all file stuff here
+
+
+
+
+
+
+
+
+        ### PARSER STUFF -------
+
+        recap = re.sub(rf'(.*?){parser.CONVERSATION_START_SEP}\n+', '', session_history, flags=re.DOTALL)
 
         file_matches = re.finditer(rf'^{FILE_PREFIX}(.*?)$', recap, flags=re.MULTILINE)
 
@@ -503,7 +528,17 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
             recap,
             flags=re.MULTILINE)
 
-        ### done file stuff here
+        ### PARSER STUFF -------
+
+
+
+
+
+
+
+
+
+
         markdown = Markdown(recap, code_theme=EverforestDarkStyle)
 
         console.print(markdown)
@@ -595,6 +630,14 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
 
             history.append(f'\n**Brent:**\n\n' + prompt_text + '\n')
 
+
+
+
+
+
+
+            ### PARSER STUFF -------
+
             # Handle multiple file references
             file_references = re.findall(r'@(\S+)', prompt_text)
             file_references = [re.sub(r"[^\w\s]+$", '', file_reference) for file_reference in file_references]
@@ -605,6 +648,14 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
                     with open(file_path, 'r') as f:
                         file_content = f.read()
                     history.append(f'\n{FILE_PREFIX}{file_path}\n{file_content}\n{DELIMITER}\n')
+
+            ### PARSER STUFF -------
+
+
+
+
+
+
 
             request_text = ''.join(history) + f'\n{CONVERSATION_END_SEP}\n'
 
@@ -625,6 +676,15 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
 
                     full_response_text += chunk.text
                     queued_response_text += chunk.text
+
+
+
+
+
+
+
+
+                    ### PARSER STUFF -------
 
                     # TODO: here need to be more sophisticated to catch when delimiter is in the actual text
                     sections = re.split(rf"({DELIMITER}.*?{DELIMITER}|{FILE_PREFIX}.*?\n.*?\n{DELIMITER})", queued_response_text, flags=re.DOTALL)
@@ -669,6 +729,18 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
 
                             section = f"{DELIMITER}{language if language != 'text' else ''}\n{code}\n{DELIMITER}"
 
+                        ### PARSER STUFF -------
+
+
+
+
+
+
+
+
+
+
+
                         console.print(Markdown(section, code_theme=EverforestDarkStyle))
                         console.print()
 
@@ -685,6 +757,17 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
             duration = end_time - start_time
 
             # --- Post-processing after the entire response is received ---
+
+
+
+
+
+
+
+
+
+
+            ### PARSER STUFF -------
 
             # Now we process the *entire* response for file writes, pruning, and history
             def replace_with_diff_for_history(match):
@@ -704,6 +787,16 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
             file_references = re.findall(rf'{FILE_PREFIX}(.*?)\n(.*?)\n{DELIMITER}', full_response_text, flags=re.DOTALL)
             for file_path, _ in file_references:
                 prune_file_history(file_path)
+
+            ### PARSER STUFF -------
+
+
+
+
+
+
+
+
 
             history.append(f'\n**Linus:**\n\n' + history_response + '\n')
 
