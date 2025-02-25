@@ -9,6 +9,7 @@ Anything related to the project management of the project, such as tracking issu
 
 ## Backlog
 
+* Have own .linignore file to ignore files and directories
 * Auto ignore non text or non source code files as well as other common files that are not code (don't assume your large .ignore/.gitignore is present)
 * Be able to look at console history with @symbol lookup (ex: a tmux session so the recent log to reference (ex: errors, etc))
 * Use sqlite to store history, file, and project data
