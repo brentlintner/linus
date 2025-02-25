@@ -9,6 +9,7 @@ Anything related to the project management of the project, such as tracking issu
 
 ## Backlog
 
+* Auto ignore non text or non source code files as well as other common files that are not code (don't assume your large .ignore/.gitignore is present)
 * Be able to look at console history with @symbol lookup (ex: a tmux session so the recent log to reference (ex: errors, etc))
 * Use sqlite to store history, file, and project data
 * Easier ways to provide supplemental files that are huge ex: readme docs, terminal logs
@@ -27,7 +28,6 @@ Anything related to the project management of the project, such as tracking issu
 
 * Auto update the project file structure when new files are added or updated (db setup + function calling for this?)
 * Use a vector database to store embeddings of files and their contents, and optimize prompt generation for large projects and files
-* Auto ignore binary files as well as other common files that are not code (don't assume your large .ignore/.gitignore is present)
 * Support versions of files (need to use local db setup + function calling for this?)
 * Handle renaming or deleting file references, for example when refactoring
 * Show the token output count for each final response if verbose
