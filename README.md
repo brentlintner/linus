@@ -4,13 +4,13 @@ A terminal-based AI coding partner that helps you write software more efficientl
 
 ## Features
 
-*   **Extreme Terminal Programming:**  Designed to be used in a multiplexed terminal environment.
+*   **Extreme Terminal Programming:**  Never leave your terminal or touch that disgusting mouse ever again.
 *   **Context-Aware Assistance:**  Maintains session history and project context for consistent, relevant suggestions.
-*   **File System Integration:**  Reads and writes directly to project files, allowing for seamless integration and modification.
-*   **Fast Responses:** Outputs are streamed to the terminal in real-time.
-*   **Diff View:** Edits to files are shown as unified diffs.
-*   **Fuzzy File Referencing:** Fuzzy search and attach project files to the current message.
-*   **Customizable Ignored Files**: Supports `.gitignore` files for customizing ignored files.
+*   **File System Integration:**  Reads and writes directly to project files while showing diffs, allowing for seamless integration and modification.
+*   **Shell Interation:**  Executes terminal commands on your behalf and analyzes the output for errors.
+*   **Fuzzy Search:** Fuzzy searchs specfic project files to reference in the current message.
+*   **Tmux Integration:**  Provide terminal output when debugging test failures or other issues.
+*   **Customizable Ignored Files**: Supports ignore files and folders, including auto ignoring anything in your `.gitignore` file
 
 ## Dependencies
 
@@ -52,11 +52,3 @@ Show detailed stats about the current session:
 ```sh
 bin/ai -iwfv
 ```
-
-## FAQ
-
-*   **Why was this created?**
-
-    I wanted to create a coding assistant that could help me code in a more natural, streamlined way,
-    all without having to switch between windows or use a mouse. Essentially a pair programming tool
-    that I can have in the terminal beside my code editor (neovim), without needing to be coupled to any editor.

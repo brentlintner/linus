@@ -10,14 +10,16 @@ Anything related to the project management of the project, such as tracking issu
 ## Backlog
 
 * Have own .linignore file to ignore files and directories
-* Auto ignore non text or non source code files as well as other common files that are not code (don't assume your large .ignore/.gitignore is present)
+* Auto ignore non text files (get a list from AI)
 * Be able to look at console history with @symbol lookup (ex: a tmux session so the recent log to reference (ex: errors, etc))
 * Use sqlite to store history, file, and project data
 * Easier ways to provide supplemental files that are huge ex: readme docs, terminal logs
-  * Just show a Part: 1, and tell LLM to ask for more, then for now manual @ load it all
+  * Just show a Chunk: 1/2 (Or Preview: True), and tell LLM to ask for more if they need tha file (for now manual @ load it all)
 * Keep two versions not pruned instead of only one
 * Be able to allow the ai to writing command blocks (whitelist each command) that run in a subshell.
   * We then take the sliced output and show it to the llm as a log file linked to the command. It then can then continue on.
+  * Whitelist once per directory for each command? (needs db)
+* Before writing files ask for confirmation to accept changes (needs db)
 
 ## Icebox
 
@@ -38,6 +40,7 @@ Anything related to the project management of the project, such as tracking issu
 * Be able to see the git history of a file (useful when able to actually commit?)
 * Consider using advanced APIs like function calling and search grounding
 * Have privacy confirmation for file system integration, and other sensitive data or destructive operations
+* Have extra security confirmation for file system integration, terminal commands run, injection/MITM attacks, heuristics and other sensitive data or destructive operations
 
 ### Performance
 
