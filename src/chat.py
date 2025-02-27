@@ -367,7 +367,6 @@ def generate_project_structure(extra_ignore_patterns=None):
             file_path = os.path.join(relative_path, file)
             file_parent = os.path.dirname(file_path)
 
-            print(f"Checking {file_path} with parent {file_parent}")
             file_tree.append({
                 "id": file_path,
                 "name": os.path.basename(file),
