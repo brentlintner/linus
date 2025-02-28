@@ -63,7 +63,6 @@ def create_parser():
     return parser
 
 def clean_history_files(tmp_dir='tmp'):
-    """Remove all history files in the specified directory."""
     if os.path.exists(tmp_dir):
         try:
             shutil.rmtree(tmp_dir)

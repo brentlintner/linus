@@ -25,7 +25,7 @@ from google.genai import types
 from .everforest import EverforestDarkStyle
 
 from . import chat_prefix as parser
-from .chat_prefix import file_block, snippet_block, terminal_log_block, get_language_from_extension
+from .chat_prefix import file_block, terminal_log_block, get_language_from_extension
 
 GOOGLE_API_KEY = os.getenv('GOOGLE_API_KEY') or ''
 
@@ -111,7 +111,6 @@ def type_response_out(lines, delay=0.01):
         print()  # Newline after each string
 
 def get_tmux_pane_content(session_name, pane_id):
-    """Captures the entire content of a tmux pane."""
     command = ["tmux", "capture-pane", "-p", "-t", f"{pane_id}", "-S", "-"]
     result = subprocess.run(command, capture_output=True, text=True)
     if result.returncode != 0:
@@ -120,7 +119,6 @@ def get_tmux_pane_content(session_name, pane_id):
     return result.stdout
 
 def get_tmux_pane_ids(session_name, pane_id):
-    """Gets a list of pane IDs in a tmux session."""
     command = ["tmux", "list-panes", "-s", "-F", "#{pane_id}", "-t", session_name]
     result = subprocess.run(command, capture_output=True, text=True)
     if result.returncode != 0:
@@ -136,7 +134,6 @@ def get_current_tmux_pane_id():
         return None
 
 def get_tmux_logs():
-    """Gets the content of all tmux panes *except* the current one."""
     current_pane_id = get_current_tmux_pane_id()
     if not current_pane_id:
         return "No tmux session detected.\n"
@@ -585,6 +582,7 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
                     if not chunk.text: continue
 
                     full_response_text += chunk.text
+
                     queued_response_text += chunk.text
 
                     sections = re.split(parser.match_any_block(), queued_response_text, flags=re.DOTALL)
