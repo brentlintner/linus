@@ -41,6 +41,7 @@ print('Hello, world!')
 
 {{{START FILE METADATA}}}
 Path: hello_world.py
+Langauge: python
 {{{END FILE METADATA}}}
 print('Hello, world!')
 {{{END OF FILE}}}

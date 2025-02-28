@@ -80,7 +80,7 @@ def match_before_conersation_history():
 
 def file_block(file_path, content, language):
     return f"""
-{FILE_METADATA_START}"
+{FILE_METADATA_START}
 Path: {file_path}
 Language: {language}
 {FILE_METADATA_END}
@@ -90,7 +90,7 @@ Language: {language}
 
 def snippet_block(content, language):
     return f"""
-{SNIPPET_METADATA_START}"
+{SNIPPET_METADATA_START}
 Language: {language}
 {SNIPPET_METADATA_END}
 {content}
@@ -99,7 +99,7 @@ Language: {language}
 
 def terminal_log_block(content, title):
     return f"""
-{TERMINAL_METADATA_START}"
+{TERMINAL_METADATA_START}
 Session: {title}
 {TERMINAL_METADATA_END}
 {content}
