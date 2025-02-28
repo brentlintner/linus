@@ -5,15 +5,12 @@ import hashlib
 import re
 import uuid
 import pathspec
-import prompt_toolkit
 import difflib
 import json
-import pygments.util
-import shlex
 import subprocess
-from pygments.lexers import get_lexer_for_filename
 from datetime import datetime, timezone
 from collections import deque
+from prompt_toolkit.styles import Style
 from prompt_toolkit import PromptSession
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.keys import Keys
@@ -28,21 +25,19 @@ from google.genai import types
 from .everforest import EverforestDarkStyle
 
 from . import chat_prefix as parser
+from .chat_prefix import file_block, snippet_block, terminal_log_block, get_language_from_extension
 
 GOOGLE_API_KEY = os.getenv('GOOGLE_API_KEY') or ''
+
 GEMINI_MODEL = os.getenv('GEMINI_MODEL') or ''
 
 PARSER_DEFINITION_FILE = 'src/chat_prefix.py'
 
+PROMPT_PREFIX_FILE = os.path.join(os.path.dirname(__file__), '../docs/background.txt')
+
 DEFAULT_IGNORE_PATTERNS = ['.git*']
 
-history = []
-
-verbose = False
-
-debug_mode = False
-
-custom_theme = Theme({
+CONSOLE_THEME = Theme({
     "markdown.code": "#dcdcdc",
     "markdown.code_block": "#dcdcdc",
     "markdown.h1": "bold #dcdcdc",
@@ -59,7 +54,13 @@ custom_theme = Theme({
     "diff.header": "#dbbc7f"
 })
 
-console = Console(theme=custom_theme)
+history = []
+
+verbose = False
+
+debug_mode = False
+
+console = Console(theme=CONSOLE_THEME)
 
 key_bindings = KeyBindings()
 
@@ -92,45 +93,6 @@ def info(message):
 
 def error(message):
     console.print(message, style="bold red")
-
-def get_program_from_shebang(shebang_line):
-    if not shebang_line.startswith("#!"):
-        return None
-
-    lexer = shlex.shlex(shebang_line)
-    lexer.wordchars += ".-"
-    try:
-        lexer.get_token()  # Skip "#!"
-        program = lexer.get_token()
-        if program == "env":
-            program = lexer.get_token() # Get the *next* token after 'env'
-        return os.path.basename(program) if program else None
-    except EOFError:
-        return None
-
-def get_language_from_extension(filename):
-    try:
-        _, ext = os.path.splitext(filename)
-        if ext:
-            lexer = get_lexer_for_filename(filename)
-            return lexer.name.lower()
-        else:
-            with open(filename, 'r') as f:
-                first_line = f.readline()
-            program = get_program_from_shebang(first_line)
-            if program:
-                if program == "python3" or program == "python":
-                    return "python"
-                elif program == "bash":
-                    return "bash"
-                elif program == "sh":
-                    return "sh"
-                # Could add more mappings here, but keep it minimal
-            return "text" # Fallback
-    except pygments.util.ClassNotFound:
-        return "text"
-    except FileNotFoundError:
-        return "text"
 
 def tail(filename, n=10):
     try:
@@ -191,13 +153,14 @@ def get_tmux_logs():
     for pane_id in pane_ids:
         if pane_id != current_pane_id:
             content = get_tmux_pane_content(session_name, pane_id)
-            all_logs += f"{DELIMITER}text\n{content}{DELIMITER}\n"
+            # TODO: use "-F\#W-\#P-\#T" as title
+            title = f"Pane {pane_id}"
+            all_logs += terminal_log_block(content, title)
     return all_logs
 
 def prompt_prefix(extra_ignore_patterns=None, include_files=True):
-    prompt_prefix_file = os.path.join(os.path.dirname(__file__), '../docs/background.txt')
     try:
-        with open(prompt_prefix_file, 'r') as f:
+        with open(PROMPT_PREFIX_FILE, 'r') as f:
             prefix = f.read()
     except FileNotFoundError:
         return "Could not find background.txt"
@@ -434,40 +397,20 @@ def get_file_contents(file_path):
     try:
         with open(file_path, 'r') as f:
             contents = f.read()
-        return f"{FILE_PREFIX}{file_path}\n{contents}\n{DELIMITER}\n"
+        block = file_block(file_path, contents, get_language_from_extension(file_path))
+        return f"{block}\n"
     except Exception as e:
         return f"    Error reading {file_path}: {e}\n"
 
-
-
-
-
-# --- PARSER STUFF ---
-
 def prune_file_history(file_path):
     global history
-    # Refined regex to match content only between FILE_PREFIX and the next FILE_PREFIX or FILES_END_SEP
-    file_regex = re.compile(
-        rf'{FILE_PREFIX}{re.escape(file_path)}\n(.*?)(?=(?:{FILE_PREFIX}|{FILES_END_SEP}|{CONVERSATION_END_SEP}|$))',
-        flags=re.DOTALL
-    )
+
+    file_regex = re.compile(parser.match_file(file_path), flags=re.DOTALL)
 
     debug(f"Regex being used: {file_regex.pattern}")
 
     for i in range(len(history)):
-        debug(f"Before pruning history[{i}]:\n{history[i]}")
-        history[i] = file_regex.sub(f'@{file_path}\n', history[i])
-        debug(f"After pruning history[{i}]:\n{history[i]}")
-
-# --- PARSER STUFF ---
-
-
-
-
-
-
-
-
+        history[i] = file_regex.sub('', history[i])
 
 def list_available_models():
     check_if_env_vars_set()
@@ -504,46 +447,22 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
 
         history.append(session_history)
 
+        recap = re.sub(parser.match_before_conersation_history(), '', session_history, flags=re.DOTALL)
 
+        files = parser.find_files(recap)
 
-
-
-
-
-
-
-
-        ### PARSER STUFF -------
-
-        recap = re.sub(rf'(.*?){parser.CONVERSATION_START_SEP}\n+', '', session_history, flags=re.DOTALL)
-
-        file_matches = re.finditer(rf'^{FILE_PREFIX}(.*?)$', recap, flags=re.MULTILINE)
-
-        for match in file_matches:
-            file_path = match.group(1)
-
+        for file_path in files:
             recap = re.sub(
-                rf'^{FILE_PREFIX}{re.escape(file_path)}$',
-                rf'#### {file_path}\n\n{DELIMITER}{get_language_from_extension(file_path)}',
+                parser.match_file(file_path),
+                rf'#### {file_path}\n\n```{get_language_from_extension(file_path)}\n\1\n```',
                 recap,
-                flags=re.MULTILINE)
+                flags=re.DOTALL)
 
         recap = re.sub(
-            rf'^{SNIPPET_PREFIX}(.*?)$',
-            rf'#### \1\n\n{DELIMITER}\1',
+            parser.match_snippet(),
+            r'#### \1\n\n```\1\n\2\n```',
             recap,
-            flags=re.MULTILINE)
-
-        ### PARSER STUFF -------
-
-
-
-
-
-
-
-
-
+            flags=re.DOTALL)
 
         markdown = Markdown(recap, code_theme=EverforestDarkStyle)
 
@@ -563,10 +482,11 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
                 with open(history_filename, 'w') as f:
                     f.write(''.join(history))
 
-    prompt_style = prompt_toolkit.styles.Style.from_dict({ '': '#8CB9B3 bold' })
+    prompt_style = Style.from_dict({ '': '#8CB9B3 bold' })
 
     file_completer = FuzzyCompleter(FilePathCompleter()) if interactive else None
     command_completer = FuzzyCompleter(CommandCompleter(['reset', 'refresh', 'exit'])) if interactive else None
+
     # Combine completers
     class CombinedCompleter(Completer):
         def get_completions(self, document, complete_event):
@@ -634,42 +554,26 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
             if prompt_text == '':
                 continue
 
-            history.append(f'\n**Brent:**\n\n' + prompt_text + '\n')
+            history.append(f'\n**Brent:**\n\n{prompt_text}\n')
 
+            file_references = parser.find_file_references(prompt_text)
 
-
-
-
-
-
-            ### PARSER STUFF -------
-
-            # Handle multiple file references
-            file_references = re.findall(r'@(\S+)', prompt_text)
-            file_references = [re.sub(r"[^\w\s]+$", '', file_reference) for file_reference in file_references]
             for file_path in file_references:
-                if os.path.isfile(file_path):
-                    prune_file_history(file_path)
+                if not os.path.isfile(file_path): continue
 
-                    with open(file_path, 'r') as f:
-                        file_content = f.read()
-                    history.append(f'\n{FILE_PREFIX}{file_path}\n{file_content}\n{DELIMITER}\n')
+                prune_file_history(file_path)
 
-            ### PARSER STUFF -------
+                with open(file_path, 'r') as f:
+                    file_content = f.read()
 
+                history.append(file_block(file_path, file_content, get_language_from_extension(file_path)))
 
+            request_text = ''.join(history) + f'\n{parser.CONVERSATION_END_SEP}\n'
 
-
-
-
-
-            request_text = ''.join(history) + f'\n{CONVERSATION_END_SEP}\n'
-
-            # Prepare contents for generate_content
             contents = [types.Part.from_text(text=request_text)]
 
             start_time = time.time()
-            # Use generate_content_stream instead of generate_content
+
             stream = client.models.generate_content_stream(model=GEMINI_MODEL, contents=contents)
 
             full_response_text = ""
@@ -683,24 +587,14 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
                     full_response_text += chunk.text
                     queued_response_text += chunk.text
 
+                    sections = re.split(parser.match_any_block(), queued_response_text, flags=re.DOTALL)
 
-
-
-
-
-
-
-                    ### PARSER STUFF -------
-
-                    # TODO: here need to be more sophisticated to catch when delimiter is in the actual text
-                    sections = re.split(rf"({DELIMITER}.*?{DELIMITER}|{FILE_PREFIX}.*?\n.*?\n{DELIMITER})", queued_response_text, flags=re.DOTALL)
-
-                    if len(sections) == 1 and not queued_response_text.startswith(DELIMITER): continue
+                    if len(sections) == 1 and not re.match(parser.match_any_block(), queued_response_text): continue
 
                     queued_response_text = "" # Reset because we're processing the sections
 
                     for index, section in enumerate(sections):
-                        is_code_block = section.startswith(DELIMITER)
+                        is_code_block = parser.has_starting_block(section)
                         is_last_section = index == len(sections) - 1
 
                         if not is_code_block and is_last_section:
@@ -709,43 +603,21 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
                             continue
 
                         if is_code_block:
-                            file_path_match = re.search(rf'^{FILE_PREFIX}(.*)\n', section)
-                            is_file = bool(file_path_match)
-
-                            # Be greedy here since it's just a section
-                            content_match = re.match(rf'^{DELIMITER}.*\n(.*)\n{DELIMITER}', section, flags=re.DOTALL)
-                            content = content_match.group(1) if content_match else ""
+                            is_file = parser.is_file(section)
 
                             if is_file:
-                                file_path = file_path_match.group(1)
+                                file_path, content = parser.find_files(section)[0]
                                 code = generate_diff(file_path, content)
                                 is_diff = os.path.exists(file_path) and content != code
                                 language = "diff" if is_diff else get_language_from_extension(file_path)
-
-                                console.print(Markdown(f"#### {file_path}"))
                             else:
-                                code = content
-                                # Be greedy here since it's just a section
-                                language_match = re.match(rf'^{SNIPPET_PREFIX}(.*)\n', section)
-                                language = language_match.group(1) if language_match else 'text'
+                                file_path = None
+                                language, code = parser.find_snippets(section)[0]
 
-                                console.print(Markdown(f"#### {language}")) # Keep this
-
+                            console.print(Markdown(f"#### {file_path or language}"))
                             console.print()
 
-                            section = f"{DELIMITER}{language if language != 'text' else ''}\n{code}\n{DELIMITER}"
-
-                        ### PARSER STUFF -------
-
-
-
-
-
-
-
-
-
-
+                            section = f"```{language}\n{code}\n```"
 
                         console.print(Markdown(section, code_theme=EverforestDarkStyle))
                         console.print()
@@ -762,49 +634,12 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
             end_time = time.time()
             duration = end_time - start_time
 
-            # --- Post-processing after the entire response is received ---
-
-
-
-
-
-
-
-
-
-
-            ### PARSER STUFF -------
-
-            # Now we process the *entire* response for file writes, pruning, and history
-            def replace_with_diff_for_history(match):
-                file_path = match.group(1)
-                file_content = match.group(2)
-                return f'{FILE_PREFIX}{file_path}\n{file_content}\n{DELIMITER}'
-
-            # Prepare for history (don't show diffs in history, just the final content)
-            history_response = re.sub(
-                rf'{FILE_PREFIX}(.*?)\n(.*?)\n{DELIMITER}',
-                replace_with_diff_for_history,
-                full_response_text,
-                flags=re.DOTALL
-            )
-
-            # Prune file history *after* the entire response is received, but before history is appended
-            file_references = re.findall(rf'{FILE_PREFIX}(.*?)\n(.*?)\n{DELIMITER}', full_response_text, flags=re.DOTALL)
+            # Prune file history after the entire response is received, but before history is appended
+            file_references = parser.find_files(full_response_text)
             for file_path, _ in file_references:
                 prune_file_history(file_path)
 
-            ### PARSER STUFF -------
-
-
-
-
-
-
-
-
-
-            history.append(f'\n**Linus:**\n\n' + history_response + '\n')
+            history.append(f'\n**Linus:**\n\n{full_response_text}\n')
 
             if writeable:
                 for file_path, file_content in file_references:

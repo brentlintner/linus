@@ -49,7 +49,6 @@ def add_file_listing_args(parser):
 def create_parser():
     parser = argparse.ArgumentParser(
         prog="ai-code",
-        description="Pair program with a Gemini AI based assistant.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         add_help=True
     )
