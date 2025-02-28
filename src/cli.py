@@ -9,7 +9,7 @@ from .__version__ import __version__
 
 load_dotenv()
 
-install(show_locals=False)
+install(show_locals=True)
 
 from .chat import coding_repl, debug_logging, verbose_logging, check_if_env_vars_set, list_available_models, history_filename_for_directory, generate_project_file_contents, generate_project_file_list
 

@@ -592,7 +592,7 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
                     queued_response_text = "" # Reset because we're processing the sections
 
                     for index, section in enumerate(sections):
-                        is_code_block = parser.has_starting_block(section)
+                        is_code_block = re.match(parser.match_any_block(), section)
                         is_last_section = index == len(sections) - 1
 
                         if not is_code_block and is_last_section:
@@ -668,4 +668,4 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
                 break
         except Exception:
             print("Linus has glitched!\n")
-            console.print_exception(show_locals=False)
+            console.print_exception(show_locals=True)

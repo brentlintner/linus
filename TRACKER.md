@@ -32,7 +32,7 @@ Anything related to the project management of the project, such as tracking issu
 * Bug: When the streamed text for a file/snippet is the first character of the stream it renders before the content and breaks
 * Bug: Snippets and files that are inside markdown blocks (ex: lists) are not being highlighted properly
 * Bug: Any source code file with backticks in it breaks the pretty printing in the terminal
-* Bug: Files and tree data should be refreshed every time the project is loaded, depending on the flags enabled
+* Bug: Files and tree data should be refreshed every time the project is resumed, depending on the flags enabled
 * Bug: Resume is really slow for giant files
 
 * Auto update the project file structure when new files are added or updated (db setup + function calling for this?)
