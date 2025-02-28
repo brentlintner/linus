@@ -587,12 +587,13 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
 
                     sections = re.split(parser.match_any_block(), queued_response_text, flags=re.DOTALL)
 
-                    if len(sections) == 1 and not re.match(parser.match_any_block(), queued_response_text): continue
+                    if len(sections) == 1 and not re.match(parser.match_any_block(), queued_response_text, flags=re.DOTALL): continue
 
                     queued_response_text = "" # Reset because we're processing the sections
 
+# TODO
                     for index, section in enumerate(sections):
-                        is_code_block = re.match(parser.match_any_block(), section)
+                        is_code_block = re.match(parser.match_any_block(), section, flags=re.DOTALL)
                         is_last_section = index == len(sections) - 1
 
                         if not is_code_block and is_last_section:
