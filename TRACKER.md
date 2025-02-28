@@ -24,6 +24,8 @@ Anything related to the project management of the project, such as tracking issu
       * Just show a Chunk: 1/2 (Or Preview: True), and tell LLM to ask for more if they need tha file (for now manual @ load it all)
     * Keep two versions not pruned instead of only one
     * Before writing files ask for confirmation to accept changes (needs db)
+* Always use spaces to indent not tabs (look for .editorconfig files or other files as a reference)
+* If a AI.md exists, pull that into the prompt
 
 ## Icebox
 
