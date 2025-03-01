@@ -4,55 +4,29 @@ import time
 import hashlib
 import re
 import uuid
-import pathspec
-import difflib
-import json
-import subprocess
 from datetime import datetime, timezone
 from collections import deque
-from prompt_toolkit.styles import Style
-from prompt_toolkit import PromptSession
-from prompt_toolkit.key_binding import KeyBindings
-from prompt_toolkit.keys import Keys
-from prompt_toolkit.completion import FuzzyCompleter, Completer, Completion
-from prompt_toolkit.shortcuts import CompleteStyle
 from rich.console import Console
 from rich.markdown import Markdown
-from rich.theme import Theme
 from google import genai
 from google.genai import types
 
-from .everforest import EverforestDarkStyle
-
-from . import chat_prefix as parser
-from .chat_prefix import file_block, terminal_log_block, get_language_from_extension
-
-GOOGLE_API_KEY = os.getenv('GOOGLE_API_KEY') or ''
-
-GEMINI_MODEL = os.getenv('GEMINI_MODEL') or ''
-
-PARSER_DEFINITION_FILE = 'src/chat_prefix.py'
-
-PROMPT_PREFIX_FILE = os.path.join(os.path.dirname(__file__), '../docs/background.txt')
-
-DEFAULT_IGNORE_PATTERNS = ['.git*']
-
-CONSOLE_THEME = Theme({
-    "markdown.code": "#dcdcdc",
-    "markdown.code_block": "#dcdcdc",
-    "markdown.h1": "bold #dcdcdc",
-    "markdown.h2": "bold #dcdcdc",
-    "markdown.h3": "bold #dcdcdc",
-    "markdown.h4": "bold #dcdcdc",
-    "markdown.h5": "bold #dcdcdc",
-    "markdown.h6": "bold #dcdcdc",
-    "markdown.strong": "bold #dcdcdc",
-    "markdown.em": "#a7c080",
-    "markdown.alert": "bold #e67e80",
-    "diff.add": "#a7c080",
-    "diff.remove": "#e67e80",
-    "diff.header": "#dbbc7f"
-})
+from . import parser
+from .repl import create_prompt_session
+from .theme import EverforestDarkStyle
+from .config import (
+    GOOGLE_API_KEY,
+    GEMINI_MODEL,
+    CONSOLE_THEME,
+    PROMPT_PREFIX_FILE
+)
+from .file_utils import (
+    generate_project_structure,
+    generate_project_file_contents,
+    prune_file_history,
+    generate_diff,
+    get_file_contents
+)
 
 history = []
 
@@ -61,16 +35,6 @@ verbose = False
 debug_mode = False
 
 console = Console(theme=CONSOLE_THEME)
-
-key_bindings = KeyBindings()
-
-@key_bindings.add(Keys.Up)
-def _(event):
-    event.current_buffer.history_backward()
-
-@key_bindings.add(Keys.Down)
-def _(event):
-    event.current_buffer.history_forward()
 
 def verbose_logging():
     global verbose
@@ -109,51 +73,6 @@ def type_response_out(lines, delay=0.01):
 
             time.sleep(delay)
         print()  # Newline after each string
-
-def get_tmux_pane_content(session_name, pane_id):
-    command = ["tmux", "capture-pane", "-p", "-t", f"{pane_id}", "-S", "-"]
-    result = subprocess.run(command, capture_output=True, text=True)
-    if result.returncode != 0:
-        error(f"Error capturing pane {pane_id}: {result.stderr}")
-        return ""  # Return empty string on error
-    return result.stdout
-
-def get_tmux_pane_ids(session_name, pane_id):
-    command = ["tmux", "list-panes", "-s", "-F", "#{pane_id}", "-t", session_name]
-    result = subprocess.run(command, capture_output=True, text=True)
-    if result.returncode != 0:
-        error(f"Error listing panes for {session_name}: {result.stderr}")
-        return [] # Return empty list on error.  Important!
-    return result.stdout.strip().splitlines()
-
-def get_current_tmux_pane_id():
-    """Gets the current tmux pane ID."""
-    try:
-        return os.environ.get('TMUX_PANE')
-    except KeyError:
-        return None
-
-def get_tmux_logs():
-    current_pane_id = get_current_tmux_pane_id()
-    if not current_pane_id:
-        return "No tmux session detected.\n"
-
-    try:
-        session_name = subprocess.run(["tmux", "display-message", "-p", "#S"], capture_output=True, text=True, check=True).stdout.strip()
-    except subprocess.CalledProcessError as e:
-        error(f"Error getting tmux session name: {e}")
-        return f"Error getting tmux session name: {e}\n"
-
-    pane_ids = get_tmux_pane_ids(session_name, current_pane_id)
-    all_logs = ""
-
-    for pane_id in pane_ids:
-        if pane_id != current_pane_id:
-            content = get_tmux_pane_content(session_name, pane_id)
-            # TODO: use "-F\#W-\#P-\#T" as title
-            title = f"Pane {pane_id}"
-            all_logs += terminal_log_block(content, title)
-    return all_logs
 
 def prompt_prefix(extra_ignore_patterns=None, include_files=True):
     try:
@@ -221,192 +140,6 @@ def last_session():
     else:
         return None
 
-class FilePathCompleter(Completer):
-    def __init__(self):
-        self.ignore_patterns = self.load_ignore_patterns()
-        self.spec = pathspec.PathSpec.from_lines('gitwildmatch', self.ignore_patterns)
-
-    def load_ignore_patterns(self):
-        ignore_patterns = [] + DEFAULT_IGNORE_PATTERNS
-        for ignore_file in ['.gitignore']:
-            if os.path.exists(ignore_file):
-                with open(ignore_file) as f:
-                    ignore_patterns.extend([line.strip() for line in f if line.strip() and not line.startswith('#')])
-        return ignore_patterns
-
-    def is_ignored(self, path):
-        return self.spec.match_file(path)
-
-    def get_completions(self, document, complete_event):
-        word_before_cursor = document.get_word_before_cursor()
-
-        if '@' not in word_before_cursor:
-            return
-
-        for root, _, items in os.walk(os.getcwd()):
-            for item in items:
-                path = re.sub(r'^\./', '', os.path.relpath(os.path.join(root, item)))
-                if not self.is_ignored(path) and item.startswith(word_before_cursor[1:]):  # Skip the '@' character
-                    yield Completion(path, start_position=-len(word_before_cursor) + 1)
-
-class CommandCompleter(Completer):
-    def __init__(self, commands):
-        self.commands = commands
-
-    def get_completions(self, document, complete_event):
-        word_before_cursor = document.get_word_before_cursor()
-
-        if '$' not in word_before_cursor:
-            return
-
-        for command in self.commands:
-            if command.startswith(word_before_cursor[1:]):
-                yield Completion(command, start_position=-len(word_before_cursor) + 1)
-
-def generate_diff(file_path, current_content):
-    try:
-        with open(file_path, 'r') as f:
-            file_content = f.readlines()
-    except FileNotFoundError:
-        return current_content  # If file not found, return current content
-
-    diff = difflib.unified_diff(
-        file_content,
-        current_content.splitlines(keepends=True),
-        fromfile=f"{file_path} (disk)",
-        tofile=f"{file_path} (context)",
-    )
-
-    stringifed_diff = ''.join(diff)
-
-    if len(stringifed_diff) == 0:
-        # If no diff (i.e. we are re-adding the same file), return full (i.e. current) content
-        return current_content
-
-    return stringifed_diff
-
-def generate_project_structure(extra_ignore_patterns=None):
-    # ignore_patterns = ['.*']  # Ignore dotfiles by default
-    ignore_patterns = [] + DEFAULT_IGNORE_PATTERNS
-    for ignore_file in ['.gitignore']:
-        if os.path.exists(ignore_file):
-            with open(ignore_file) as f:
-                ignore_patterns.extend([line.strip() for line in f if line.strip() and not line.startswith('#')])
-
-    if extra_ignore_patterns:
-        ignore_patterns.extend(extra_ignore_patterns)
-
-    spec = pathspec.PathSpec.from_lines('gitwildmatch', ignore_patterns)
-
-    file_tree = [{
-        "id": "$root",
-        "name": os.path.basename(os.getcwd()),
-        "parent": None,
-        "type": "directory"
-    }]
-
-    for root, dirs, files in os.walk(os.getcwd()):
-        relative_path = os.path.relpath(root, os.getcwd())
-        relative_path = '' if relative_path == '.' else relative_path
-
-        dirs[:] = [dir for dir in dirs if not spec.match_file(os.path.join(relative_path, dir))]
-        files[:] = [file for file in files if not spec.match_file(os.path.join(relative_path, file))]
-
-        for dir in dirs:
-            dir_path = os.path.join(relative_path, dir)
-            dir_parent = os.path.dirname(dir_path)
-
-            file_tree.append({
-                "id": dir_path,
-                "name": os.path.basename(dir_path),
-                "parent": dir_parent != '.' and dir_parent or "$root",
-                "type": "directory"
-            })
-
-        for file in files:
-            file_path = os.path.join(relative_path, file)
-            file_parent = os.path.dirname(file_path)
-
-            file_tree.append({
-                "id": file_path,
-                "name": os.path.basename(file),
-                "parent": file_parent != '.' and file_parent or "$root",
-                "type": "file"
-            })
-
-    file_tree = sorted(file_tree, key=lambda x: x['id'])
-
-    return json.dumps(file_tree, indent=2)
-
-def generate_project_file_contents(extra_ignore_patterns=None):
-    # ignore_patterns = ['.*']  # Ignore dotfiles by default
-    ignore_patterns = [] + DEFAULT_IGNORE_PATTERNS
-    for ignore_file in ['.gitignore']:
-        if os.path.exists(ignore_file):
-            with open(ignore_file) as f:
-                ignore_patterns.extend([line.strip() for line in f if line.strip() and not line.startswith('#')])
-
-    if extra_ignore_patterns:
-        ignore_patterns.extend(extra_ignore_patterns)
-
-    spec = pathspec.PathSpec.from_lines('gitwildmatch', ignore_patterns)
-    output = ""
-
-    for root, _, files in os.walk(os.getcwd()):
-        relative_path = os.path.relpath(root, os.getcwd())
-        if relative_path == '.':
-            relative_path = ''
-
-        # Output files and their contents
-        for file in files:
-            file_path = os.path.join(relative_path, file)
-            if not spec.match_file(file_path):
-                output += get_file_contents(file_path)
-
-    return output
-
-def generate_project_file_list(extra_ignore_patterns=None):
-    # ignore_patterns = ['.*']
-    ignore_patterns = DEFAULT_IGNORE_PATTERNS
-    for ignore_file in ['.gitignore']:
-        if os.path.exists(ignore_file):
-            with open(ignore_file) as f:
-                ignore_patterns.extend([line.strip() for line in f if line.strip() and not line.startswith('#')])
-    if extra_ignore_patterns:
-        ignore_patterns.extend(extra_ignore_patterns)
-
-    spec = pathspec.PathSpec.from_lines('gitwildmatch', ignore_patterns)
-    output = []  # Use a list to store file names
-
-    # TODO: ignore certain directories so we don't go into them (ex: .git)
-    for root, _, files in os.walk(os.getcwd()):
-        relative_path = os.path.relpath(root, os.getcwd())
-        if relative_path == '.':
-            relative_path = ''
-        for file in files:
-            file_path = os.path.join(relative_path, file)
-            if not spec.match_file(file_path):
-                output.append(file_path)  # Append file path to the list
-
-    return "\n".join(output)  # Join with newlines
-
-def get_file_contents(file_path):
-    try:
-        with open(file_path, 'r') as f:
-            contents = f.read()
-        block = file_block(file_path, contents, get_language_from_extension(file_path))
-        return f"{block}\n"
-    except Exception as e:
-        return f"    Error reading {file_path}: {e}\n"
-
-def prune_file_history(file_path):
-    global history
-
-    file_regex = re.compile(parser.match_file(file_path), flags=re.DOTALL)
-
-    for i in range(len(history)):
-        history[i] = file_regex.sub('', history[i])
-
 def list_available_models():
     check_if_env_vars_set()
 
@@ -439,9 +172,10 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
         files = parser.find_files(recap)
 
         for file_path in files:
+            language = parser.get_language_from_extension(file_path)
             recap = re.sub(
                 parser.match_file(file_path),
-                rf'#### {file_path}\n\n```{get_language_from_extension(file_path)}\n\1\n```',
+                rf'#### {file_path}\n\n```{language}\n\1\n```',
                 recap,
                 flags=re.DOTALL)
 
@@ -469,28 +203,7 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
                 with open(history_filename, 'w') as f:
                     f.write(''.join(history))
 
-    prompt_style = Style.from_dict({ '': '#8CB9B3 bold' })
-
-    file_completer = FuzzyCompleter(FilePathCompleter()) if interactive else None
-    command_completer = FuzzyCompleter(CommandCompleter(['reset', 'refresh', 'exit'])) if interactive else None
-
-    # Combine completers
-    class CombinedCompleter(Completer):
-        def get_completions(self, document, complete_event):
-            # Use file completer if '@' detected, otherwise use command completer
-            if '@' in document.text:
-                if file_completer:
-                    yield from file_completer.get_completions(document, complete_event)
-            elif '$' in document.text:
-                if command_completer:
-                    yield from command_completer.get_completions(document, complete_event)
-
-    session = PromptSession(
-        style=prompt_style,
-        multiline=True,
-        key_bindings=key_bindings,
-        completer=CombinedCompleter(),
-        complete_style=CompleteStyle.MULTI_COLUMN)
+    session = create_prompt_session(interactive)
 
     def calculate_history_stats():
         # token_count = client.models.count_tokens(model=GEMINI_MODEL, contents=''.join(history))
@@ -548,12 +261,9 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
             for file_path in file_references:
                 if not os.path.isfile(file_path): continue
 
-                prune_file_history(file_path)
+                prune_file_history(file_path, history)
 
-                with open(file_path, 'r') as f:
-                    file_content = f.read()
-
-                history.append(file_block(file_path, file_content, get_language_from_extension(file_path)))
+                history.append(get_file_contents(file_path))
 
             request_text = ''.join(history) + f'\n{parser.CONVERSATION_END_SEP}\n'
 
@@ -606,7 +316,7 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
                                 file_path, content = parser.find_files(section)[0]
                                 code = generate_diff(file_path, content)
                                 is_diff = os.path.exists(file_path) and content != code
-                                language = "diff" if is_diff else get_language_from_extension(file_path)
+                                language = "diff" if is_diff else parser.get_language_from_extension(file_path)
                             else:
                                 file_path = None
                                 language, code = parser.find_snippets(section)[0]
@@ -636,7 +346,7 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
             # Prune file history after the entire response is received, but before history is appended
             file_references = parser.find_files(full_response_text)
             for file_path, _ in file_references:
-                prune_file_history(file_path)
+                prune_file_history(file_path, history)
 
             history.append(f'\n**Linus:**\n\n{full_response_text}\n')
 

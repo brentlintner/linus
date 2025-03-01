@@ -11,7 +11,15 @@ load_dotenv()
 
 install(show_locals=True)
 
-from .chat import coding_repl, debug_logging, verbose_logging, check_if_env_vars_set, list_available_models, history_filename_for_directory, generate_project_file_contents, generate_project_file_list
+from .file_utils import generate_project_file_list
+
+from .chat import (
+    coding_repl,
+    debug_logging,
+    verbose_logging,
+    check_if_env_vars_set,
+    list_available_models
+)
 
 def add_general_args(parser):
     group = parser.add_argument_group(title="General Options")
