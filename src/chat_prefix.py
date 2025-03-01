@@ -31,8 +31,6 @@ CONVERSATION_END_SEP =   '{{{CONVERSATION_HISTORY END}}}'
 
 TERMINAL_LOGS_PLACEHOLDER = '{{{TERMINAL_LOGS}}}'
 
-MATCH_FILE_DATA = rf'{FILE_METADATA_END}\n?(.*?){END_OF_FILE}'
-
 def find_file_references(content):
     file_references = re.findall(r'@(\S+)', content)
 
@@ -48,25 +46,19 @@ def find_snippets(content):
     snippet_matches = re.finditer(regex, content, flags=re.DOTALL)
     return [(match.group(1), match.group(2)) for match in snippet_matches]
 
-def has_starting_block(content):
-    return(is_file(content) or
-           is_snippet(content) or
-           is_terminal_log(content))
-
 def is_file(content):
-    return content.startswith(FILE_METADATA_START)
+    return str(content).startswith(FILE_METADATA_START)
 
 def is_snippet(content):
-    return content.startswith(SNIPPET_METADATA_START)
+    return str(content).startswith(SNIPPET_METADATA_START)
 
 def is_terminal_log(content):
-    return content.startswith(TERMINAL_METADATA_START)
+    return str(content).startswith(TERMINAL_METADATA_START)
 
-def match_any_block():
-    starts = '|'.join([FILE_METADATA_START, SNIPPET_METADATA_START, TERMINAL_METADATA_START])
-    ends = '|'.join([FILE_METADATA_END, SNIPPET_METADATA_END, TERMINAL_METADATA_END])
-
-    return rf'({starts})(.*?)({ends})(.*?){END_OF_FILE}'
+def match_code_block():
+    file_regex = rf'{FILE_METADATA_START}.*?\nPath: .*?\n.*?{FILE_METADATA_END}.*?{END_OF_FILE}'
+    snippet_regex = rf'{SNIPPET_METADATA_START}.*?\nLanguage: .*?\n{SNIPPET_METADATA_END}.*?{END_OF_FILE}'
+    return rf'({file_regex}|{snippet_regex})'
 
 def match_file(file_path):
     escaped = re.escape(file_path)

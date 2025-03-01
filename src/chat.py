@@ -404,8 +404,6 @@ def prune_file_history(file_path):
 
     file_regex = re.compile(parser.match_file(file_path), flags=re.DOTALL)
 
-    debug(f"Regex being used: {file_regex.pattern}")
-
     for i in range(len(history)):
         history[i] = file_regex.sub('', history[i])
 
@@ -417,14 +415,6 @@ def list_available_models():
 
     for m in client.models.list():
         console.print(f"{(m.name or '').replace('models/', '')} ({m.description})")
-
-def split_at(delimiter, input_string):
-    parts = input_string.split(delimiter, 1)  # Split at most once
-
-    if len(parts) < 2:  # No delimiter found
-        return input_string, ""
-    else:
-        return parts[0], parts[1]
 
 def coding_repl(resume=False, interactive=False, writeable=False, ignore_patterns=None, include_files=False):
     start_time = time.time()
@@ -585,23 +575,31 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
 
                     queued_response_text += chunk.text
 
-                    sections = re.split(parser.match_any_block(), queued_response_text, flags=re.DOTALL)
+                    sections = re.split(parser.match_code_block(), queued_response_text, flags=re.DOTALL)
 
-                    if len(sections) == 1 and not re.match(parser.match_any_block(), queued_response_text, flags=re.DOTALL): continue
+                    if len(sections) == 1 and not re.match(parser.match_code_block(), queued_response_text, flags=re.DOTALL):
+                        debug("Waiting for more content...")
+                        continue
 
+                    debug("Found block(s) in response (START)")
                     queued_response_text = "" # Reset because we're processing the sections
 
-# TODO
                     for index, section in enumerate(sections):
-                        is_code_block = re.match(parser.match_any_block(), section, flags=re.DOTALL)
+                        if not section: continue
+
+                        is_code_block = parser.is_file(section) or parser.is_snippet(section)
                         is_last_section = index == len(sections) - 1
+
+                        debug(f"Processing section {index} of {len(sections)} (code block: {is_code_block}, last: {is_last_section})")
 
                         if not is_code_block and is_last_section:
                             # TODO: split the last section on \n\n and print the first part, then queue the second part
+                            debug("Waiting for more content (not code block)...")
                             queued_response_text = section
                             continue
 
                         if is_code_block:
+                            debug("Code block detected, processing...")
                             is_file = parser.is_file(section)
 
                             if is_file:
@@ -620,6 +618,8 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
 
                         console.print(Markdown(section, code_theme=EverforestDarkStyle))
                         console.print()
+
+                    debug("Found block(s) in response (END)")
 
                 # Handle any remaining text in the queue
                 if queued_response_text:
@@ -670,3 +670,4 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
         except Exception:
             print("Linus has glitched!\n")
             console.print_exception(show_locals=True)
+

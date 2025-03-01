@@ -6,6 +6,7 @@ Anything related to the project management of the project, such as tracking issu
 
 * Optimize output token limit by showing plan first, then file-to-file and part-by-part (no show code first)
   * Limit your response to 8000 characters: If you are writing a large file, split it up into smaller chunks and send the first chunk, then the second chunk, etc.
+* Bug: one line before each file when wrapped
 
 ## Backlog
 
