@@ -194,11 +194,13 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
 
         history.append(session_history)
 
-        recap = re.sub(parser.match_before_conersation_history(), '', session_history, flags=re.DOTALL)
+        recap = re.sub(parser.match_before_conversation_history(), '', session_history, flags=re.DOTALL)
 
         files = parser.find_files(recap)
 
         for file_path, _, _, _ in files:
+            print(f"Reading file: {file_path}")
+            print()
             language = parser.get_language_from_extension(file_path)
             recap = re.sub(
                 parser.match_file(file_path),
@@ -249,9 +251,11 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
         print(' ', flush=True)
         console.print("History reset.", style="bold yellow")
 
+    # TODO: should prune/compact as well after refreshing?
     def refresh_project_context():
         global history
-        history[0] = prompt_prefix(extra_ignore_patterns, include_files)
+        prefix = prompt_prefix(extra_ignore_patterns, include_files)
+        history[0] = re.sub(parser.match_before_conversation_history(), prefix, history[0], flags=re.DOTALL)
         if history_filename:
             with open(history_filename, 'w') as f:
                 f.write(''.join(history))

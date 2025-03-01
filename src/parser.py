@@ -5,23 +5,23 @@ from pygments.util import ClassNotFound
 from pygments.lexers import get_lexer_for_filename
 
 # NOTE: We must use this way to generate the placeholder wrapper so this parsing doesn't fail for this file when using this project on itself
-def id(placeholder):
-    return f'{{{placeholder}}}'
+def uid(placeholder):
+    return '{{{' + placeholder + '}}}'
 
-FILE_METADATA_START =       id('START FILE METADATA')
-FILE_METADATA_END =         id('END FILE METADATA')
-SNIPPET_METADATA_START =    id('START CODE SNIPPET METADATA')
-SNIPPET_METADATA_END =      id('END CODE SNIPPET METADATA')
-TERMINAL_METADATA_START =   id('START TERMINAL METADATA')
-TERMINAL_METADATA_END =     id('END TERMINAL METADATA')
-END_OF_FILE =               id('END OF FILE')
-FILE_TREE_PLACEHOLDER =     id('FILE_TREE_JSON')
-FILES_PLACEHOLDER =         id('FILE_REFERENCES')
-FILES_START_SEP =           id('FILE_REFERENCES START')
-FILES_END_SEP =             id('FILE_REFERENCES END')
-CONVERSATION_START_SEP =    id('CONVERSATION_HISTORY START')
-CONVERSATION_END_SEP =      id('CONVERSATION_HISTORY END')
-TERMINAL_LOGS_PLACEHOLDER = id('TERMINAL_LOGS')
+FILE_METADATA_START =       uid('START FILE METADATA')
+FILE_METADATA_END =         uid('END FILE METADATA')
+SNIPPET_METADATA_START =    uid('START CODE SNIPPET METADATA')
+SNIPPET_METADATA_END =      uid('END CODE SNIPPET METADATA')
+TERMINAL_METADATA_START =   uid('START TERMINAL METADATA')
+TERMINAL_METADATA_END =     uid('END TERMINAL METADATA')
+END_OF_FILE =               uid('END OF FILE')
+FILE_TREE_PLACEHOLDER =     uid('FILE_TREE_JSON')
+FILES_PLACEHOLDER =         uid('FILE_REFERENCES')
+FILES_START_SEP =           uid('FILE_REFERENCES START')
+FILES_END_SEP =             uid('FILE_REFERENCES END')
+CONVERSATION_START_SEP =    uid('CONVERSATION_HISTORY START')
+CONVERSATION_END_SEP =      uid('CONVERSATION_HISTORY END')
+TERMINAL_LOGS_PLACEHOLDER = uid('TERMINAL_LOGS')
 
 def find_file_references(content):
     file_references = re.findall(r'@(\S+)', content)
@@ -48,18 +48,18 @@ def is_terminal_log(content):
     return str(content).startswith(TERMINAL_METADATA_START)
 
 def match_code_block():
-    file_regex = rf'{FILE_METADATA_START}.*?\nPath: .*?\n(?:Chunk: \d+/\d+\n)?Language: .*?\n{FILE_METADATA_END}.*?{END_OF_FILE}'
-    snippet_regex = rf'{SNIPPET_METADATA_START}.*?\nLanguage: .*?\n{SNIPPET_METADATA_END}.*?{END_OF_FILE}'
+    file_regex = rf'{FILE_METADATA_START}.*?{FILE_METADATA_END}.*?{END_OF_FILE}'
+    snippet_regex = rf'{SNIPPET_METADATA_START}.*?{SNIPPET_METADATA_END}.*?{END_OF_FILE}'
     return rf'({file_regex}|{snippet_regex})'
 
 def match_file(file_path):
     escaped = re.escape(file_path)
-    return rf'{FILE_METADATA_START}.*?\nPath: {escaped}\n(?:Chunk: \d+/\d+\n)?Language: .*?\n{FILE_METADATA_END}(.*?){END_OF_FILE}'
+    return rf'{FILE_METADATA_START}.*?\nPath: {escaped}\n.*?{FILE_METADATA_END}(.*?){END_OF_FILE}'
 
 def match_snippet():
     return rf'{SNIPPET_METADATA_START}.*?\nLanguage: (.*?)\n{SNIPPET_METADATA_END}(.*?){END_OF_FILE}'
 
-def match_before_conersation_history():
+def match_before_conversation_history():
     return rf'^(.*?){CONVERSATION_START_SEP}'
 
 def file_block(file_path, content, language, chunk=None):
