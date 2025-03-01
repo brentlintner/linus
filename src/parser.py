@@ -6,7 +6,7 @@ from pygments.lexers import get_lexer_for_filename
 
 # NOTE: We must use this way to generate the placeholder wrapper so this parsing doesn't fail for this file when using this project on itself
 def uid(placeholder):
-    return '{{{' + placeholder + '}}}'
+    return r'{{{' + placeholder + r'}}}'
 
 FILE_METADATA_START =       uid('START FILE METADATA')
 FILE_METADATA_END =         uid('END FILE METADATA')
