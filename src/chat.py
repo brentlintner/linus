@@ -303,7 +303,10 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
 
             start_time = time.time()
 
-            stream = client.models.generate_content_stream(model=GEMINI_MODEL, contents=contents)
+            config = types.GenerateContentConfig(
+                max_output_tokens=8000)
+
+            stream = client.models.generate_content_stream(model=GEMINI_MODEL, contents=contents, config=config)
 
             full_response_text = ""
             queued_response_text = ""  # Used for non-code block text
@@ -316,10 +319,24 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
 
                     queued_response_text += chunk.text
 
+                    is_code_block = re.match(parser.match_code_block(), queued_response_text, flags=re.DOTALL)
+
                     sections = re.split(parser.match_code_block(), queued_response_text, flags=re.DOTALL)
 
-                    if len(sections) == 1 and not re.match(parser.match_code_block(), queued_response_text, flags=re.DOTALL):
-                        debug("Waiting for more content...")
+                    if is_code_block:
+                        file_paths = parser.find_in_progress_files(queued_response_text)
+                        if len(file_paths) > 0:
+                            status.update(f"Linus is coding {','.join(file_paths)}...")
+                        else:
+                            status.update(f"Linus is coding...")
+                    else:
+                        status.update(f"Linus is typing...")
+
+                    if len(sections) == 1 and not is_code_block:
+                        if is_code_block:
+                            debug("Waiting for more file content...")
+                        else:
+                            debug("Waiting for more response content...")
                         continue
 
                     queued_response_text = "" # Reset the queue and process the split sections

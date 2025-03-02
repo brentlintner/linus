@@ -28,6 +28,11 @@ def find_file_references(content):
 
     return [re.sub(r"[^\w\s]+$", '', file_reference) for file_reference in file_references]
 
+def find_in_progress_files(content):
+    regex = rf'{FILE_METADATA_START}.*?\nPath: (.*?)\n'
+    file_matches = re.finditer(regex, content, flags=re.DOTALL)
+    return [match.group(1) for match in file_matches]
+
 def find_files(content):
     regex = rf'{FILE_METADATA_START}.*?\nPath: (.*?)\n(?:Chunk: (\d+/\d+)\n)?Language: (.*?)\n{FILE_METADATA_END}(.*?){END_OF_FILE}'
     file_matches = re.finditer(regex, content, flags=re.DOTALL)

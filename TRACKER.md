@@ -40,10 +40,11 @@ Anything related to the project management of the project, such as tracking issu
 * Auto update the project file structure when new files are added or updated (db setup + function calling for this?)
 * Use a vector database to store embeddings of files and their contents, and optimize prompt generation for large projects and files
 * Support versions of files (need to use local db setup + function calling for this?)
-* Support adding files like PDFs and images to the project (binary files add via file upload vs inline)
+* Support adding files like PDFs and images to the project (attach as normal but as individual contents (need db setup for this)
 * Handle renaming or deleting file references, for example when refactoring
 * Show the token output count for each final response if verbose
 * Remember input prompt history inbetween sessions
+* Adjust the safety settings
 * Support text to speech output for responses
 * Show better progress bars, notably when writing a file (extract from file or diff the line and compare to current version)
 * Be able to see the git history of a file (useful when able to actually commit?)

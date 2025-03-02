@@ -4,7 +4,6 @@ A terminal-based AI coding partner that helps you write software more efficientl
 
 ## Features
 
-*   **Extreme Terminal Programming:**  Never leave your terminal or touch that disgusting mouse ever again.
 *   **Context-Aware Assistance:**  Maintains session history and project context for consistent, relevant suggestions.
 *   **File System Integration:**  Reads and writes directly to project files while showing diffs, allowing for seamless integration and modification.
 *   **Shell Interation:**  Executes terminal commands on your behalf and analyzes the output for errors.
