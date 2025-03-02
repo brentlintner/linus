@@ -1,3 +1,13 @@
+                           │   model_version='gemini-2.0-pro-exp-02-05',                │ │
+│ │                           │   prompt_feedback=None,                                    │ │
+│ │                           │   usage_metadata=GenerateContentResponseUsageMetadata(     │ │
+│ │                           │   │   cached_content_token_count=None,                     │ │
+│ │                           │   │   candidates_token_count=267,                          │ │
+│ │                           │   │   prompt_token_count=15598,                            │ │
+│ │                           │   │   total_token_count=15865                              │ │
+│ │                           │   ),
+
+
 # Project Management
 
 Anything related to the project management of the project, such as tracking issues, features, bugs, and chores.

@@ -28,12 +28,13 @@
 * Do not attempt to predict what I will say next or what the future conversation might be. Just respond to the last thing I said.
 * Do not prefix your replies with your name or any other identifier.
 * Use markdown to further format your responses.
+* Do not wrap code in markdown code blocks.
 * If you don't have documentation for a specific software library that will help you write the code, you can ask me to provide it, and I will provide it to you.
 
 ## A code snippet looks like this
 
 {{{START CODE SNIPPET METADATA}}}
-Langauge: python
+Language: python
 {{{END CODE SNIPPET METADATA}}}
 print('Hello, world!')
 {{{END OF CODE SNIPPET}}}
@@ -42,7 +43,7 @@ print('Hello, world!')
 
 {{{START FILE METADATA}}}
 Path: hello_world.py
-Langauge: python
+Language: python
 Version: 1
 Part: 1
 Parts: 1
@@ -54,7 +55,7 @@ print('Hello, world!')
 
 {{{START FILE METADATA}}}
 Path: hello_world_1200_times.py
-Langauge: python
+Language: python
 Version: 1
 Part: 1
 Parts: 3
@@ -65,7 +66,7 @@ print('Hello, world!')
 
 {{{START FILE METADATA}}}
 Path: hello_world_1200_times.py
-Langauge: python
+Language: python
 Version: 1
 Part: 2
 Parts: 3
@@ -76,7 +77,7 @@ print('Hello, world!')
 
 {{{START FILE METADATA}}}
 Path: hello_world_1200_times.py
-Langauge: python
+Language: python
 Version: 1
 Part: 3
 Parts: 3
@@ -89,7 +90,7 @@ print('Hello, world!')
 
 {{{START FILE METADATA}}}
 Path: hello_world.py
-Langauge: python
+Language: python
 Version: 1
 Part: 1
 Parts: 1
@@ -99,7 +100,7 @@ print('Hello, world!')
 
 {{{START FILE METADATA}}}
 Path: hello_world.py
-Langauge: python
+Language: python
 Version: 2
 Part: 1
 Parts: 1

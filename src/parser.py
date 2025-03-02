@@ -28,30 +28,37 @@ def find_file_references(content):
 
     return [re.sub(r"[^\w\s]+$", '', file_reference) for file_reference in file_references]
 
-def find_in_progress_files(content):
-    regex = rf'{FILE_METADATA_START}.*?\nPath: (.*?)\n'
-    file_matches = re.finditer(regex, content, flags=re.DOTALL)
-    return [match.group(1) for match in file_matches]
+def find_in_progress_file(content):
+    regex = rf'{FILE_METADATA_START}.*?\nPath: (.*?)\n.*?{FILE_METADATA_END}.*?[^{END_OF_FILE}].*?'
+    file_match = re.match(regex, content, flags=re.DOTALL)
+    return file_match.group(1) if file_match else None
+
+def find_in_progress_snippet(content):
+    regex = rf'{SNIPPET_METADATA_START}.*?\nLanguage: (.*?)\n{SNIPPET_METADATA_END}.*?[^{END_OF_FILE}].*?'
+    snippet_match = re.match(regex, content, flags=re.DOTALL)
+    return snippet_match.group(1) if snippet_match else None
 
 def safe_int(value, default=1):
     try:
+        if value is None:
+            return default
         return int(value)
     except ValueError:
         return default
 
 def find_files(content, parts=False):
     # TODO: get metadata first then extract key-value pairs
-    regex = rf'{FILE_METADATA_START}.*?\nPath: (.*?)\nLanguage: (.*?)\n(?:Part: (\d+)\n)(?:Parts: (\d+)\n)(?:Version: (\d+)\n).*?{FILE_METADATA_END}(.*?){END_OF_FILE}'
+    regex = rf'{FILE_METADATA_START}.*?\nPath: (.*?)\nLanguage: (.*?)\n(?:Version: (\d+)\n)(?:Part: (\d+)\n)(?:Parts: (\d+)\n).*?{FILE_METADATA_END}(.*?){END_OF_FILE}'
+    print(f"find_files regex: {regex}")
     file_matches = re.finditer(regex, content, flags=re.DOTALL)
 
     all_file_parts =  [(
         match.group(1),
-        safe_int(match.group(5)),
+        safe_int(match.group(3)),
         match.group(6),
         match.group(2),
-        safe_int(match.group(3)),
-        safe_int(match.group(4))) for match in file_matches
-    ] # (path, version, content, language, part, parts)
+        safe_int(match.group(4)),
+        safe_int(match.group(5))) for match in file_matches] # (path, version, content, language, part, parts)
 
     if parts:
         return all_file_parts
@@ -64,8 +71,13 @@ def find_files(content, parts=False):
             all_files[file_key].append((content, language, part, parts))
             all_files[file_key].sort(key=lambda x: x[2]) # Sort by part
         result = []
-        for key, value in all_files.items():
-            result.append(list(key) + list(value))
+        for key_tuple, parts_array in all_files.items():
+            result.append(list(key_tuple) + parts_array)
+        print()
+        print("--------- find_files zipped ---------")
+        print()
+        print(result)
+        print()
         return result
 
 def find_snippets(content):

@@ -298,29 +298,32 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
         queued_response_text = continue_text  # Used for non-code block text
 
         console.print()
-        with console.status("", spinner="point") as status:
+        with console.status("Linus is thinking...", spinner="point") as status:
             for chunk in stream:
                 if not chunk.text:
                     continue
 
                 queued_response_text += chunk.text
 
-                has_complete_code_block = re.match(parser.match_code_block(), queued_response_text, flags=re.DOTALL)
+                queued_has_complete_code_block = re.match(parser.match_code_block(), queued_response_text, flags=re.DOTALL)
+
+                # TODO: look to the left of the first start, and log it
+                # queued_has_incomplete_file = parser.find_in_progress_file(queued_response_text)
+                # if queued_has_incomplete_file:
+
+                debug("")
+                debug("")
+                debug("-------- QUEUED START ------------------------------------------------------------------")
+                debug(queued_response_text)
+                debug("-------- QUEUED END ------------------------------------------------------------------")
+                debug("")
+                debug("")
+
+                if not queued_has_complete_code_block:
+                    debug("No complete code block detected, queueing...")
+                    continue
 
                 sections = re.split(parser.match_code_block(), queued_response_text, flags=re.DOTALL)
-
-                if has_complete_code_block:
-                    status.update(f"")
-                else:
-                    file_paths = parser.find_in_progress_files(queued_response_text)
-                    if len(file_paths) > 0:
-                        status.update(f"Linus is coding {','.join(file_paths)}...")
-                    else:
-                        status.update(f"Linus is typing...")
-
-                if len(sections) == 1 and not has_complete_code_block:
-                    debug("Got non-completing section, waiting for more...")
-                    continue
 
                 queued_response_text = "" # Reset the queue and process the split sections
 
@@ -328,23 +331,18 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
                     if not section:
                         continue
 
-                    is_code_block = parser.is_file(section) or parser.is_snippet(section)
+                    is_code_block = re.match(parser.match_code_block(), section, flags=re.DOTALL)
+
+                    debug("")
+                    debug(f'is_code_block: {is_code_block}')
+                    debug("")
+
                     is_last_section = index == len(sections) - 1
 
                     if not is_code_block and is_last_section:
-                        debug("Checking for whole lines (not code block)...")
-                        lines = section.split('\n\n')
-                        if len(lines) > 1:
-                            debug("Whole lines found, printing...")
-                            last_line = lines[-1]
-                            everything_else = '\n\n'.join(lines[:-1])
-                            console.print(Markdown(everything_else))
-                            console.print()
-                            queued_response_text = last_line
-                            full_response_text += everything_else
-                        else:
-                            debug("No whole lines found, waiting for more...")
-                            queued_response_text = section
+                        # TODO: log \n\n lines like before
+                        debug("Last section is not a full code block, queueing...")
+                        queued_response_text += section
                         continue
 
                     if is_code_block:
@@ -352,8 +350,8 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
                         is_file = parser.is_file(section)
 
                         if is_file:
-                            # TODO: handle all the found files, not just the first one (edge case)
-                            file_path, version, file_content, language, part_id, part_total  = parser.find_files(section)[0]
+                            # TODO: loop through all the parts of the file not just grab the first, could be different versions
+                            file_path, version, file_content, language, part_id, part_total = parser.find_files(section)[0]
 
                             if part_total > 1:
                                 debug(f"Received chunk {part_id} for {file_path}")
@@ -375,7 +373,7 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
                                     debug(f"Waiting for more chunks of {file_path}")
                                     continue  # Important: Don't process incomplete chunks
                             else:
-                                # Regular file handling (no chunks).
+                                debug('Regular file handling (no chunks)')
                                 file_content = file_content.strip('\n')
                                 full_response_text += f"\n\n{parser.file_block(file_path, file_content)}\n\n"
                                 code = generate_diff(file_path, file_content.strip('\n'))
@@ -387,7 +385,7 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
                                 print_markdown_code(section)
 
                         else:
-                            # Snippet handling
+                            debug('Snippet handling')
                             file_path = None
                             language, code = parser.find_snippets(section)[0]
                             full_response_text += section
@@ -398,10 +396,11 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
 
             # Handle any remaining text in the queue (non-code block parts)
             if queued_response_text:
+                debug("Processing remaining queued text...")
                 # Check for incomplete file block
-                unfinished_files = parser.find_in_progress_files(queued_response_text)
-                if len(unfinished_files) > 0:
-                    debug("Incomplete file block(s) detected. Continuing...")
+                unfinished_file = parser.find_in_progress_file(queued_response_text)
+                if unfinished_file:
+                    debug(f"Incomplete file block for {unfinished_file} detected. Continuing...")
                     status.stop()
                     return True, queued_response_text
 
@@ -410,6 +409,16 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
                 queued_response_text = ""
 
         status.stop()
+
+        debug("")
+        debug("")
+        debug("")
+        debug("-------- Full response text START ------------------------------------------------------------------")
+        debug(full_response_text)
+        debug("-------- Full response text END ------------------------------------------------------------------")
+        debug("")
+        debug("")
+        debug("")
 
         end_time = time.time()
         duration = end_time - start_time
@@ -459,8 +468,8 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
     while True:
         try:
             # Check for incomplete file block *before* prompting for new input.
-            in_progress_files = parser.find_in_progress_files(queued_response_text)
-            if len(in_progress_files) > 0:
+            in_progress_file = parser.find_in_progress_file(queued_response_text)
+            if in_progress_file:
                 debug("Incomplete file block on initial entry. Continuing...")
                 force_continue, queued_response_text = send_request_to_ai(continue_request=True, continue_text=queued_response_text)
                 if force_continue:
