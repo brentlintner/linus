@@ -72,7 +72,12 @@ def find_files(content, parts=False):
             all_files[file_key].sort(key=lambda x: x[2]) # Sort by part
         result = []
         for key_tuple, parts_array in all_files.items():
-            result.append(list(key_tuple) + parts_array)
+            # HACK
+            joined_content = ''.join([part[0] for part in parts_array])
+            language = parts_array[-1][1]
+            part_ids = sorted([part[2] for part in parts_array])
+            parts = parts_array[-1][3]
+            result.append(list(key_tuple) + [joined_content, language, part_ids, parts])
         print()
         print("--------- find_files zipped ---------")
         print()
