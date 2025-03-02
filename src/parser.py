@@ -48,8 +48,7 @@ def safe_int(value, default=1):
 
 def find_files(content, parts=False):
     # TODO: get metadata first then extract key-value pairs
-    regex = rf'{FILE_METADATA_START}.*?\nPath: (.*?)\nLanguage: (.*?)\n(?:Version: (\d+)\n)(?:Part: (\d+)\n)(?:Parts: (\d+)\n).*?{FILE_METADATA_END}(.*?){END_OF_FILE}'
-    print(f"find_files regex: {regex}")
+    regex = rf'{FILE_METADATA_START}.*?\nPath: (.*?)\nLanguage: (.*?)\n(?:Version: (\d+)\n)(?:Part: (\d+)\n)(?:Parts: (\d+)\n).*?{FILE_METADATA_END}\n?(.*?)\n?{END_OF_FILE}'
     file_matches = re.finditer(regex, content, flags=re.DOTALL)
 
     all_file_parts =  [(
@@ -78,11 +77,6 @@ def find_files(content, parts=False):
             part_ids = sorted([part[2] for part in parts_array])
             parts = parts_array[-1][3]
             result.append(list(key_tuple) + [joined_content, language, part_ids, parts])
-        print()
-        print("--------- find_files zipped ---------")
-        print()
-        print(result)
-        print()
         return result
 
 def find_snippets(content):

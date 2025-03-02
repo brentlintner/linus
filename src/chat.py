@@ -49,15 +49,17 @@ def debug_logging():
 def debug(message):
     global debug_mode
     if debug_mode:
-        print(message)
+        message = f"DEBUG: {message}" if message else ""
+        console.print(message, style="bold yellow")
 
 def info(message):
     global verbose
     if verbose:
+        message = f"INFO: {message}" if message else ""
         console.print(message, style="bold")
 
 def error(message):
-    console.print(message, style="bold red")
+    console.print(f"ERROR: {message}", style="bold red")
 
 def print_markdown_code(code_block):
     console.print(Markdown(code_block, code_theme=EverforestDarkStyle))
@@ -174,7 +176,7 @@ class FilePartBuffer:
             return None
 
         sorted_parts = sorted(self.buffer[(file_path, version)].items())
-        full_content = ''.join(part_data for _, part_data in sorted_parts)
+        full_content = '\n'.join(part_data for _, part_data in sorted_parts)
         del self.buffer[(file_path, version)]
         del self.total_parts[(file_path, version)]
         return full_content
@@ -308,17 +310,9 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
 
                 queued_has_complete_code_block = re.search(parser.match_code_block(), queued_response_text, flags=re.DOTALL)
 
-                # TODO: look to the left of the first start, and log it
+                # TODO: if anything left of first code block, log it it
                 # queued_has_incomplete_file = parser.find_in_progress_file(queued_response_text)
                 # if queued_has_incomplete_file:
-
-                # debug("")
-                # debug("")
-                # debug("-------- QUEUED START ------------------------------------------------------------------")
-                # debug(queued_response_text)
-                # debug("-------- QUEUED END ------------------------------------------------------------------")
-                # debug("")
-                # debug("")
 
                 if not queued_has_complete_code_block:
                     debug("No complete code block detected, queueing...")
@@ -344,6 +338,7 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
 
                     if not is_code_block:
                         debug("Non-code block detected, processing...")
+                        debug("")
                         console.print(Markdown(section), end="")
                         continue
                     else:
@@ -351,9 +346,7 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
                         is_file = parser.is_file(section)
 
                         if is_file:
-                            debug('File handling')
-                            debug(parser.find_files(section))
-                            # TODO: loop through all the potential versions, (shouldn't be double parts in this loop though)
+                            # HACK: we can reasonably assume that we only have one part and version in this section
                             file_path, version, file_content, language, [part_id], part_total = parser.find_files(section)[0]
 
                             if part_total > 1:
@@ -367,6 +360,7 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
                                     is_diff = os.path.exists(file_path) and file_content != code
                                     language = "diff" if is_diff else parser.get_language_from_extension(file_path)
 
+                                    debug("")
                                     console.print(Markdown(f"#### {file_path}"))
                                     console.print()
                                     section = f"```{language}\n{code}\n```"
@@ -380,6 +374,7 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
                                 code = generate_diff(file_path, file_content.strip('\n'))
                                 is_diff = os.path.exists(file_path) and file_content != code
                                 language = "diff" if is_diff else parser.get_language_from_extension(file_path)
+                                debug("")
                                 console.print(Markdown(f"#### {file_path}"))
                                 console.print()
                                 section = f"```{language}\n{code}\n```"
@@ -389,6 +384,7 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
                             debug('Snippet handling')
                             file_path = None
                             language, code = parser.find_snippets(section)[0]
+                            debug("")
                             console.print(Markdown(f"#### {file_path or language}"))
                             console.print()
                             section = f"```{language}\n{code}\n```"
@@ -405,7 +401,9 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
                     status.stop()
                     return True, queued_response_text
 
-                print_markdown_code(queued_response_text)
+                debug("")
+                console.print(Markdown(queued_response_text))
+                console.print()
                 queued_response_text = ""
 
         status.stop()

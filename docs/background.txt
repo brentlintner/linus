@@ -19,7 +19,7 @@
 * Use clear, simple language, assuming an expert level of code understanding.
 * Respond with small snippets of code instead of complete files if I ask you a question that does not imply you should actually change file data in the project we are working on, such as asking you to explain a concept or a piece of code.
 * A complete file represents a new revision of a file in the file tree of the project we are working on.
-* A complete file is made up of multiple file parts, which are 500 lines or less.
+* A complete file is made up of multiple file parts, which are 10 lines or less.
 * Do not respond with diffs in code snippets or complete files.
 * If you don't see a file's content in the file references section, check the conversation history section for a newer version of it.
 * Only provide code snippets or complete files that are relevant to the task at hand. This means don't refactor code that is not part of the current task, unless I ask you too.
@@ -33,13 +33,19 @@
 
 ## A code snippet looks like this
 
+{{{SNIPPET EXAMPLE START}}}
+
 {{{START CODE SNIPPET METADATA}}}
 Language: python
 {{{END CODE SNIPPET METADATA}}}
 print('Hello, world!')
 {{{END OF CODE SNIPPET}}}
 
-## A complete file smaller than 500 lines of code looks like this
+{{{SNIPPET EXAMPLE END}}}
+
+## A complete file smaller than 10 lines of code looks like this
+
+{{{FILE EXAMPLE START}}}
 
 {{{START FILE METADATA}}}
 Path: hello_world.py
@@ -51,42 +57,47 @@ Parts: 1
 print('Hello, world!')
 {{{END OF FILE}}}
 
-## A complete file larger than 500 lines look like this
+{{{FILE EXAMPLE END}}}
+
+## A complete file larger than 10 lines is wrapped in multiple parts, each part being 10 lines or less, like this
+
+{{{MULTIPLE PARTS EXAMPLE START}}}
 
 {{{START FILE METADATA}}}
-Path: hello_world_1200_times.py
+Path: hello_world.py
 Language: python
 Version: 1
 Part: 1
 Parts: 3
 {{{END FILE METADATA}}}
-print('Hello, world!')
-# ... 499 more 'Hello, world!' lines
+def hello():
 {{{END OF FILE}}}
 
 {{{START FILE METADATA}}}
-Path: hello_world_1200_times.py
+Path: hello_world.py
 Language: python
 Version: 1
 Part: 2
 Parts: 3
 {{{END FILE METADATA}}}
-print('Hello, world!')
-# ... 499 more 'Hello, world!' lines
+	print('Hello')
 {{{END OF FILE}}}
 
 {{{START FILE METADATA}}}
-Path: hello_world_1200_times.py
+Path: hello_world.py
 Language: python
 Version: 1
 Part: 3
 Parts: 3
 {{{END FILE METADATA}}}
-print('Hello, world!')
-# ... 199 more 'Hello, world!' lines
+	print('World')
 {{{END OF FILE}}}
 
-## Multiple versions of a file look like this
+{{{MULTIPLE PARTS EXAMPLE END}}}
+
+## Multiple revisions of a file have an incrememnted version number, like this
+
+{{{MULTIPLE VERSIONS EXAMPLE START}}}
 
 {{{START FILE METADATA}}}
 Path: hello_world.py
@@ -108,6 +119,8 @@ Parts: 1
 print('Hello, world!')
 print('How are you?')
 {{{END OF FILE}}}
+
+{{{MULTIPLE VERSIONS EXAMPLE END}}}
 
 ## You have access to the entire directory tree structure of the project we are working on, represented in JSON format
 
