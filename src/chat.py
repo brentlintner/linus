@@ -1,3 +1,4 @@
+
 import os
 import sys
 import time
@@ -261,6 +262,195 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
         print(' ', flush=True)
         console.print("Project context refreshed.", style="bold yellow")
 
+    def should_exit(prompt_text):
+        return prompt_text.startswith('$exit')
+
+    def process_user_input(prompt_text):
+        """Processes user input, updating history and handling file references."""
+        if not prompt_text:
+            return
+
+        history.append(f'\n**Brent:**\n\n{prompt_text}\n')
+
+        file_references = parser.find_file_references(prompt_text)
+
+        for file_path in file_references:
+            if not os.path.isfile(file_path): continue
+
+            prune_file_history(file_path, history)
+
+            history.append(get_file_contents(file_path))
+
+    def send_request_to_ai(continue_request=False, continue_text=""):
+        """Sends a request to the AI and processes the streamed response."""
+        nonlocal queued_response_text
+
+        request_text = ''.join(history) + f'\n{parser.CONVERSATION_END_SEP}\n'
+
+        contents = [types.Part.from_text(text=request_text)]
+
+        start_time = time.time()
+
+        stream = client.models.generate_content_stream(model=GEMINI_MODEL, contents=contents)
+
+        full_response_text = ""
+        queued_response_text = continue_text  # Used for non-code block text
+
+        console.print()
+        with console.status("", spinner="point") as status:
+            for chunk in stream:
+                if not chunk.text:
+                    continue
+
+                queued_response_text += chunk.text
+
+                has_complete_code_block = re.match(parser.match_code_block(), queued_response_text, flags=re.DOTALL)
+
+                sections = re.split(parser.match_code_block(), queued_response_text, flags=re.DOTALL)
+
+                if has_complete_code_block:
+                    status.update(f"")
+                else:
+                    file_paths = parser.find_in_progress_files(queued_response_text)
+                    if len(file_paths) > 0:
+                        status.update(f"Linus is coding {','.join(file_paths)}...")
+                    else:
+                        status.update(f"Linus is typing...")
+
+                if len(sections) == 1 and not has_complete_code_block:
+                    debug("Got non-completing section, waiting for more...")
+                    continue
+
+                queued_response_text = "" # Reset the queue and process the split sections
+
+                for index, section in enumerate(sections):
+                    if not section:
+                        continue
+
+                    is_code_block = parser.is_file(section) or parser.is_snippet(section)
+                    is_last_section = index == len(sections) - 1
+
+                    if not is_code_block and is_last_section:
+                        debug("Checking for whole lines (not code block)...")
+                        lines = section.split('\n\n')
+                        if len(lines) > 1:
+                            debug("Whole lines found, printing...")
+                            last_line = lines[-1]
+                            everything_else = '\n\n'.join(lines[:-1])
+                            markdown = Markdown(everything_else, code_theme=EverforestDarkStyle)
+                            console.print(markdown)
+                            console.print()
+                            queued_response_text = last_line
+                            full_response_text += everything_else
+                        else:
+                            debug("No whole lines found, waiting for more...")
+                            queued_response_text = section
+                        continue
+
+                    if is_code_block:
+                        debug("Code block detected, processing...")
+                        is_file = parser.is_file(section)
+
+                        if is_file:
+                            file_path, file_content, language, chunk_id = parser.find_files(section)[0]
+
+                            if chunk_id:
+                                debug(f"Received chunk {chunk_id} for {file_path}")
+                                file_chunk_buffer.add_chunk(file_path, file_content, chunk_id)
+
+                                if file_chunk_buffer.is_complete(file_path):
+                                    debug(f"All chunks received for {file_path}")
+                                    file_content = (file_chunk_buffer.assemble(file_path) or "").strip('\n')
+                                    full_response_text += f"\n\n{parser.file_block(file_path, file_content)}\n\n"
+                                    code = generate_diff(file_path, file_content)
+                                    is_diff = os.path.exists(file_path) and file_content != code
+                                    language = "diff" if is_diff else parser.get_language_from_extension(file_path)
+
+                                    console.print(Markdown(f"#### {file_path}"))
+                                    console.print()
+                                    section = f"```{language}\n{code}\n```"
+
+                                    console.print(Markdown(section, code_theme=EverforestDarkStyle))
+                                    console.print()
+                                else:
+                                    debug(f"Waiting for more chunks of {file_path}")
+                                    continue  # Important: Don't process incomplete chunks
+                            else:
+                                # Regular file handling (no chunks).
+                                file_content = file_content.strip('\n')
+                                full_response_text += f"\n\n{parser.file_block(file_path, file_content)}\n\n"
+                                code = generate_diff(file_path, file_content.strip('\n'))
+                                is_diff = os.path.exists(file_path) and file_content != code
+                                language = "diff" if is_diff else parser.get_language_from_extension(file_path)
+                                console.print(Markdown(f"#### {file_path}"))
+                                console.print()
+                                section = f"```{language}\n{code}\n```"
+                                console.print(Markdown(section, code_theme=EverforestDarkStyle))
+                                console.print()
+
+                        else:
+                            # Snippet handling
+                            file_path = None
+                            language, code = parser.find_snippets(section)[0]
+                            full_response_text += section
+                            console.print(Markdown(f"#### {file_path or language}"))
+                            console.print()
+                            section = f"```{language}\n{code}\n```"
+                            console.print(Markdown(section, code_theme=EverforestDarkStyle))
+                            console.print()
+
+            # Handle any remaining text in the queue (non-code block parts)
+            if queued_response_text:
+                # Check for incomplete file block
+                unfinished_files = parser.find_in_progress_files(queued_response_text)
+                if len(unfinished_files) > 0:
+                    debug("Incomplete file block(s) detected. Continuing...")
+                    status.stop()
+                    return True, queued_response_text
+
+                full_response_text += queued_response_text
+                markdown = Markdown(queued_response_text, code_theme=EverforestDarkStyle)
+                console.print(markdown)
+                console.print()
+                queued_response_text = ""
+
+        status.stop()
+
+        end_time = time.time()
+        duration = end_time - start_time
+        # --- History and File Writing ---
+
+        # History prune first before appending, but also after the response is fully processed
+        for file_path, file_content, _, chunk_id in parser.find_files(full_response_text):
+            prune_file_history(file_path, history)
+
+        history.append(f'\n**Linus:**\n\n{full_response_text}\n')
+
+        if writeable:
+            # We iterate over the *original* full_response_text. This is important
+            # because we want to write *all* file chunks, not just complete files.
+            for file_path, file_content, _, _ in parser.find_files(full_response_text):
+                info(f":w {file_path}")
+                directory = os.path.dirname(file_path)
+                if directory and not os.path.exists(directory):
+                    os.makedirs(directory)
+
+                with open(file_path, 'w') as f:
+                    f.write(file_content)
+
+            if len(parser.find_files(full_response_text)) > 0:
+                print()
+
+        if history_filename:
+            with open(history_filename, 'w') as f:
+                f.write(''.join(history))
+
+        if verbose:
+            total_characters, total_lines = calculate_history_stats()
+            info(f"{total_lines} lines, {total_characters} characters, {duration:.2f}s ({GEMINI_MODEL})")
+
+        return False, queued_response_text
+
     if verbose:
         end_time = time.time()
         duration = end_time - start_time
@@ -268,11 +458,21 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
         info(f"{total_lines} lines, {total_characters} characters, {duration:.2f}s ({GEMINI_MODEL})")
 
     file_chunk_buffer = FileChunkBuffer()
+    queued_response_text = ""
 
     while True:
         try:
+            # Check for incomplete file block *before* prompting for new input.
+            in_progress_files = parser.find_in_progress_files(queued_response_text)
+            if len(in_progress_files) > 0:
+                debug("Incomplete file block on initial entry. Continuing...")
+                force_continue, queued_response_text = send_request_to_ai(continue_request=True, continue_text=queued_response_text)
+                if force_continue:
+                    continue
+
             prompt_text = session.prompt("> ")
-            if prompt_text.startswith('$exit'):
+
+            if should_exit(prompt_text):
                 break
 
             if prompt_text.startswith('$reset'):
@@ -283,183 +483,15 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
                 refresh_project_context()
                 continue
 
-            if prompt_text == '':
+            if prompt_text.startswith('$continue'):
+                process_user_input("")  # Explicitly pass empty string
+                send_request_to_ai(continue_request=True)
                 continue
 
-            history.append(f'\n**Brent:**\n\n{prompt_text}\n')
-
-            file_references = parser.find_file_references(prompt_text)
-
-            for file_path in file_references:
-                if not os.path.isfile(file_path): continue
-
-                prune_file_history(file_path, history)
-
-                history.append(get_file_contents(file_path))
-
-            request_text = ''.join(history) + f'\n{parser.CONVERSATION_END_SEP}\n'
-
-            contents = [types.Part.from_text(text=request_text)]
-
-            start_time = time.time()
-
-            # config = types.GenerateContentConfig(
-                # max_output_tokens=8000)
-
-            stream = client.models.generate_content_stream(model=GEMINI_MODEL, contents=contents)
-
-            full_response_text = ""
-            queued_response_text = ""  # Used for non-code block text
-
-            console.print()
-            with console.status("", spinner="point") as status:
-                for chunk in stream:
-                    if not chunk.text:
-                        continue
-
-                    queued_response_text += chunk.text
-
-                    is_code_block = re.match(parser.match_code_block(), queued_response_text, flags=re.DOTALL)
-
-                    sections = re.split(parser.match_code_block(), queued_response_text, flags=re.DOTALL)
-
-                    if is_code_block:
-                        file_paths = parser.find_in_progress_files(queued_response_text)
-                        if len(file_paths) > 0:
-                            status.update(f"Linus is coding {','.join(file_paths)}...")
-                        else:
-                            status.update(f"Linus is coding...")
-                    else:
-                        status.update(f"Linus is typing...")
-
-                    if len(sections) == 1 and not is_code_block:
-                        if is_code_block:
-                            debug("Waiting for more file content...")
-                        else:
-                            debug("Waiting for more response content...")
-                        continue
-
-                    queued_response_text = "" # Reset the queue and process the split sections
-
-                    for index, section in enumerate(sections):
-                        if not section:
-                            continue
-
-                        is_code_block = parser.is_file(section) or parser.is_snippet(section)
-                        is_last_section = index == len(sections) - 1
-
-                        if not is_code_block and is_last_section:
-                            debug("Checking for whole lines (not code block)...")
-                            lines = section.split('\n\n')
-                            if len(lines) > 1:
-                                debug("Whole lines found, printing...")
-                                last_line = lines[-1]
-                                everything_else = '\n\n'.join(lines[:-1])
-                                markdown = Markdown(everything_else, code_theme=EverforestDarkStyle)
-                                console.print(markdown)
-                                console.print()
-                                queued_response_text = last_line
-                                full_response_text += everything_else
-                            else:
-                                debug("No whole lines found, waiting for more...")
-                                queued_response_text = section
-                            continue
-
-                        if is_code_block:
-                            debug("Code block detected, processing...")
-                            is_file = parser.is_file(section)
-
-                            if is_file:
-                                file_path, file_content, language, chunk_id = parser.find_files(section)[0]
-
-                                if chunk_id:
-                                    debug(f"Received chunk {chunk_id} for {file_path}")
-                                    file_chunk_buffer.add_chunk(file_path, file_content, chunk_id)
-
-                                    if file_chunk_buffer.is_complete(file_path):
-                                        debug(f"All chunks received for {file_path}")
-                                        file_content = (file_chunk_buffer.assemble(file_path) or "").strip('\n')
-                                        full_response_text += f"\n\n{parser.file_block(file_path, file_content)}\n\n"
-                                        code = generate_diff(file_path, file_content)
-                                        is_diff = os.path.exists(file_path) and file_content != code
-                                        language = "diff" if is_diff else parser.get_language_from_extension(file_path)
-
-                                        console.print(Markdown(f"#### {file_path}"))
-                                        console.print()
-                                        section = f"```{language}\n{code}\n```"
-
-                                        console.print(Markdown(section, code_theme=EverforestDarkStyle))
-                                        console.print()
-                                    else:
-                                        debug(f"Waiting for more chunks of {file_path}")
-                                        continue  # Important: Don't process incomplete chunks
-                                else:
-                                    # Regular file handling (no chunks).
-                                    file_content = file_content.strip('\n')
-                                    full_response_text += f"\n\n{parser.file_block(file_path, file_content)}\n\n"
-                                    code = generate_diff(file_path, file_content.strip('\n'))
-                                    is_diff = os.path.exists(file_path) and file_content != code
-                                    language = "diff" if is_diff else parser.get_language_from_extension(file_path)
-                                    console.print(Markdown(f"#### {file_path}"))
-                                    console.print()
-                                    section = f"```{language}\n{code}\n```"
-                                    console.print(Markdown(section, code_theme=EverforestDarkStyle))
-                                    console.print()
-
-                            else:
-                                # Snippet handling
-                                file_path = None
-                                language, code = parser.find_snippets(section)[0]
-                                full_response_text += section
-                                console.print(Markdown(f"#### {file_path or language}"))
-                                console.print()
-                                section = f"```{language}\n{code}\n```"
-                                console.print(Markdown(section, code_theme=EverforestDarkStyle))
-                                console.print()
-
-                # Handle any remaining text in the queue (non-code block parts)
-                if queued_response_text:
-                    full_response_text += queued_response_text
-                    markdown = Markdown(queued_response_text, code_theme=EverforestDarkStyle)
-                    console.print(markdown)
-                    console.print()
-                    queued_response_text = ""
-
-            status.stop()
-
-            end_time = time.time()
-            duration = end_time - start_time
-
-            # --- History and File Writing ---
-
-            # History prune first before appending, but also after the response is fully processed
-            for file_path, file_content, _, chunk_id in parser.find_files(full_response_text):
-                prune_file_history(file_path, history)
-
-            history.append(f'\n**Linus:**\n\n{full_response_text}\n')
-
-            if writeable:
-                # We iterate over the *original* full_response_text. This is important
-                # because we want to write *all* file chunks, not just complete files.
-                for file_path, file_content, _, _ in parser.find_files(full_response_text):
-                    info(f":w {file_path}")
-                    directory = os.path.dirname(file_path)
-                    if directory and not os.path.exists(directory):
-                        os.makedirs(directory)
-
-                    with open(file_path, 'w') as f:
-                        f.write(file_content)
-
-                if len(parser.find_files(full_response_text)) > 0:
-                    print()
-
-            if history_filename:
-                with open(history_filename, 'w') as f:
-                    f.write(''.join(history))
-
-            if verbose:
-                total_characters, total_lines = calculate_history_stats()
-                info(f"{total_lines} lines, {total_characters} characters, {duration:.2f}s ({GEMINI_MODEL})")
+            process_user_input(prompt_text)
+            force_continue, queued_response_text = send_request_to_ai()
+            if force_continue:
+                continue
 
         except KeyboardInterrupt:
             if input("\nReally quit? (y/n) ").lower() == 'y':
@@ -470,4 +502,3 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
         except Exception:
             print("Linus has glitched!\n")
             console.print_exception(show_locals=True)
-
