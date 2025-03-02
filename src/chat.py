@@ -303,10 +303,10 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
 
             start_time = time.time()
 
-            config = types.GenerateContentConfig(
-                max_output_tokens=8000)
+            # config = types.GenerateContentConfig(
+                # max_output_tokens=8000)
 
-            stream = client.models.generate_content_stream(model=GEMINI_MODEL, contents=contents, config=config)
+            stream = client.models.generate_content_stream(model=GEMINI_MODEL, contents=contents)
 
             full_response_text = ""
             queued_response_text = ""  # Used for non-code block text
