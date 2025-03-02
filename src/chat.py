@@ -1,4 +1,3 @@
-
 import os
 import sys
 import time
@@ -315,7 +314,6 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
                     if not chunk.text:
                         continue
 
-                    full_response_text += chunk.text
                     queued_response_text += chunk.text
 
                     sections = re.split(parser.match_code_block(), queued_response_text, flags=re.DOTALL)
@@ -324,7 +322,7 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
                         debug("Waiting for more content...")
                         continue
 
-                    queued_response_text = ""
+                    queued_response_text = "" # Reset the queue and process the split sections
 
                     for index, section in enumerate(sections):
                         if not section:
@@ -334,8 +332,20 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
                         is_last_section = index == len(sections) - 1
 
                         if not is_code_block and is_last_section:
-                            debug("Waiting for more content (not code block)...")
-                            queued_response_text = section
+                            debug("Checking for whole lines (not code block)...")
+                            lines = section.split('\n\n')
+                            if len(lines) > 1:
+                                debug("Whole lines found, printing...")
+                                last_line = lines[-1]
+                                everything_else = '\n\n'.join(lines[:-1])
+                                markdown = Markdown(everything_else, code_theme=EverforestDarkStyle)
+                                console.print(markdown)
+                                console.print()
+                                queued_response_text = last_line
+                                full_response_text += everything_else
+                            else:
+                                debug("No whole lines found, waiting for more...")
+                                queued_response_text = section
                             continue
 
                         if is_code_block:
@@ -351,7 +361,8 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
 
                                     if file_chunk_buffer.is_complete(file_path):
                                         debug(f"All chunks received for {file_path}")
-                                        file_content = file_chunk_buffer.assemble(file_path)
+                                        file_content = (file_chunk_buffer.assemble(file_path) or "").strip('\n')
+                                        full_response_text += f"\n\n{parser.file_block(file_path, file_content)}\n\n"
                                         code = generate_diff(file_path, file_content)
                                         is_diff = os.path.exists(file_path) and file_content != code
                                         language = "diff" if is_diff else parser.get_language_from_extension(file_path)
@@ -367,7 +378,9 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
                                         continue  # Important: Don't process incomplete chunks
                                 else:
                                     # Regular file handling (no chunks).
-                                    code = generate_diff(file_path, file_content)
+                                    file_content = file_content.strip('\n')
+                                    full_response_text += f"\n\n{parser.file_block(file_path, file_content)}\n\n"
+                                    code = generate_diff(file_path, file_content.strip('\n'))
                                     is_diff = os.path.exists(file_path) and file_content != code
                                     language = "diff" if is_diff else parser.get_language_from_extension(file_path)
                                     console.print(Markdown(f"#### {file_path}"))
@@ -380,6 +393,7 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
                                 # Snippet handling
                                 file_path = None
                                 language, code = parser.find_snippets(section)[0]
+                                full_response_text += section
                                 console.print(Markdown(f"#### {file_path or language}"))
                                 console.print()
                                 section = f"```{language}\n{code}\n```"
@@ -388,6 +402,7 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
 
                 # Handle any remaining text in the queue (non-code block parts)
                 if queued_response_text:
+                    full_response_text += queued_response_text
                     markdown = Markdown(queued_response_text, code_theme=EverforestDarkStyle)
                     console.print(markdown)
                     console.print()
@@ -399,14 +414,10 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
             duration = end_time - start_time
 
             # --- History and File Writing ---
-            #  *Crucially*, after the *entire* response has been processed and printed.
 
-            # History pruning and appending happens *after* processing the full response
+            # History prune first before appending, but also after the response is fully processed
             for file_path, file_content, _, chunk_id in parser.find_files(full_response_text):
                 prune_file_history(file_path, history)
-                # If it's a complete file (no chunk ID), add it to the history
-                if not chunk_id:
-                    history.append(get_file_contents(file_path))
 
             history.append(f'\n**Linus:**\n\n{full_response_text}\n')
 

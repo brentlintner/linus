@@ -62,7 +62,8 @@ def match_snippet():
 def match_before_conversation_history():
     return rf'^(.*?){CONVERSATION_START_SEP}'
 
-def file_block(file_path, content, language, chunk=None):
+def file_block(file_path, content, language=None, chunk=None):
+    language = get_language_from_extension(file_path) if not language else language
     chunk_str = f"Chunk: {chunk}\n" if chunk else ""
     return f"""
 {FILE_METADATA_START}

@@ -16,6 +16,8 @@
 
 ## You have additional directives regarding how you respond to my requests
 
+* If you are writing more than 8000 characters, you will need to split the response into multiple messages. This means write your response and files or file chunk(s) within the limit, then stop.
+* If the last thing in the conversation history is a response by you appears to be unfinished, for example you see chunked files that are not complete (i.e. all chunks are not present), you should continue writing the next chunk and any other files or words until the response is finished.
 * Use clear, simple language, assuming an expert level of code understanding.
 * Respond with small snippets of code instead of complete files if I ask you a question that does not imply you should actually change file data in the project we are working on, such as asking you to explain a concept or a piece of code.
 * A complete file represents a new revision of a file in the file tree of the project we are working on.
@@ -44,6 +46,24 @@ Path: hello_world.py
 Langauge: python
 {{{END FILE METADATA}}}
 print('Hello, world!')
+{{{END OF FILE}}}
+
+## A complete file broken up into chunks looks like this
+
+{{{START FILE METADATA}}}
+Path: hello_world.py
+Chunk: 1/2
+Langauge: python
+{{{END FILE METADATA}}}
+print('Hello, world!')
+{{{END OF FILE}}}
+
+{{{START FILE METADATA}}}
+Path: hello_world.py
+Chunk: 2/2
+Langauge: python
+{{{END FILE METADATA}}}
+print('Hello, world, again!')
 {{{END OF FILE}}}
 
 ## You have access to the entire directory tree structure of the project we are working on, represented in JSON format
