@@ -59,6 +59,10 @@ def info(message):
 def error(message):
     console.print(message, style="bold red")
 
+def print_markdown_code(code_block):
+    console.print(Markdown(code_block, code_theme=EverforestDarkStyle))
+    console.print()
+
 def tail(filename, n=10):
     try:
         with open(filename) as f:
@@ -150,30 +154,29 @@ def list_available_models():
     for m in client.models.list():
         console.print(f"{(m.name or '').replace('models/', '')} ({m.description})")
 
-class FileChunkBuffer:
+class FilePartBuffer:
     def __init__(self):
         self.buffer = defaultdict(lambda: defaultdict(str))
-        self.total_chunks = {}
+        self.total_parts = {}
 
-    def add_chunk(self, file_path, chunk_data, chunk_id):
-        current_chunk, total_chunks = map(int, chunk_id.split('/'))
-        self.buffer[file_path][current_chunk] = chunk_data
-        self.total_chunks[file_path] = total_chunks
-        debug(f"Added chunk {current_chunk} of {total_chunks} for {file_path}")
+    def add(self, file_path, part_data, current_part, total_parts, version):
+        self.buffer[(file_path, version)][current_part] = part_data
+        self.total_parts[(file_path, version)] = total_parts
+        debug(f"Added part {current_part} of {total_parts} for {file_path} (v{version})")
 
-    def is_complete(self, file_path):
-        if file_path not in self.total_chunks:
+    def is_complete(self, file_path, version):
+        if (file_path, version) not in self.total_parts:
             return False
-        return len(self.buffer[file_path]) == self.total_chunks[file_path]
+        return len(self.buffer[(file_path, version)]) == self.total_parts[(file_path, version)]
 
-    def assemble(self, file_path):
-        if not self.is_complete(file_path):
+    def assemble(self, file_path, version):
+        if not self.is_complete(file_path, version):
             return None
 
-        sorted_chunks = sorted(self.buffer[file_path].items())
-        full_content = ''.join(chunk_data for _, chunk_data in sorted_chunks)
-        del self.buffer[file_path]
-        del self.total_chunks[file_path]
+        sorted_parts = sorted(self.buffer[(file_path, version)].items())
+        full_content = ''.join(part_data for _, part_data in sorted_parts)
+        del self.buffer[(file_path, version)]
+        del self.total_parts[(file_path, version)]
         return full_content
 
 def coding_repl(resume=False, interactive=False, writeable=False, ignore_patterns=None, include_files=False):
@@ -198,7 +201,7 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
 
         files = parser.find_files(recap)
 
-        for file_path, _, _, _ in files:
+        for file_path, _, _, _, _, _ in files:
             print(f"Reading file: {file_path}")
             print()
             language = parser.get_language_from_extension(file_path)
@@ -214,10 +217,7 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
             recap,
             flags=re.DOTALL)
 
-        markdown = Markdown(recap, code_theme=EverforestDarkStyle)
-
-        console.print(markdown)
-        console.print()
+        print_markdown_code(recap)
     else:
         # Start fresh, but *only* if no history file exists *and* resume is true.  Otherwise, we're in a new session.
         if not previous_session and resume:
@@ -277,7 +277,8 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
         for file_path in file_references:
             if not os.path.isfile(file_path): continue
 
-            prune_file_history(file_path, history)
+            # TODO
+            # prune_file_history(file_path, history)
 
             history.append(get_file_contents(file_path))
 
@@ -337,8 +338,7 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
                             debug("Whole lines found, printing...")
                             last_line = lines[-1]
                             everything_else = '\n\n'.join(lines[:-1])
-                            markdown = Markdown(everything_else, code_theme=EverforestDarkStyle)
-                            console.print(markdown)
+                            console.print(Markdown(everything_else))
                             console.print()
                             queued_response_text = last_line
                             full_response_text += everything_else
@@ -352,15 +352,16 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
                         is_file = parser.is_file(section)
 
                         if is_file:
-                            file_path, file_content, language, chunk_id = parser.find_files(section)[0]
+                            # TODO: handle all the found files, not just the first one (edge case)
+                            file_path, version, file_content, language, part_id, part_total  = parser.find_files(section)[0]
 
-                            if chunk_id:
-                                debug(f"Received chunk {chunk_id} for {file_path}")
-                                file_chunk_buffer.add_chunk(file_path, file_content, chunk_id)
+                            if part_total > 1:
+                                debug(f"Received chunk {part_id} for {file_path}")
+                                file_part_buffer.add(file_path, file_content, part_id, part_total, version)
 
-                                if file_chunk_buffer.is_complete(file_path):
-                                    debug(f"All chunks received for {file_path}")
-                                    file_content = (file_chunk_buffer.assemble(file_path) or "").strip('\n')
+                                if file_part_buffer.is_complete(file_path, version):
+                                    debug(f"All chunks received for {file_path} (v{version})")
+                                    file_content = (file_part_buffer.assemble(file_path, version) or "").strip('\n')
                                     full_response_text += f"\n\n{parser.file_block(file_path, file_content)}\n\n"
                                     code = generate_diff(file_path, file_content)
                                     is_diff = os.path.exists(file_path) and file_content != code
@@ -369,9 +370,7 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
                                     console.print(Markdown(f"#### {file_path}"))
                                     console.print()
                                     section = f"```{language}\n{code}\n```"
-
-                                    console.print(Markdown(section, code_theme=EverforestDarkStyle))
-                                    console.print()
+                                    print_markdown_code(section)
                                 else:
                                     debug(f"Waiting for more chunks of {file_path}")
                                     continue  # Important: Don't process incomplete chunks
@@ -385,8 +384,7 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
                                 console.print(Markdown(f"#### {file_path}"))
                                 console.print()
                                 section = f"```{language}\n{code}\n```"
-                                console.print(Markdown(section, code_theme=EverforestDarkStyle))
-                                console.print()
+                                print_markdown_code(section)
 
                         else:
                             # Snippet handling
@@ -396,8 +394,7 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
                             console.print(Markdown(f"#### {file_path or language}"))
                             console.print()
                             section = f"```{language}\n{code}\n```"
-                            console.print(Markdown(section, code_theme=EverforestDarkStyle))
-                            console.print()
+                            print_markdown_code(section)
 
             # Handle any remaining text in the queue (non-code block parts)
             if queued_response_text:
@@ -409,9 +406,7 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
                     return True, queued_response_text
 
                 full_response_text += queued_response_text
-                markdown = Markdown(queued_response_text, code_theme=EverforestDarkStyle)
-                console.print(markdown)
-                console.print()
+                print_markdown_code(queued_response_text)
                 queued_response_text = ""
 
         status.stop()
@@ -421,15 +416,16 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
         # --- History and File Writing ---
 
         # History prune first before appending, but also after the response is fully processed
-        for file_path, file_content, _, chunk_id in parser.find_files(full_response_text):
-            prune_file_history(file_path, history)
+        # for file_path, version, file_content, language, part_id, parts_total in parser.find_files(full_response_text):
+            # TODO
+            # prune_file_history(file_path, history)
 
         history.append(f'\n**Linus:**\n\n{full_response_text}\n')
 
         if writeable:
             # We iterate over the *original* full_response_text. This is important
             # because we want to write *all* file chunks, not just complete files.
-            for file_path, file_content, _, _ in parser.find_files(full_response_text):
+            for file_path, _, file_content, _, _, _ in parser.find_files(full_response_text):
                 info(f":w {file_path}")
                 directory = os.path.dirname(file_path)
                 if directory and not os.path.exists(directory):
@@ -457,7 +453,7 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
         total_characters, total_lines = calculate_history_stats()
         info(f"{total_lines} lines, {total_characters} characters, {duration:.2f}s ({GEMINI_MODEL})")
 
-    file_chunk_buffer = FileChunkBuffer()
+    file_part_buffer = FilePartBuffer()
     queued_response_text = ""
 
     while True:
