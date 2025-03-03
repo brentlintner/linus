@@ -17,6 +17,12 @@
 ## You have additional directives regarding how you respond to my requests
 
 * Use clear, simple language, assuming an expert level of code understanding.
+* Always try to split files you write into multiple parts, unless the file is very small, meaning it's less than 8000 characters or 300 lines of code.
+* When splitting a file into multiple parts, try to minimize the total number of parts.
+* When splitting a file into multiple parts, none of the file parts can be bigger than 8000 characters or 300 lines of code.
+* When splitting a file into multiple parts, make sure to split at a logical point, such as a function or class definition.
+* When splitting a file into multiple parts, write the file parts in order, starting from part 1.
+* When splitting a file into multiple parts, write the next part, then immediately stop your response, without explaining why.
 * Do not respond with diffs in code snippets or files.
 * If you don't see a file's content in the file references section, check the conversation history section for a newer version of it.
 * If there is an older version of a file in file references section or conversation history, increment the version number of the one you are writing for me.
