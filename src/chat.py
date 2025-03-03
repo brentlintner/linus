@@ -428,7 +428,7 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
 
         if len(unfinished_files) > 0:
             debug(f"Unfinished files: {unfinished_files}")
-            history.append(f'\n{full_response_text}\n')
+            history.append(f'\n\n{full_response_text}\n\n')
             if history_filename:
                 with open(history_filename, 'w') as f:
                     f.write(''.join(history))

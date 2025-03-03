@@ -1,24 +1,19 @@
-                           │   model_version='gemini-2.0-pro-exp-02-05',                │ │
-│ │                           │   prompt_feedback=None,                                    │ │
-│ │                           │   usage_metadata=GenerateContentResponseUsageMetadata(     │ │
-│ │                           │   │   cached_content_token_count=None,                     │ │
-│ │                           │   │   candidates_token_count=267,                          │ │
-│ │                           │   │   prompt_token_count=15598,                            │ │
-│ │                           │   │   total_token_count=15865                              │ │
-│ │                           │   ),
-
-
 # Project Management
 
 Anything related to the project management of the project, such as tracking issues, features, bugs, and chores.
 
 ## Current
 
-* Log token metadata on each response
-* Force continue if a half file block is in the response text
-* Print linus is coding file, typing etc
-
 ## Backlog
+
+* Log token metadata on each response (usage_metadata=GenerateContentResponseUsageMetadata)
+* Print Linus is coding file, typing etc
+* Bug: Prune is disable right now
+* Bug: If continuing from a half done file, bring over the remaining queued response
+* Bug: Sometimes the model doesn't write within the constraints of the output
+  * Turn down temperature for more focused responses, maybe helps wrapping?
+  * Force continue if a half file block is in the response text
+  * Rename Part to Chunk?
 
 * Use sqlite to store history, file, and project data
 * Ignoring Files
