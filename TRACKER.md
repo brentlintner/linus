@@ -4,6 +4,8 @@ Anything related to the project management of the project, such as tracking issu
 
 ## Current
 
+Bug: Code snippets are not pretty printed properly (not matched)?
+
 ## Backlog
 
 * Log token metadata on each response (usage_metadata=GenerateContentResponseUsageMetadata)
