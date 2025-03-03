@@ -20,6 +20,7 @@ Anything related to the project management of the project, such as tracking issu
 * Bug: Prune is disable right now
 * Bug: If continuing from a half done file, bring over the remaining queued response
 
+* Explore getting the LLM to consistently examine it's changes and consider if it made any mistakes
 * Use sqlite to store history, file, and project data
 * Ignoring Files
   * Only ignore from gitignore (and DRY up ignore code)
