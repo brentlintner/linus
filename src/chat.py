@@ -424,7 +424,7 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
         # If either of this is the case, keep track, and only print the Linus part once
         files = parser.find_files(full_response_text)
         files_with_parts = [(file_path, part_ids, parts) for file_path, _, _, _, part_ids, parts in files]
-        unfinished_files = [file_path for file_path, part_ids, parts in files_with_parts if not len(list(part_ids)) == parts or list(part_ids) is list(parts)]
+        unfinished_files = [(file_path, part_ids, parts) for file_path, part_ids, parts in files_with_parts if parts not in part_ids]
 
         if len(unfinished_files) > 0:
             debug(f"Unfinished files: {unfinished_files}")
