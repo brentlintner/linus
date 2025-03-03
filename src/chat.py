@@ -423,8 +423,11 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
         # Do this both for not all parts and cut off (i.e model messed up and needs to be re-fed)
         # If either of this is the case, keep track, and only print the Linus part once
         files = parser.find_files(full_response_text)
-        unfinished_files = [file_path for file_path, _, version, _, _, _ in files if not file_part_buffer.is_complete(file_path, version)]
+        files_with_parts = [(file_path, part_ids, parts) for file_path, _, _, _, part_ids, parts in files]
+        unfinished_files = [file_path for file_path, part_ids, parts in files_with_parts if not len(list(part_ids)) == parts or list(part_ids) is list(parts)]
+
         if len(unfinished_files) > 0:
+            debug(f"Unfinished files: {unfinished_files}")
             history.append(f'\n{full_response_text}\n')
             if history_filename:
                 with open(history_filename, 'w') as f:
@@ -434,6 +437,7 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
         history.append(f'\n**Linus:**\n\n{full_response_text}\n')
 
         if writeable:
+            # Assume no parts here because we've force continued above until we had them all
             found_files = parser.find_files(full_response_text)
             # We iterate over the *original* full_response_text. This is important
             # because we want to write *all* file chunks, not just complete files.
