@@ -4,18 +4,21 @@ Anything related to the project management of the project, such as tracking issu
 
 ## Current
 
-Bug: Code snippets are not pretty printed properly (not matched)?
+* Bug: Sometimes the model doesn't write within the constraints of the output
+  * Turn down temperature for more focused responses, maybe helps wrapping? (SET TO 0.4 to 0.6)
+  * Update prompt (DONE)
+  * Rename Part to Chunk?
+* As the model produces the output, the library can monitor the token count live (show in status if verbose)
+    * Log token metadata on each response (usage_metadata=GenerateContentResponseUsageMetadata)
+* If the token count reaches a limit, cut off the model, finish the wrapper if it's a file, show a warning, and force continue
+* Print Linus is coding file, typing etc
+* Bug: It will stop after writing all the parts, and not continue especially if it needs to write another file
+* Bug: Code snippets are not pretty printed properly (not matched)?
 
 ## Backlog
 
-* Log token metadata on each response (usage_metadata=GenerateContentResponseUsageMetadata)
-* Print Linus is coding file, typing etc
 * Bug: Prune is disable right now
 * Bug: If continuing from a half done file, bring over the remaining queued response
-* Bug: Sometimes the model doesn't write within the constraints of the output
-  * Turn down temperature for more focused responses, maybe helps wrapping?
-  * Force continue if a half file block is in the response text
-  * Rename Part to Chunk?
 
 * Use sqlite to store history, file, and project data
 * Ignoring Files
