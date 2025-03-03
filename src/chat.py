@@ -297,7 +297,6 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
         full_response_text = ""
         queued_response_text = ""
 
-        console.print()
         with console.status("Linus is thinking...", spinner="point") as status:
             for chunk in stream:
                 if not chunk.text:
@@ -338,7 +337,6 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
 
                     if not is_code_block:
                         debug("Non-code block detected, processing...")
-                        debug("")
                         console.print(Markdown(section), end="")
                         continue
                     else:
@@ -360,9 +358,8 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
                                     is_diff = os.path.exists(file_path) and file_content != code
                                     language = "diff" if is_diff else parser.get_language_from_extension(file_path)
 
-                                    debug("")
-                                    console.print(Markdown(f"#### {file_path}"))
                                     console.print()
+                                    console.print(Markdown(f"#### {file_path}"))
                                     section = f"```{language}\n{code}\n```"
                                     print_markdown_code(section)
                                 else:
@@ -370,13 +367,11 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
                                     continue  # Important: Don't process incomplete chunks
                             else:
                                 debug('Regular file handling (no chunks)')
-                                file_content = file_content.strip('\n')
                                 code = generate_diff(file_path, file_content.strip('\n'))
                                 is_diff = os.path.exists(file_path) and file_content != code
                                 language = "diff" if is_diff else parser.get_language_from_extension(file_path)
-                                debug("")
-                                console.print(Markdown(f"#### {file_path}"))
                                 console.print()
+                                console.print(Markdown(f"#### {file_path}"))
                                 section = f"```{language}\n{code}\n```"
                                 print_markdown_code(section)
 
@@ -384,9 +379,8 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
                             debug('Snippet handling')
                             file_path = None
                             language, code = parser.find_snippets(section)[0]
-                            debug("")
-                            console.print(Markdown(f"#### {file_path or language}"))
                             console.print()
+                            console.print(Markdown(f"#### {file_path or language}"))
                             section = f"```{language}\n{code}\n```"
                             print_markdown_code(section)
 
@@ -401,6 +395,7 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
                     # return True, queued_response_text
 
                 debug("Processing remaining queued text...")
+                console.print()
                 console.print(Markdown(queued_response_text.strip('\n')))
                 console.print()
                 queued_response_text = ""

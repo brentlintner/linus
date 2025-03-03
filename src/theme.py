@@ -15,7 +15,7 @@ from pygments.token import (
 class EverforestDarkStyle(Style):
     name = "everforest-dark"
 
-    background_color = "#0f0f0f"
+    background_color = None
     line_number_color = "#627e79"
 
     styles = {
