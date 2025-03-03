@@ -67,7 +67,7 @@ def create_prompt_session(interactive):
 
     if interactive:
         file_completer = FuzzyCompleter(FilePathCompleter())
-        command_completer = FuzzyCompleter(CommandCompleter(['reset', 'refresh', 'exit']))
+        command_completer = FuzzyCompleter(CommandCompleter(['reset', 'refresh', 'exit', 'continue']))
 
         # Combine completers
         class CombinedCompleter(Completer):

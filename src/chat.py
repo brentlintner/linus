@@ -164,7 +164,7 @@ class FilePartBuffer:
     def add(self, file_path, part_data, current_part, total_parts, version):
         self.buffer[(file_path, version)][current_part] = part_data
         self.total_parts[(file_path, version)] = total_parts
-        debug(f"Added part {current_part} of {total_parts} for {file_path} (v{version})")
+        info(f"Added part {current_part} of {total_parts} for {file_path} (v{version})")
 
     def is_complete(self, file_path, version):
         if (file_path, version) not in self.total_parts:
@@ -267,7 +267,7 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
     def should_exit(prompt_text):
         return prompt_text.startswith('$exit')
 
-    def process_user_input(prompt_text):
+    def process_user_input(prompt_text=""):
         """Processes user input, updating history and handling file references."""
         if not prompt_text:
             return
@@ -284,10 +284,8 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
 
             history.append(get_file_contents(file_path))
 
-    def send_request_to_ai(continue_request=False, continue_text=""):
+    def send_request_to_ai():
         """Sends a request to the AI and processes the streamed response."""
-        nonlocal queued_response_text
-
         request_text = ''.join(history) + f'\n{parser.CONVERSATION_END_SEP}\n'
 
         contents = [types.Part.from_text(text=request_text)]
@@ -297,7 +295,7 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
         stream = client.models.generate_content_stream(model=GEMINI_MODEL, contents=contents)
 
         full_response_text = ""
-        queued_response_text = continue_text  # Used for non-code block text
+        queued_response_text = ""
 
         console.print()
         with console.status("Linus is thinking...", spinner="point") as status:
@@ -330,6 +328,8 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
 
                     is_last_section = index == len(sections) - 1
 
+                    # TODO: add the typing/coding part back
+
                     if not is_code_block and is_last_section:
                         # Continue on, because another file could be right after
                         debug("Last section is not a full code block, queueing...")
@@ -350,11 +350,11 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
                             file_path, version, file_content, language, [part_id], part_total = parser.find_files(section)[0]
 
                             if part_total > 1:
-                                debug(f"Received chunk {part_id} for {file_path}")
+                                info(f"Received chunk {part_id} for {file_path}")
                                 file_part_buffer.add(file_path, file_content, part_id, part_total, version)
 
                                 if file_part_buffer.is_complete(file_path, version):
-                                    debug(f"All chunks received for {file_path} (v{version})")
+                                    info(f"All chunks received for {file_path} (v{version})")
                                     file_content = (file_part_buffer.assemble(file_path, version) or "").strip('\n')
                                     code = generate_diff(file_path, file_content)
                                     is_diff = os.path.exists(file_path) and file_content != code
@@ -395,14 +395,13 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
             if queued_response_text:
                 debug("Processing remaining queued text...")
                 # Check for incomplete file block
-                unfinished_file = parser.find_in_progress_file(queued_response_text)
-                if unfinished_file:
-                    debug(f"Incomplete file block for {unfinished_file} detected. Continuing...")
-                    status.stop()
-                    return True, queued_response_text
+                # unfinished_file = parser.find_in_progress_file(queued_response_text)
+                # if unfinished_file:
+                    # debug(f"Incomplete file block for {unfinished_file} detected. Continuing...")
+                    # status.stop()
+                    # return True, queued_response_text
 
-                debug("")
-                console.print(Markdown(queued_response_text))
+                console.print(Markdown(queued_response_text.strip('\n')))
                 console.print()
                 queued_response_text = ""
 
@@ -414,8 +413,23 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
 
         # History prune first before appending, but also after the response is fully processed
         # for file_path, version, file_content, language, part_id, parts_total in parser.find_files(full_response_text):
-            # TODO
             # prune_file_history(file_path, history)
+
+        # TODO:
+        #
+        # - Check for incomplete file blocks for any files (i.e. parts_total not in parts)
+        #   If this is the case, return True, ""
+        #
+        # Do this both for not all parts and cut off (i.e model messed up and needs to be re-fed)
+        # If either of this is the case, keep track, and only print the Linus part once
+        files = parser.find_files(full_response_text)
+        unfinished_files = [file_path for file_path, _, version, _, _, _ in files if not file_part_buffer.is_complete(file_path, version)]
+        if len(unfinished_files) > 0:
+            history.append(f'\n{full_response_text}\n')
+            if history_filename:
+                with open(history_filename, 'w') as f:
+                    f.write(''.join(history))
+            return True
 
         history.append(f'\n**Linus:**\n\n{full_response_text}\n')
 
@@ -444,7 +458,7 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
             total_characters, total_lines = calculate_history_stats()
             info(f"{total_lines} lines, {total_characters} characters, {duration:.2f}s ({GEMINI_MODEL})")
 
-        return False, queued_response_text
+        return False
 
     if verbose:
         end_time = time.time()
@@ -452,18 +466,23 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
         total_characters, total_lines = calculate_history_stats()
         info(f"{total_lines} lines, {total_characters} characters, {duration:.2f}s ({GEMINI_MODEL})")
 
+    # TODO: fill up file part buffer from history on resume
     file_part_buffer = FilePartBuffer()
-    queued_response_text = ""
+    force_continue = False
+    force_continue_counter = 0
 
     while True:
         try:
-            # Check for incomplete file block *before* prompting for new input.
-            in_progress_file = parser.find_in_progress_file(queued_response_text)
-            if in_progress_file:
-                debug("Incomplete file block on initial entry. Continuing...")
-                force_continue, queued_response_text = send_request_to_ai(continue_request=True, continue_text=queued_response_text)
-                if force_continue:
-                    continue
+            if force_continue:
+                info("Forcing continue...")
+                if force_continue_counter > 5:
+                    error("Model is stuck. Please restart.")
+                    break
+                force_continue_counter += 1
+                force_continue = send_request_to_ai()
+                continue
+            else:
+                force_continue_counter = 0
 
             prompt_text = session.prompt("> ")
 
@@ -479,14 +498,13 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
                 continue
 
             if prompt_text.startswith('$continue'):
-                process_user_input("")  # Explicitly pass empty string
-                send_request_to_ai(continue_request=True)
+                process_user_input()
+                force_continue = send_request_to_ai()
                 continue
 
             process_user_input(prompt_text)
-            force_continue, queued_response_text = send_request_to_ai()
-            if force_continue:
-                continue
+
+            force_continue = send_request_to_ai()
 
         except KeyboardInterrupt:
             if input("\nReally quit? (y/n) ").lower() == 'y':
