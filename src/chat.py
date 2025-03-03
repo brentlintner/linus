@@ -393,7 +393,6 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
             # TODO: we need to process potential file blocks at the end of the response
             # Handle any remaining text in the queue (non-code block parts)
             if queued_response_text:
-                debug("Processing remaining queued text...")
                 # Check for incomplete file block
                 # unfinished_file = parser.find_in_progress_file(queued_response_text)
                 # if unfinished_file:
@@ -401,6 +400,7 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
                     # status.stop()
                     # return True, queued_response_text
 
+                debug("Processing remaining queued text...")
                 console.print(Markdown(queued_response_text.strip('\n')))
                 console.print()
                 queued_response_text = ""

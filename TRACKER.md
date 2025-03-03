@@ -14,9 +14,9 @@ Anything related to the project management of the project, such as tracking issu
 
 ## Current
 
-* Optimize output token limit by showing plan first, then file-to-file and part-by-part (no show code first)
-  * Limit your response to 8000 characters: If you are writing a large file, split it up into smaller chunks and send the first chunk, then the second chunk, etc.
-* Bug: one line before and after each file (prune newlines at start/end)
+* Log token metadata on each response
+* Force continue if a half file block is in the response text
+* Print linus is coding file, typing etc
 
 ## Backlog
 
@@ -44,12 +44,8 @@ Anything related to the project management of the project, such as tracking issu
 
 ## Icebox
 
-* Bug: When the streamed text for a file/snippet is the first character of the stream it renders before the content and breaks
-* Bug: Snippets and files that are inside markdown blocks (ex: lists) are not being highlighted properly
-* Bug: Any source code file with backticks in it breaks the pretty printing in the terminal
 * Bug: Files and tree data should be refreshed every time the project is resumed, depending on the flags enabled
 * Bug: Resume is really slow for giant files
-
 * Auto update the project file structure when new files are added or updated (db setup + function calling for this?)
 * Use a vector database to store embeddings of files and their contents, and optimize prompt generation for large projects and files
 * Support versions of files (need to use local db setup + function calling for this?)
