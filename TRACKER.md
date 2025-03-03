@@ -5,22 +5,17 @@ Anything related to the project management of the project, such as tracking issu
 ## Current
 
 * Bug: Each file part is immediately written to the file (should be batched?)
-* Bug: Sometimes the model doesn't write within the constraints of the output
-  * Turn down temperature for more focused responses, maybe helps wrapping? (SET TO 0.4 to 0.6)
-  * Update prompt (DONE)
+* Turn down temperature for more focused responses, maybe helps wrapping? (SET TO 0.4 to 0.6)
 * As the model produces the output, the library can monitor the token count live (show in status if verbose)
     * Log token metadata on each response (usage_metadata=GenerateContentResponseUsageMetadata)
-* If the token count reaches a limit, cut off the model, finish the wrapper if it's a file, show a warning, and force continue
 * Print Linus is coding file, typing etc
-* Bug: It will stop after writing all the parts, and not continue especially if it needs to write another file
-* Bug: Code snippets are not pretty printed properly (not matched)?
 
 ## Backlog
 
-* Bug: Prune is disable right now
 * Bug: If continuing from a half done file, bring over the remaining queued response
-
-* Explore getting the LLM to consistently examine it's changes and consider if it made any mistakes
+    * If the token count reaches a limit, cut off the model, finish the wrapper if it's a file, show a warning, and force continue
+* Bug: Prune is disabled right now
+* Bug: Refresh is broken with bad escape position issue
 * Use sqlite to store history, file, and project data
 * Ignoring Files
   * Only ignore from gitignore (and DRY up ignore code)
@@ -41,7 +36,6 @@ Anything related to the project management of the project, such as tracking issu
   * Create one for this project to test out
   * Have defaults as well
     * ex: Always use spaces to indent not tabs (look for .editorconfig files or other files as a reference)
-* Bug: Refresh is broken with bad escape position issue
 
 ## Icebox
 
@@ -64,6 +58,7 @@ Anything related to the project management of the project, such as tracking issu
 ### Performance
 
 * Rename Part to Chunk?
+* Explore getting the LLM to consistently examine it's changes and consider if it made any mistakes
 * For very long conversation histories, consider summarizing earlier parts of the conversation.
 * For very large projects, consider using an external memory mechanism like a vector database (with embeddings generated).
 * Potentiall start asking for diffs instead of full files, if file-by-file + part-by-part isn't feasible enough)
