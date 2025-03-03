@@ -51,21 +51,15 @@ Examples of how to format code snippets, files, and other content you generate.
 
 ## Code Snippet
 
-{{{SNIPPET EXAMPLE START}}}
-
 {{{START CODE SNIPPET METADATA}}}
 Language: python
 {{{END CODE SNIPPET METADATA}}}
 print('Hello, world!')
 {{{END OF CODE SNIPPET}}}
 
-{{{SNIPPET EXAMPLE END}}}
-
 ## File
 
 A complete file, made up of only one part:
-
-{{{FILE EXAMPLE START}}}
 
 {{{START FILE METADATA}}}
 Path: hello_world.py
@@ -77,13 +71,9 @@ Parts: 1
 print('Hello, world!')
 {{{END OF FILE}}}
 
-{{{FILE EXAMPLE END}}}
-
 ## Split Files
 
 A file split into multiple parts:
-
-{{{MULTIPLE PARTS EXAMPLE START}}}
 
 {{{START FILE METADATA}}}
 Path: hello_world.py
@@ -115,11 +105,7 @@ Parts: 3
 	print('World')
 {{{END OF FILE}}}
 
-{{{MULTIPLE PARTS EXAMPLE END}}}
-
 ## File Versions
-
-{{{MULTIPLE VERSIONS EXAMPLE START}}}
 
 {{{START FILE METADATA}}}
 Path: hello_world.py
@@ -141,8 +127,6 @@ Parts: 1
 print('Hello, world!')
 print('How are you?')
 {{{END OF FILE}}}
-
-{{{MULTIPLE VERSIONS EXAMPLE END}}}
 
 # Project File Tree
 
