@@ -8,20 +8,23 @@ Anything related to the project management of the project, such as tracking issu
 * As the model produces the output, the library can monitor the token count live (show in status if verbose)
     * Log token metadata on each response (usage_metadata=GenerateContentResponseUsageMetadata)
 * Print Linus is coding file (part 1/X), or typing if streaming, or thinking if stream idles
+* Be able to include a whitelist of files instead of just ignore (i.e huge projects...)
+* If don't see a file in references or converstatio, ask for them
 
 ## Backlog
 
+* If the file references etc is bigger than certain amount, do a simple optimization for now (how? need vector db...)
 * Bug: If continuing from a half done file, bring over the remaining queued response
     * If the token count reaches a limit, cut off the model, finish the wrapper if it's a file, show a warning, and force continue
 * Bug: Prune is disabled right now
 * Bug: Refresh is broken with bad escape position issue
+* Pull in language specific files to help the LLM (ex: https://dotcursorrules.com/)
 * If a PROJECT.md exists, pull that into the prompt (right near the top)
   * Create one for this project to test out
   * Have defaults as well
     * ex: Always use spaces to indent not tabs (look for .editorconfig files or other files as a reference)
 * Use sqlite to store history, file, and project data
 * Ignoring Files
-  * Only ignore from gitignore (and DRY up ignore code)
   * Auto ignore binary files as well as other common files/dirs that are not code (get list from AI)
   * Have own .linignore file to ignore files and directories
 * Terminal Integration
@@ -56,6 +59,8 @@ Anything related to the project management of the project, such as tracking issu
 
 ### Performance
 
+* Don't pretty print JSON data?
+* Try out other models like Claude using a dedicated vertex AI instance
 * Try turning down the temperature for more focused responses, maybe helps wrapping? (SET TO 0.4 to 0.6)
 * Explore getting the LLM to consistently examine it's changes and consider if it made any mistakes
 * For very long conversation histories, consider summarizing earlier parts of the conversation.
