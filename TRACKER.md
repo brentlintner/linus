@@ -4,11 +4,21 @@ Anything related to the project management of the project, such as tracking issu
 
 ## Current
 
+* Formatting files issues
+    * Ensure files are indented correctly etc, maybe add them to the examples?
+    * Ensure no ```java gets added, maybe put two sentences below each other
+    * Using parts wrong issue? Might have not been an issue, but need to clarify because it got really confused (long context window? experimental model issue?)
+    * Clarify parts are not for multi steps in changing files, only to break it up because it makes it easier for me to parse it, instead use versions for that.
+    * Rename Part to Chunk?
 * Bug: Each file part is immediately written to the file (should be batched?)
 * Turn down temperature for more focused responses, maybe helps wrapping? (SET TO 0.4 to 0.6)
 * As the model produces the output, the library can monitor the token count live (show in status if verbose)
     * Log token metadata on each response (usage_metadata=GenerateContentResponseUsageMetadata)
 * Print Linus is coding file, typing etc
+* If a PROJECT.md exists, pull that into the prompt (right near the top)
+  * Create one for this project to test out
+  * Have defaults as well
+    * ex: Always use spaces to indent not tabs (look for .editorconfig files or other files as a reference)
 
 ## Backlog
 
@@ -32,10 +42,6 @@ Anything related to the project management of the project, such as tracking issu
     * Just show a Chunk: 1/2 (Or Preview: True), and tell LLM to ask for more if they need tha file (for now manual @ load it all)
   * Keep two versions not pruned instead of only one
   * Before writing files ask for confirmation to accept changes (needs db)
-* If a AI.md exists, pull that into the prompt
-  * Create one for this project to test out
-  * Have defaults as well
-    * ex: Always use spaces to indent not tabs (look for .editorconfig files or other files as a reference)
 
 ## Icebox
 
@@ -57,7 +63,6 @@ Anything related to the project management of the project, such as tracking issu
 
 ### Performance
 
-* Rename Part to Chunk?
 * Explore getting the LLM to consistently examine it's changes and consider if it made any mistakes
 * For very long conversation histories, consider summarizing earlier parts of the conversation.
 * For very large projects, consider using an external memory mechanism like a vector database (with embeddings generated).

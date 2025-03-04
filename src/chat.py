@@ -203,6 +203,8 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
 
         files = parser.find_files(recap)
 
+        # TODO: what happens with multiple file parts here?
+
         for file_path, _, _, _, _, _ in files:
             print(f"Reading file: {file_path}")
             print()
@@ -433,7 +435,12 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
 
         if writeable:
             # Assume no parts here because we've force continued above until we had them all
+
+
+            # Use the entire response text with file parts (or... just look up the whole history for the versino of the file found in response text, we can assume all parts are there)
             found_files = parser.find_files(full_response_text)
+
+
             # We iterate over the *original* full_response_text. This is important
             # because we want to write *all* file chunks, not just complete files.
             # TODO: handle newer versions in the same response
