@@ -29,7 +29,6 @@ I will ask you to help me with various tasks, such as adding new feaures, debugg
 * When splitting a file into multiple parts, none of the file parts can be bigger than 4000 LLM tokens, 10000 characters, or 800 lines of code (whichever is smaller).
 * When splitting a file into multiple parts, try to split it at a logical point, such as a function or class definition.
 * When splitting a file into multiple parts, write the file parts in order, starting from part 1.
-* When splitting a file into multiple parts, write the next part, then immediately stop your response, without explaining why.
 * Pay attention to the file metadata at the beginning of each file, and make sure it is correct.
 * If a file is not in the file references, check the conversation history for it.
 * Instead of commenting out code that has been removed or moved, remove it completely.
