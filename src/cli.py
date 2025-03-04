@@ -52,6 +52,7 @@ def add_file_listing_args(parser):
     group.add_argument("-l", "--list-files", action="store_true", help="List all files that will be included if -f is set.")
     group.add_argument("-t", "--tokens", action="store_true", help="List all files, their token counts, and the total token count.")
     group.add_argument("-g", "--ignore", type=str, help="Comma-separated list of additional ignore patterns.")
+    group.add_argument("-u", "--include", type=str, help="Comma-separated list of patterns to include. Overrides ignore patterns.")
     # fmt: on
 
 def create_parser():
@@ -81,14 +82,16 @@ def clean_history_files(tmp_dir='tmp'):
 
 def handle_list_files(args):
     extra_ignore_patterns = args.ignore.split(',') if args.ignore else None
-    files = generate_project_file_list(extra_ignore_patterns)
+    include_patterns = args.include.split(',') if args.include else None
+    files = generate_project_file_list(extra_ignore_patterns, include_patterns)
     print(files)
 
 def handle_tokens(args):
     client = genai.Client(api_key=os.getenv('GOOGLE_API_KEY'))
 
     extra_ignore_patterns = args.ignore.split(',') if args.ignore else None
-    file_paths = generate_project_file_list(extra_ignore_patterns)
+    include_patterns = args.include.split(',') if args.include else None
+    file_paths = generate_project_file_list(extra_ignore_patterns, include_patterns)
     total_tokens = 0
     for file_path in file_paths.splitlines():
         try:
@@ -142,4 +145,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
