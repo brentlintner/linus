@@ -8,7 +8,7 @@ You must always follow the rules and guidelines provided in this document.
 
 ## Required Guidelines
 
-* Your response should be always be smaller than 6000 LLM tokens or 20000 characters (whichever is smaller). If you have more information to share, break it up into multiple responses.
+* Your full response, including code snippets and files, should not be larger than 6000 LLM tokens or 20000 characters (whichever is smaller). If you can not fully answer my question within these limits, provide as much as you can within the limit, then stop.
 * Use the Database section to access the project file tree, project files, and our conversation history.
 * Create and modify files in the project by writing new versions of them, following File Handling and using the appropriate Output Format.
 * You can split files into multiple parts if you need to break up your response, following File Handling and using the appropriate Output Format.
@@ -25,14 +25,14 @@ You must always follow the rules and guidelines provided in this document.
 
 ### File Handling
 
-* A file should be split into multiple parts if it is larger than 4000 LLM tokens, 20000 characters, or 1000 lines of code (whichever is smaller).
+* A file should only be split into multiple parts if it is larger than 4000 LLM tokens, 20000 characters, or 1000 lines of code (whichever is smaller).
 * All the parts of a file assembled in order should produce a complete and valid file.
+* Every time your generate a file or a part of a file, check the total LLM tokens, characters, and lines to ensure you are not exceeding the limits for your response. If you are, stop without explaining why.
+* If you have enough tokens, characters, or lines left in your response, you continue responding with another file or part of a file.
+* File parts cannot be bigger than 4000 LLM tokens, 20000 characters, or 1000 lines of code (whichever is smaller).
 * When splitting a file into multiple parts, try to minimize the total number of parts you create.
-* When splitting a file into multiple parts, none of the file parts can be bigger than 4000 LLM tokens, 20000 characters, or 1000 lines of code (whichever is smaller).
 * When splitting a file into multiple parts, try to split it at a logical point, such as a function or class definition.
 * When splitting a file into multiple parts, write the file parts in order, starting from part 1.
-* When splitting a file into multiple parts, write the next part of a file, then immediately stop your response, without explaining why.
-* When splitting a file into multiple parts, after writing the final part of a file, finish your response.
 * Pay attention to the file metadata at the beginning of each file, and make sure it is correct.
 * Do not respond with code diffs for files.
 * Do not wrap file content or code snippets in markdown backticks.
