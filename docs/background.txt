@@ -13,8 +13,8 @@ The text below is a markdown document with a number of sections. Each section ha
 
 ## Response Length
 
-* Your response, including any code snippets and files, should never be larger than 6000 LLM tokens or 20000 characters (whichever is smaller). If it is, you will break and die.
-* If you can not fully answer my question within 6000 LLM tokens or 20000 characters (whichever is smaller), provide as much as you can within said limit, print "CONTINUE" on the next line, then stop.
+* Your response, including any code snippets and files, should never be larger than 6000 LLM tokens or 25000 characters (whichever is smaller). If it is, you will break and die.
+* If you can not fully answer my question within 6000 LLM tokens or 25000 characters (whichever is smaller), provide as much as you can within said limit, print "CONTINUE" on the next line, then stop.
 * If you are stopping your response, be sure to stop at a logical point, for example: the end of a code snippet, file, or file part.
 * Each time you finish writing a file or a part of a file, check the total LLM tokens and characters to ensure you are not exceeding the limits for your response. If you are, print "CONTINUE" on the next line, then stop.
 * If the last message in the conversation was "CONTINUE", you should continue your reply to my previous message, without explaining why you stopped.
@@ -23,8 +23,8 @@ The text below is a markdown document with a number of sections. Each section ha
 
 * Files represent a real file in the project, and are wrapped in a specific format that includes metadata about the file. See the Output Formats section for examples.
 * If you need to break up your response, you can split files into multiple, separately wrapped sections. See the Output Formats section for examples.
-* A file should only be split into multiple parts if it is larger than 6000 LLM tokens or 20000 characters (whichever is smaller).
-* File parts cannot be bigger than 6000 LLM tokens or 20000 characters (whichever is smaller).
+* A file should only be split into multiple parts if it is larger than 6000 LLM tokens or 25000 characters (whichever is smaller).
+* File parts cannot be bigger than 6000 LLM tokens or 25000 characters (whichever is smaller).
 * Do not wrap file content or code snippets in markdown backticks.
 * A file can be split into multiple parts if it is too large to fit into a single response.
 * All the parts of a file assembled in order should produce a complete and valid file.
@@ -71,7 +71,7 @@ print('Hello, world!')
 
 ### File
 
-A complete file smaller than 6000 LLM tokens or 20000 characters, made up of only one part:
+A complete file smaller than 6000 LLM tokens or 25000 characters, made up of only one part:
 
 {{{START FILE METADATA}}}
 Path: hello_world.py
@@ -96,7 +96,7 @@ Part: 1
 Parts: 3
 {{{END FILE METADATA}}}
 print('Hello, world, from the start of the file!')
-# ... (continues for 6000 LLM tokens or 20000 characters)
+# ... (continues for 6000 LLM tokens or 25000 characters)
 {{{END OF FILE}}}
 
 {{{START FILE METADATA}}}
@@ -107,7 +107,7 @@ Part: 2
 Parts: 3
 {{{END FILE METADATA}}}
 print('Hello, world, from the middle of the file!')
-# ... (continues for 6000 LLM tokens or 20000 characters)
+# ... (continues for 6000 LLM tokens or 25000 characters)
 {{{END OF FILE}}}
 
 {{{START FILE METADATA}}}
@@ -117,7 +117,7 @@ Version: 1
 Part: 3
 Parts: 3
 {{{END FILE METADATA}}}
-# ... (continues for the remaining tokens or charaters in the file if less than 6000 LLM tokens or 20000 characters)
+# ... (continues for the remaining tokens or charaters in the file if less than 6000 LLM tokens or 25000 characters)
 print('Hello, world, from the end of the file!')
 {{{END OF FILE}}}
 
