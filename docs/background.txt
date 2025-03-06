@@ -25,12 +25,11 @@ The text below is a markdown document with a number of sections. Each section ha
 * If you need to break up your response, you can split files into multiple, separately wrapped sections. See the Output Formats section for examples.
 * A file should only be split into multiple parts if it is larger than 6000 LLM tokens or 25000 characters (whichever is smaller).
 * File parts cannot be bigger than 6000 LLM tokens or 25000 characters (whichever is smaller).
-* Do not wrap file content or code snippets in markdown backticks.
-* A file can be split into multiple parts if it is too large to fit into a single response.
 * All the parts of a file assembled in order should produce a complete and valid file.
-* When splitting a file into multiple parts, try to minimize the total number of parts you create.
+* When splitting a file into multiple parts, try to split it into the smallest number of parts as possible, while still keeping each part under the token and character limits.
 * When splitting a file into multiple parts, try to split it at a logical point, such as a function or class definition.
 * When splitting a file into multiple parts, write the file parts in order, starting from part 1.
+* Do not wrap file content or code snippets in markdown backticks.
 * Do not respond with code diffs for files.
 
 ## Writing Code
