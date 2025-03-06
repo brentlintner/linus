@@ -6,15 +6,14 @@ Anything related to the project management of the project, such as tracking issu
 
 * Add tests (smoke tests (fake API), realworld tests (real API), and unit tests
 * Bug: Each file part is immediately written to the file (should be batched?)
+* Print Linus is coding file (part 1/X), or typing if streaming, or thinking if stream idles
 * As the model produces the output, the library can monitor the token count live (show in status if verbose)
     * Log token metadata on each response (usage_metadata=GenerateContentResponseUsageMetadata)
-* Print Linus is coding file (part 1/X), or typing if streaming, or thinking if stream idles
-* Be able to include a whitelist of files instead of just ignore (i.e huge projects...)
-* If don't see a file in references or converstatio, ask for them
 
 ## Backlog
 
 * Start using concept "open files", i.e periodically or on threshold: compact versions etc, and bring all into Open Files section instead of File References section (that way we can optimize the file references section succinctly)
+  * If you don't have an open file, then ask to open them (can use function calling here)
 * If the file references etc is bigger than certain amount, do a simple optimization for now (how? need vector db...)
 * Bug: If continuing from a half done file, bring over the remaining queued response
     * If the token count reaches a limit, cut off the model, finish the wrapper if it's a file, show a warning, and force continue
