@@ -14,7 +14,9 @@ Anything related to the project management of the project, such as tracking issu
 
 * Start using concept "open files", i.e periodically or on threshold: compact versions etc, and bring all into Open Files section instead of File References section (that way we can optimize the file references section succinctly)
   * If you don't have an open file, then ask to open them (can use function calling here)
-* If the file references etc is bigger than certain amount, do a simple optimization for now (how? need vector db...)
+* If the file references (aka open files) etc is bigger than certain amount, do a simple optimization for now (how? need vector db...)
+  * Simple calculation for now (limit size), eventually use a vector database to store embeddings of files and their contents, and include most related files each time
+* Consider using the role="model" for unfinished file part convos for the LLM to understand the context better?
 * Bug: If continuing from a half done file, bring over the remaining queued response
     * If the token count reaches a limit, cut off the model, finish the wrapper if it's a file, show a warning, and force continue
 * Bug: Prune is disabled right now
@@ -35,7 +37,8 @@ Anything related to the project management of the project, such as tracking issu
     * Whitelist once per directory for each command? (needs db)
 * File Integration
   * Easier ways to provide supplemental files that are huge ex: readme docs, terminal logs
-    * Support adding files like PDFs and images to the project (attach as normal but as individual contents (need db setup for this)
+    * Support adding images and files from a Url (types.Part.from_uri)
+    * Support adding files like PDFs and images to the project (attach as normal but as individual contents using genai api (need db setup for this)
     * Just show a Chunk: 1/2 (Or Preview: True), and tell LLM to ask for more if they need tha file (for now manual @ load it all)
   * Keep two versions not pruned instead of only one
   * Before writing files ask for confirmation to accept changes (needs db)
