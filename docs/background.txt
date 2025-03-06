@@ -71,7 +71,7 @@ print('Hello, world!')
 
 ### File
 
-A complete file, made up of only one part:
+A complete file smaller than 6000 LLM tokens or 20000 characters, made up of only one part:
 
 {{{START FILE METADATA}}}
 Path: hello_world.py
@@ -95,7 +95,8 @@ Version: 1
 Part: 1
 Parts: 3
 {{{END FILE METADATA}}}
-print('Hello, world!')
+print('Hello, world, from the start of the file!')
+# ... (continues for 6000 LLM tokens or 20000 characters)
 {{{END OF FILE}}}
 
 {{{START FILE METADATA}}}
@@ -105,7 +106,8 @@ Version: 1
 Part: 2
 Parts: 3
 {{{END FILE METADATA}}}
-print('Hello, world!')
+print('Hello, world, from the middle of the file!')
+# ... (continues for 6000 LLM tokens or 20000 characters)
 {{{END OF FILE}}}
 
 {{{START FILE METADATA}}}
@@ -115,6 +117,8 @@ Version: 1
 Part: 3
 Parts: 3
 {{{END FILE METADATA}}}
+# ... (continues for the remaining tokens or charaters in the file if less than 6000 LLM tokens or 20000 characters)
+print('Hello, world, from the end of the file!')
 {{{END OF FILE}}}
 
 ### File Versions
