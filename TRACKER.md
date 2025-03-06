@@ -9,13 +9,21 @@ Anything related to the project management of the project, such as tracking issu
 * Print Linus is coding file (part 1/X), or typing if streaming, or thinking if stream idles
 * As the model produces the output, the library can monitor the token count live (show in status if verbose)
     * Log token metadata on each response (usage_metadata=GenerateContentResponseUsageMetadata)
+* Fix code snippets having backticks in them (maybe we just ignore them having wrappers, and only have files?)
+* Don't show me open files unless you are updating them, because I can already see in my editor
+* If the last message is from the AI, finish it if you need to, else respond to me
+* Possible to enforce model to consistently make large parts (though it could be trying to be safe)
+    * Remove the "minimize number of parts" part? (maybe thinks minimize in the response not entire response which it doesn't understand before it makes it)
+    * It's predictive... it can't look ahead really, but it can look at the past
 
 ## Backlog
 
+* Use Chunk instead of Part
 * Start using concept "open files", i.e periodically or on threshold: compact versions etc, and bring all into Open Files section instead of File References section (that way we can optimize the file references section succinctly)
   * If you don't have an open file, then ask to open them (can use function calling here)
 * If the file references (aka open files) etc is bigger than certain amount, do a simple optimization for now (how? need vector db...)
   * Simple calculation for now (limit size), eventually use a vector database to store embeddings of files and their contents, and include most related files each time
+  * This will be especially useful for the random part lengths the model produces
 * Consider using the role="model" for unfinished file part convos for the LLM to understand the context better?
 * Bug: If continuing from a half done file, bring over the remaining queued response
     * If the token count reaches a limit, cut off the model, finish the wrapper if it's a file, show a warning, and force continue
