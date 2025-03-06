@@ -81,15 +81,15 @@ def type_response_out(lines, delay=0.01):
             time.sleep(delay)
         print()  # Newline after each string
 
-def prompt_prefix(extra_ignore_patterns=None, include_files=None):
+def prompt_prefix(extra_ignore_patterns=None, include_patterns=None):
     try:
         with open(PROMPT_PREFIX_FILE, 'r') as f:
             prefix = f.read()
     except FileNotFoundError:
         return "Could not find background.txt"
 
-    project_structure = generate_project_structure(extra_ignore_patterns, include_files)
-    project_files = generate_project_file_contents(extra_ignore_patterns, include_files)
+    project_structure = generate_project_structure(extra_ignore_patterns)
+    project_files = generate_project_file_contents(extra_ignore_patterns, include_patterns)
 
     prefix = prefix.replace(parser.FILE_TREE_PLACEHOLDER, f'\n{project_structure}\n')
     prefix = prefix.replace(parser.FILES_PLACEHOLDER, f'\n{project_files}\n')
@@ -184,6 +184,7 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
 
     # Split the comma-separated ignore patterns into a list
     extra_ignore_patterns = ignore_patterns.split(',') if ignore_patterns else None
+    include_patterns = include_files.split(',') if include_files else None
 
     history_filename = history_filename_for_directory(os.getcwd())
     previous_session = last_session()
@@ -221,13 +222,13 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
     else:
         # Start fresh, but *only* if no history file exists *and* resume is true.  Otherwise, we're in a new session.
         if not previous_session and resume:
-            history.append(prompt_prefix(extra_ignore_patterns, include_files))
+            history.append(prompt_prefix(extra_ignore_patterns, include_patterns))
             if history_filename:
                 with open(history_filename, 'w') as f:
                     f.write(''.join(history))
         elif previous_session and not resume:
             os.remove(history_filename)
-            history.append(prompt_prefix(extra_ignore_patterns, include_files)) # and then start fresh
+            history.append(prompt_prefix(extra_ignore_patterns, include_patterns)) # and then start fresh
             if history_filename:
                 with open(history_filename, 'w') as f:
                     f.write(''.join(history))
@@ -244,7 +245,7 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
     def reset_history():
         global history
         history.clear()
-        history.append(prompt_prefix(extra_ignore_patterns, include_files))
+        history.append(prompt_prefix(extra_ignore_patterns, include_patterns))
         if history_filename:
             with open(history_filename, 'w') as f:
                 f.write(''.join(history))
@@ -254,7 +255,7 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
     # TODO: should prune/compact as well after refreshing?
     def refresh_project_context():
         global history
-        prefix = prompt_prefix(extra_ignore_patterns, include_files)
+        prefix = prompt_prefix(extra_ignore_patterns, include_patterns)
         history[0] = re.sub(parser.match_before_conversation_history(), prefix, history[0], flags=re.DOTALL)
         if history_filename:
             with open(history_filename, 'w') as f:

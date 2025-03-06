@@ -33,7 +33,7 @@ def add_general_args(parser):
 def add_repl_args(parser):
     group = parser.add_argument_group(title="REPL Options")
     # fmt: off
-    group.add_argument("-f", "--files", type=str, help="Comma-separated list of patterns to include. Overrides ignore patterns.")
+    group.add_argument("-f", "--files", type=str, help="Comma-separated list of patterns to include.")
     group.add_argument("-i", "--ignore", type=str, help="Comma-separated list of additional ignore patterns.")
     group.add_argument("-w", "--writeable", action="store_true", help="Enable auto-writing to files from AI responses.")
     group.add_argument("-n", "--no-resume", action="store_true", help="Do not resume previous conversation. Start a new chat.")

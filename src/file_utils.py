@@ -10,7 +10,7 @@ from .parser import file_block, get_language_from_extension, match_file
 def load_ignore_patterns(extra_ignore_patterns=None, include_patterns=None):
     if include_patterns:
         # If include_patterns are specified, ONLY use those.
-        return include_patterns
+        return [] + include_patterns
 
     ignore_patterns = [] + DEFAULT_IGNORE_PATTERNS
     for ignore_file in ['.gitignore']:
@@ -46,8 +46,9 @@ def generate_diff(file_path, current_content):
 
     return stringifed_diff
 
-def generate_project_structure(extra_ignore_patterns=None, include_patterns=None):
-    ignore_patterns = load_ignore_patterns(extra_ignore_patterns, include_patterns)
+# NOTE: we don't use the args.files here, because we want to include all non-default ignored files
+def generate_project_structure(extra_ignore_patterns=None):
+    ignore_patterns = load_ignore_patterns(extra_ignore_patterns)
     spec = pathspec.PathSpec.from_lines('gitwildmatch', ignore_patterns)
 
     file_tree = [{
@@ -61,17 +62,8 @@ def generate_project_structure(extra_ignore_patterns=None, include_patterns=None
         relative_path = os.path.relpath(root, os.getcwd())
         relative_path = '' if relative_path == '.' else relative_path
 
-        if include_patterns:
-            # Inclusion logic: Only keep directories if they contain included files
-            dirs[:] = [d for d in dirs if any(spec.match_file(os.path.join(relative_path, d, f))
-                                            for f in os.listdir(os.path.join(root, d)) if os.path.isfile(os.path.join(root, d, f)))]
-            files[:] = [f for f in files if spec.match_file(os.path.join(relative_path, f))]
-
-        else:
-           # Exclusion logic (original behavior)
-            dirs[:] = [dir for dir in dirs if not is_ignored(os.path.join(relative_path, dir), spec)]
-            files[:] = [file for file in files if not is_ignored(os.path.join(relative_path, file), spec)]
-
+        dirs[:] = [dir for dir in dirs if not is_ignored(os.path.join(relative_path, dir), spec)]
+        files[:] = [file for file in files if not is_ignored(os.path.join(relative_path, file), spec)]
 
         for dir in dirs:
             dir_path = os.path.join(relative_path, dir)
