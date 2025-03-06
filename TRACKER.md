@@ -82,6 +82,7 @@ Anything related to the project management of the project, such as tracking issu
 * Consider using advanced APIs like function calling and search grounding
 * Have privacy confirmation for file system integration, and other sensitive data or destructive operations
 * Have extra security confirmation for file system integration, terminal commands run, injection/MITM attacks, heuristics and other sensitive data or destructive operations
+* Retrieval augmented generation (RAG) features
 
 ### Performance
 
