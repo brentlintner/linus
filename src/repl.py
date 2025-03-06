@@ -62,33 +62,26 @@ class CommandCompleter(Completer):
             if command.startswith(word_before_cursor[1:]):
                 yield Completion(command, start_position=-len(word_before_cursor) + 1)
 
-def create_prompt_session(interactive):
+def create_prompt_session():
     prompt_style = Style.from_dict({ '': '#8CB9B3 bold' })
 
-    if interactive:
-        file_completer = FuzzyCompleter(FilePathCompleter())
-        command_completer = FuzzyCompleter(CommandCompleter(['reset', 'refresh', 'exit', 'continue']))
+    file_completer = FuzzyCompleter(FilePathCompleter())
+    command_completer = FuzzyCompleter(CommandCompleter(['reset', 'refresh', 'exit', 'continue']))
 
-        # Combine completers
-        class CombinedCompleter(Completer):
-            def get_completions(self, document, complete_event):
-                # Use file completer if '@' detected, otherwise use command completer
-                if '@' in document.text:
-                    if file_completer:
-                        yield from file_completer.get_completions(document, complete_event)
-                elif '$' in document.text:
-                    if command_completer:
-                        yield from command_completer.get_completions(document, complete_event)
+    # Combine completers
+    class CombinedCompleter(Completer):
+        def get_completions(self, document, complete_event):
+            # Use file completer if '@' detected, otherwise use command completer
+            if '@' in document.text:
+                if file_completer:
+                    yield from file_completer.get_completions(document, complete_event)
+            elif '$' in document.text:
+                if command_completer:
+                    yield from command_completer.get_completions(document, complete_event)
 
-        return PromptSession(
-            style=prompt_style,
-            multiline=True,
-            key_bindings=key_bindings,
-            completer=CombinedCompleter(),
-            complete_style=CompleteStyle.MULTI_COLUMN)
-    else:
-        return PromptSession(
-            style=prompt_style,
-            multiline=True,
-            key_bindings=key_bindings)
-
+    return PromptSession(
+        style=prompt_style,
+        multiline=True,
+        key_bindings=key_bindings,
+        completer=CombinedCompleter(),
+        complete_style=CompleteStyle.MULTI_COLUMN)

@@ -81,22 +81,18 @@ def type_response_out(lines, delay=0.01):
             time.sleep(delay)
         print()  # Newline after each string
 
-def prompt_prefix(extra_ignore_patterns=None, include_files=True):
+def prompt_prefix(extra_ignore_patterns=None, include_files=None):
     try:
         with open(PROMPT_PREFIX_FILE, 'r') as f:
             prefix = f.read()
     except FileNotFoundError:
         return "Could not find background.txt"
 
-    if include_files:
-        project_structure = generate_project_structure(extra_ignore_patterns)
-        project_files = generate_project_file_contents(extra_ignore_patterns)
+    project_structure = generate_project_structure(extra_ignore_patterns, include_files)
+    project_files = generate_project_file_contents(extra_ignore_patterns, include_files)
 
-        prefix = prefix.replace(parser.FILE_TREE_PLACEHOLDER, f'\n{project_structure}\n')
-        prefix = prefix.replace(parser.FILES_PLACEHOLDER, f'\n{project_files}\n')
-    else:
-        prefix = prefix.replace(parser.FILE_TREE_PLACEHOLDER, '')
-        prefix = prefix.replace(parser.FILES_PLACEHOLDER, '')
+    prefix = prefix.replace(parser.FILE_TREE_PLACEHOLDER, f'\n{project_structure}\n')
+    prefix = prefix.replace(parser.FILES_PLACEHOLDER, f'\n{project_files}\n')
 
     return prefix
 
@@ -181,7 +177,7 @@ class FilePartBuffer:
         del self.total_parts[(file_path, version)]
         return full_content
 
-def coding_repl(resume=False, interactive=False, writeable=False, ignore_patterns=None, include_files=False):
+def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_files=[]):
     start_time = time.time()
 
     client = genai.Client(api_key=GOOGLE_API_KEY)
@@ -236,7 +232,7 @@ def coding_repl(resume=False, interactive=False, writeable=False, ignore_pattern
                 with open(history_filename, 'w') as f:
                     f.write(''.join(history))
 
-    session = create_prompt_session(interactive)
+    session = create_prompt_session()
 
     def calculate_history_stats():
         # token_count = client.models.count_tokens(model=GEMINI_MODEL, contents=''.join(history))
