@@ -7,45 +7,29 @@ Anything related to the project management of the project, such as tracking issu
 * Add tests (smoke tests (fake API), realworld tests (real API), and unit tests
 * Bug: Each file part is immediately written to the file (should be batched?)
 * Print Linus is coding file (part 1/X), or typing if streaming, or thinking if stream idles
+
 * Log token metadata on each response (usage_metadata=GenerateContentResponseUsageMetadata)
     * As the model produces the output, the library can monitor the token count live (show in status if verbose)
-* Fix code snippets having backticks in them (maybe we just ignore them having wrappers, and only have files?)
-* Don't show me open files unless you are updating them, because I can already see in my editor
-* If the last message is from the AI, finish it if you need to, else respond to me
+
 * Possible to enforce model to consistently make large parts (though it could be trying to be safe)
     * Remove the "minimize number of parts" part? (maybe thinks minimize in the response not entire response which it doesn't understand before it makes it)
     * It's predictive... it can't look ahead really, but it can look at the past
 
 ## Backlog
 
-* Use Chunk instead of Part
-* Consider using the role="model" for unfinished file part convos for the LLM to understand the context better?
-* Bug: If continuing from a half done file, bring over the remaining queued response
-    * If the token count reaches a limit, cut off the model, finish the wrapper if it's a file, show a warning, and force continue
-* Bug: Prune is disabled right now
-* Bug: Refresh is broken with bad escape position issue
-* Pull in language specific files to help the LLM (ex: https://dotcursorrules.com/)
-* If a PROJECT.md exists, pull that into the prompt (right near the top)
-    * Create one for this project to test out
-    * Have defaults as well
-        * ex: Always use spaces to indent not tabs (look for .editorconfig files or other files as a reference)
-* Use sqlite to store history, file, and project data
-* Ignoring Files
-    * Auto ignore binary files as well as other common files/dirs that are not code (get list from AI)
-    * Have own .linignore file to ignore files and directories
-* Terminal Integration
-    * Be able to look at console history with @symbol lookup (ex: a tmux session so the recent log to reference (ex: errors, etc))
-    * Be able to allow the ai to writing command blocks (whitelist each command) that run in a subshell.
-        * Use automatic function calling for this (have a cli flag to enable this, else it will ask to run it)
-        * We then take the sliced output and show it to the llm as an open log file linked to the command. It then can then continue on.
-        * Whitelist once per directory for each command? (needs db)
-* File Integration
-    * Easier ways to provide supplemental files that are huge ex: readme docs, terminal logs
-        * Support adding images and files from a Url (types.Part.from_uri)
-        * Support adding files like PDFs and images to the project (attach as normal but as individual contents using genai api (need db setup for this)
-        * Just show a Chunk: 1/2 (Or Preview: True), and tell LLM to ask for more if they need tha file (for now manual @ load it all)
-    * Keep two versions not pruned instead of only one
-    * Before writing files ask for confirmation to accept changes (needs db)
+* Update to latest google-genai version
+
+* Bugs
+    * Fix code snippets having backticks in them (maybe we just ignore them having wrappers, and only have files?)
+
+* Splitting Files
+    * Use Chunk instead of Part
+    * Consider using the role="model" for unfinished file part convos for the LLM to understand the context better?
+
+* Flexible History
+    * Use sqlite to store history, file, and project data
+    * Bug: Prune is disabled right now (NOTE: we are going to change this anyways when we introduce only "open files")
+
 * Open Files
     * Start using concept "open files", i.e periodically or on threshold: compact versions etc, and bring all into Open Files section instead of File References section (that way we can optimize the file references section succinctly)
         * If you don't have an open file, then ask to open them (can use function calling here)
@@ -55,15 +39,43 @@ Anything related to the project management of the project, such as tracking issu
 
 ## Icebox
 
-* Bug: Files and tree data should be refreshed every time the project is resumed, depending on the flags enabled
-* Bug: Resume is really slow for giant files
+* Bugs
+    * Files and tree data should be refreshed every time the project is resumed, depending on the flags enabled
+    * Resume is really slow for giant files
+
+* Ignoring Files
+    * Auto ignore binary files as well as other common files/dirs that are not code (get list from AI)
+    * Have own .linignore file to ignore files and directories
+
+* Terminal Integration
+    * Be able to look at console history with @symbol lookup (ex: a tmux session so the recent log to reference (ex: errors, etc))
+    * Be able to allow the ai to writing command blocks (whitelist each command) that run in a subshell.
+        * Use automatic function calling for this (have a cli flag to enable this, else it will ask to run it)
+        * We then take the sliced output and show it to the llm as an open log file linked to the command. It then can then continue on.
+        * Whitelist once per directory for each command? (needs db)
+
+* File Integration
+    * Easier ways to provide supplemental files that are huge ex: readme docs, terminal logs
+        * Support adding images and files from a Url (types.Part.from_uri)
+        * Support adding files like PDFs and images to the project (attach as normal but as individual contents using genai api (need db setup for this)
+        * Just show a Chunk: 1/2 (Or Preview: True), and tell LLM to ask for more if they need tha file (for now manual @ load it all)
+    * Keep two versions not pruned instead of only one
+    * Before writing files ask for confirmation to accept changes (needs db)
+
+* Prompt Customization
+    * Pull in language specific files to help the LLM (ex: https://dotcursorrules.com/)
+    * If a PROJECT.md exists, pull that into the prompt (right near the top)
+        * Create one for this project to test out
+        * Have defaults as well
+            * ex: Always use spaces to indent not tabs (look for .editorconfig files or other files as a reference)
+
 * Auto update the project file structure when new files are added or updated (db setup + function calling for this?)
 * Use a vector database to store embeddings of files and their contents, and optimize prompt generation for large projects and files
-* Support versions of files (need to use local db setup + function calling for this?)
+* Track versions of files even after pruning (need to use local db setup + function calling for this?)
 * Handle renaming or deleting file references, for example when refactoring
 * Show the token output count for each final response if verbose
-* Remember input prompt history inbetween sessions
-* Adjust the safety settings
+* Remember input prompt history inbetween sessions (keep in the db and fill in if prompt_toolkit allows it?)
+* Consider safety settings
 * Support text to speech output for responses
 * Show better progress bars, notably when writing a file (extract from file or diff the line and compare to current version)
 * Be able to see the git history of a file (useful when able to actually commit?)
