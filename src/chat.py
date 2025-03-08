@@ -250,10 +250,8 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
     session_total_tokens = 0
 
     def calculate_history_stats():
-        # token_count = client.models.count_tokens(model=GEMINI_MODEL, contents=''.join(history))
         total_characters = sum(len(entry) for entry in history)
         total_lines = sum(len(entry.splitlines()) for entry in history)
-        # return token_count.total_tokens, total_lines
         return total_characters, total_lines
 
     def reset_history():
@@ -266,7 +264,6 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
         print(' ', flush=True)
         console.print("History reset.", style="bold yellow")
 
-    # TODO: should prune/compact as well after refreshing?
     def refresh_project_context():
         global history
         prefix = prompt_prefix(extra_ignore_patterns, include_patterns)
@@ -292,9 +289,6 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
         for file_path in file_references:
             if not os.path.isfile(file_path): continue
 
-            # TODO
-            # prune_file_history(file_path, history)
-
             history.append(get_file_contents(file_path))
 
     def send_request_to_ai(is_continuation=False):
@@ -309,12 +303,6 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
 
         stream = client.models.generate_content_stream(model=GEMINI_MODEL, contents=contents)
 
-        # Initialize counters for this request
-        prompt_token_count = 0
-        candidates_token_count = 0
-        cached_content_token_count = 0
-        total_token_count = 0
-
         full_response_text = ""
         queued_response_text = ""
 
@@ -324,13 +312,6 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
             for chunk in stream:
                 if not chunk.text:
                     continue
-
-                # Accumulate token counts from usage metadata, handling potential None values
-                if chunk.usage_metadata:
-                    prompt_token_count += chunk.usage_metadata.prompt_token_count or 0
-                    candidates_token_count += chunk.usage_metadata.candidates_token_count or 0
-                    cached_content_token_count += chunk.usage_metadata.cached_content_token_count or 0
-                    total_token_count += chunk.usage_metadata.total_token_count or 0
 
                 queued_response_text += chunk.text
                 full_response_text += chunk.text
@@ -347,10 +328,6 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
                     console.print(Markdown(before_file.strip(), code_theme=EverforestDarkStyle), end="")
 
                 queued_has_complete_code_block = re.search(parser.match_code_block(), queued_response_text, flags=re.DOTALL)
-
-                # TODO: if anything left of first code block, log it it
-                # queued_has_incomplete_file = parser.find_in_progress_file(queued_response_text)
-                # if queued_has_incomplete_file:
 
                 if not queued_has_complete_code_block:
                     status.update("Linus is typing...")
@@ -369,7 +346,6 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
 
                     is_last_section = index == len(sections) - 1
 
-                    # TODO: add the typing/coding part back
 
                     if not is_code_block and is_last_section:
                         # Continue on, because another file could be right after
@@ -433,16 +409,8 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
                             section = f"```{language}\n{code}\n```"
                             print_markdown_code(section)
 
-            # TODO: we need to process potential file blocks at the end of the response
             # Handle any remaining text in the queue (non-code block parts)
             if queued_response_text:
-                # Check for incomplete file block
-                # unfinished_file = parser.find_in_progress_file(queued_response_text)
-                # if unfinished_file:
-                    # debug(f"Incomplete file block for {unfinished_file} detected. Continuing...")
-                    # status.stop()
-                    # return True, queued_response_text
-
                 debug("Processing remaining queued text...")
                 console.print()
                 console.print(Markdown(queued_response_text.strip('\n')))
@@ -451,19 +419,23 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
 
         status.stop()
 
+        # --- Metadata and Logging (AFTER processing all chunks) ---
+        last_chunk = chunk # 'chunk' is still in scope from the loop
+
+        # Initialize counters
+        prompt_token_count = 0
+        candidates_token_count = 0
+        cached_content_token_count = 0
+        total_token_count = 0
+
+        if last_chunk and last_chunk.usage_metadata:
+            prompt_token_count = last_chunk.usage_metadata.prompt_token_count or 0
+            candidates_token_count = last_chunk.usage_metadata.candidates_token_count or 0
+            cached_content_token_count = last_chunk.usage_metadata.cached_content_token_count or 0
+            total_token_count = last_chunk.usage_metadata.total_token_count or 0
+
         # --- History and File Writing ---
 
-        # History prune first before appending, but also after the response is fully processed
-        # for file_path, version, file_content, language, part_id, parts_total in parser.find_files(full_response_text):
-            # prune_file_history(file_path, history)
-
-        # TODO:
-        #
-        # - Check for incomplete file blocks for any files (i.e. parts_total not in parts)
-        #   If this is the case, return True, ""
-        #
-        # Do this both for not all parts and cut off (i.e. model messed up and needs to be re-fed)
-        # If either of this is the case, keep track, and only print the Linus part once
         files = parser.find_files(full_response_text)
         unfinished_files = []
 
@@ -484,7 +456,7 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
         if not is_continuation:
             history.append(f'\n**Linus:**\n\n{full_response_text}\n')
         else:
-            history.append(f'\n\n{full_response_text}\n')
+            history.append(f'\n{full_response_text}\n')
 
         if writeable:
             # Write all assembled files
@@ -533,7 +505,6 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
             f"{duration:.2f}s ({GEMINI_MODEL.replace('gemini-', '')})"
         )
 
-    # TODO: fill up file part buffer from history on resume
     file_part_buffer = FilePartBuffer()
     force_continue = False
     force_continue_counter = 0
@@ -566,13 +537,11 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
 
             if prompt_text.startswith('$continue'):
                 process_user_input()
-                # Pass force_continue to send_request_to_ai
                 force_continue = send_request_to_ai(is_continuation=True)
                 continue
 
             process_user_input(prompt_text)
 
-            # Not a continuation, so pass False
             force_continue = send_request_to_ai(is_continuation=False)
 
         except KeyboardInterrupt:
