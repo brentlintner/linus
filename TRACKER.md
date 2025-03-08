@@ -4,12 +4,16 @@ Anything related to the project management of the project, such as tracking issu
 
 ## Current
 
-* Use Chunk instead of Part?
-* Remove code snippets from output formats and the stream parsing, leave ai to write as markdown
+* Each time we write a file, if the content stripped of trailing newlines is the same, print (no changes) instead of writing the file and showing the diff
+* Bug: Since the LLM might write a new version of a file instead of finishing a previous version, we need to check for that so we don't continue unintentionally
 
 ## Backlog
 
-* Bug: each file the ai writes (or the parser parses) never has a trailing new line
+* Bug: Is Chunk more clear than Part?
+
+* Turn down the token and character limits?
+
+* Remove code snippets from output formats and the stream parsing, leave ai to write as markdown
 
 * Add tests (smoke tests (fake API), realworld tests (real API), and unit tests
 

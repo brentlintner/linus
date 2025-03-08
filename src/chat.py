@@ -445,6 +445,7 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
                 if not file_part_buffer.is_complete(file_path, version):
                     unfinished_files.append((file_path, version))
 
+        # TODO: technically the LLM might write a new version of a file without writing a part with not_more_parts set to True, so we should check for that
         if len(unfinished_files) > 0:
             debug(f"Unfinished files: {unfinished_files}")
             history.append(f'\n\n{full_response_text}\n\n')
