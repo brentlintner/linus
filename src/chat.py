@@ -334,6 +334,17 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
                 queued_response_text += chunk.text
                 full_response_text += chunk.text
 
+                # Check for the *start* of a file block
+                in_progress_file = parser.find_in_progress_file(queued_response_text)
+
+                if in_progress_file:
+                    # Split into before_file and rest
+                    before_file, rest = queued_response_text.split(parser.FILE_METADATA_START, 1)
+                    queued_response_text = parser.FILE_METADATA_START + rest
+
+                    # Print accumulated text (before_file part) using Markdown
+                    console.print(Markdown(before_file.strip(), code_theme=EverforestDarkStyle), end="")
+
                 queued_has_complete_code_block = re.search(parser.match_code_block(), queued_response_text, flags=re.DOTALL)
 
                 # TODO: if anything left of first code block, log it it
