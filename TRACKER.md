@@ -4,12 +4,7 @@ Anything related to the project management of the project, such as tracking issu
 
 ## Current
 
-* Print Linus is coding file (part 1/X), or typing if streaming, or thinking if stream idles
-    * Once we hit a file metadata, print the left side to console
-    * Once we hit a file metadata start, say "Linus is coding file (part 1/X) of file Y"
-    * Pretty print the tokens etc
-
-* Linus prefix should be appended to first, and if force continue, then don't for each new part
+* Log the left side of the stream once we get to a file start
 
 * Remove code snippets from output formats, leave ai to write as markdown
     * Assume all text is markdown and print in Markdown() wrapper so snippet code blocks work
@@ -20,26 +15,8 @@ Anything related to the project management of the project, such as tracking issu
 
 * Add tests (smoke tests (fake API), realworld tests (real API), and unit tests
 
-* Bug?: If a newer version is given across force continues, then don't print the previous
-
-* ? Possible to enforce model to consistently make large parts (though it could be trying to be safe)
-    * Convey that if you see a mistake in the file you just wrote, make a new version of it, that isn't a part (hmmm use Chunk)
-    * Use Chunk instead of Part?
-
-* Splitting Files
-    * Consider using the role="model" for unfinished file part convos for the LLM to understand the context better?
-    * Build in a fallback that if a part is not seen in the next force continue, then consider it done
-
-* Update to latest google-genai version
-
-* Use -f ., and if not set don't add any files or directory structures
-
-* Flexible History
-    * On resume, should show full files not the last part
-    * Use sqlite to store history, file, and project data
-    * Bug: Prune is disabled right now (NOTE: we are going to change this anyways when we introduce only "open files")
-
 * Open Files / Optimize Prompt
+    * Use Chunk instead of Part?
     * If too many files are open on boot, have a threshold or error out (too big for context window)
     * Start using concept "open files", i.e periodically or on threshold: compact versions etc, and bring all into Open Files section instead of File References section (that way we can optimize the file references section succinctly)
         * If you don't have an open file, then ask to open them (can use function calling here)
@@ -50,7 +27,24 @@ Anything related to the project management of the project, such as tracking issu
         * Simple calculation for now (limit size), eventually use a vector database to store embeddings of files and their contents, and include most related files each time
         * This will be especially useful for the random part lengths the model produces
 
+* Flexible History
+    * On resume, should show full files not the last part
+    * Use sqlite to store history, file, and project data
+    * Bug: Prune is disabled right now (NOTE: we are going to change this anyways when we introduce only "open files")
+
 ## Icebox
+
+* File Splitting Issues
+    * Convey that if you see a mistake in the file you just wrote, make a new version of it, that isn't a part (hmmm use Chunk)
+    * Bug?: If a newer version is given across force continues, then don't print the previous
+
+* Splitting Files
+    * Consider using the role="model" for unfinished file part convos for the LLM to understand the context better?
+    * Build in a fallback that if a part is not seen in the next force continue, then consider it done
+
+* Update to latest google-genai version
+
+* Use -f ., and if not set don't add any files or directory structures
 
 * Bugs
     * Files and tree data should be refreshed every time the project is resumed, depending on the flags enabled
