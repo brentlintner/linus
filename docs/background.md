@@ -66,6 +66,7 @@ print('Hello, world!')
 {{{START FILE METADATA}}}
 Path: hello_world.py
 Language: python
+Version: 1
 Part: 1
 NoMoreParts: True
 {{{END FILE METADATA}}}
@@ -78,6 +79,7 @@ print('Goodbye, world!')
 {{{START FILE METADATA}}}
 Path: hello_world.py
 Language: python
+Version: 1
 Part: 1
 NoMoreParts: False
 {{{END FILE METADATA}}}
@@ -87,6 +89,7 @@ print('Hello, world, from the start of the file!')
 {{{START FILE METADATA}}}
 Path: hello_world.py
 Language: python
+Version: 1
 Part: 2
 NoMoreParts: False
 {{{END FILE METADATA}}}
@@ -96,6 +99,7 @@ print('Hello, world, from the middle of the file!')
 {{{START FILE METADATA}}}
 Path: hello_world.py
 Language: python
+Version: 1
 Part: 3
 NoMoreParts: False
 {{{END FILE METADATA}}}
@@ -105,6 +109,7 @@ print('Hello, world, from the end of the file!')
 {{{START FILE METADATA}}}
 Path: hello_world.py
 Language: python
+Version: 1
 Part: 4
 NoMoreParts: True
 {{{END FILE METADATA}}}
