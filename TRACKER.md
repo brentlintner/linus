@@ -5,24 +5,24 @@ Anything related to the project management of the project, such as tracking issu
 ## Current
 
 * Print Linus is coding file (part 1/X), or typing if streaming, or thinking if stream idles
+    * Once we hit a file metadata, print the left side to console
+    * Once we hit a file metadata start, say "Linus is coding file (part 1/X) of file Y"
+    * Pretty print the tokens etc
 
-* Add tests (smoke tests (fake API), realworld tests (real API), and unit tests
-    * This is good, but you forgot a very important case for test_find_files. If there is a duplicate
-file entry within the same conversation history, and they are the same version, the find_files
-method should only return the one with the highest part number and all the concatenated content
-(as it already does in general for multipart files). This is important because earlier parts of
-the file could be invalid, and you will get errors.
+* Linus prefix should be appended to first, and if force continue, then don't for each new part
 
-* Possible to enforce model to consistently make large parts (though it could be trying to be safe)
-    * Convey that if you see a mistake in the file you just wrote, make a new version of it, that isn't a part (hmmm use Chunk)
-    * Use Chunk instead of Part
-* Bug: Linus prefix should be appended to first, and if force continue, then don't for each new part
 * Remove code snippets from output formats, leave ai to write as markdown
     * Assume all text is markdown and print in Markdown() wrapper so snippet code blocks work
 
 ## Backlog
 
-* If a newer version is given across force continues, then don't print the previous
+* Add tests (smoke tests (fake API), realworld tests (real API), and unit tests
+
+* Bug?: If a newer version is given across force continues, then don't print the previous
+
+* ? Possible to enforce model to consistently make large parts (though it could be trying to be safe)
+    * Convey that if you see a mistake in the file you just wrote, make a new version of it, that isn't a part (hmmm use Chunk)
+    * Use Chunk instead of Part?
 
 * Bug: each file the ai writes is opposite of trailing newline the editor does
 
@@ -39,10 +39,12 @@ the file could be invalid, and you will get errors.
     * Use sqlite to store history, file, and project data
     * Bug: Prune is disabled right now (NOTE: we are going to change this anyways when we introduce only "open files")
 
-* Open Files
+* Open Files / Optimize Prompt
     * If too many files are open on boot, have a threshold or error out (too big for context window)
     * Start using concept "open files", i.e periodically or on threshold: compact versions etc, and bring all into Open Files section instead of File References section (that way we can optimize the file references section succinctly)
         * If you don't have an open file, then ask to open them (can use function calling here)
+    * Consider pre-asking the llm (if there is no file referenced) if it thinks the request is just a conversational response or a task (which means data etc should be provided)
+        * Else if there is a file reference or it might be a request that needs the project, do a vector lookup and update open files
     * If the file references (aka open files) etc is bigger than certain amount, do a simple optimization for now (how? need vector db...)
         * Simple calculation for now (limit size), eventually use a vector database to store embeddings of files and their contents, and include most related files each time
         * This will be especially useful for the random part lengths the model produces
