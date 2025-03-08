@@ -25,7 +25,8 @@ from .file_utils import (
     generate_project_file_contents,
     prune_file_history,
     generate_diff,
-    get_file_contents
+    get_file_contents,
+    human_format_number
 )
 
 history = []
@@ -483,7 +484,7 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
         if not is_continuation:
             history.append(f'\n**Linus:**\n\n{full_response_text}\n')
         else:
-            history.append(f'\n{full_response_text}\n')
+            history.append(f'\n\n{full_response_text}\n')
 
         if writeable:
             # Write all assembled files
@@ -511,10 +512,10 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
             duration = end_time - start_time
             total_characters, total_lines = calculate_history_stats()
             console.print(
-                f"{total_lines} lines, "
-                f"{total_characters} characters, "
-                f"{total_token_count} tokens, "
-                f"{session_total_tokens} total, "
+                f"{human_format_number(total_lines)} lines, "
+                f"{human_format_number(total_characters)} characters, "
+                f"{human_format_number(total_token_count)} tokens, "
+                f"{human_format_number(session_total_tokens)} total, "
                 f"{duration:.2f}s ({GEMINI_MODEL.replace('gemini-', '')})"
             )
 
@@ -525,8 +526,8 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
         duration = end_time - start_time
         total_characters, total_lines = calculate_history_stats()
         console.print(
-            f"{total_lines} lines, "
-            f"{total_characters} characters, "
+            f"{human_format_number(total_lines)} lines, "
+            f"{human_format_number(total_characters)} characters, "
             f"0 tokens, "
             f"0 total, "
             f"{duration:.2f}s ({GEMINI_MODEL.replace('gemini-', '')})"

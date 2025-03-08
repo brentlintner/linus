@@ -146,3 +146,12 @@ def prune_file_history(file_path, history):
     for index, entry in enumerate(history):
         if re.match(match_file(file_path), entry):
             history[index] = re.sub(match_file(file_path), '', entry)
+
+def human_format_number(num):
+    """Converts an integer to a human-readable string (e.g., 1.3M, 450K)."""
+    magnitude = 0
+    while abs(num) >= 1000:
+        magnitude += 1
+        num /= 1000.0
+    # Add more prefixes if needed (e.g., 'G' for billions)
+    return '%.1f%s' % (num, ['', 'K', 'M', 'B', 'T'][magnitude])
