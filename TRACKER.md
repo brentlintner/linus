@@ -4,10 +4,8 @@ Anything related to the project management of the project, such as tracking issu
 
 ## Current
 
-* Log the left side of the stream once we get to a file start
-
-* Remove code snippets from output formats, leave ai to write as markdown
-    * Assume all text is markdown and print in Markdown() wrapper so snippet code blocks work
+* Use Chunk instead of Part?
+* Remove code snippets from output formats and the stream parsing, leave ai to write as markdown
 
 ## Backlog
 
@@ -16,7 +14,6 @@ Anything related to the project management of the project, such as tracking issu
 * Add tests (smoke tests (fake API), realworld tests (real API), and unit tests
 
 * Open Files / Optimize Prompt
-    * Use Chunk instead of Part?
     * If too many files are open on boot, have a threshold or error out (too big for context window)
     * Start using concept "open files", i.e periodically or on threshold: compact versions etc, and bring all into Open Files section instead of File References section (that way we can optimize the file references section succinctly)
         * If you don't have an open file, then ask to open them (can use function calling here)
