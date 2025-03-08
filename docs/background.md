@@ -10,16 +10,18 @@ The text below is a markdown document with a number of sections. Each section ha
 
 ## Response Length
 
-* Your response should never be larger than 5000 LLM tokens or 20000 characters (whichever is smaller). If it is, you will break and die.
-* When responding, after you have written 5000 LLM tokens or 20000 characters (whichever is smaller), respond up to the next logical point, print `LINUS CONTINUE` on the next line, the stop.
-* If a file you are creating or updating is larger than 4000 LLM tokens or 10000 characters (whichever is smaller), split it into multiple parts. See the Splitting Files section for more information.
+* Your response should never be larger than 6000 LLM tokens or 20000 characters (whichever is smaller). If it is, you will break and die.
+* When responding, after you have written 6000 LLM tokens or 20000 characters (whichever is smaller), respond up to the next logical point, print `LINUS CONTINUE` on the next line, the stop.
+* If a file you are creating or updating is larger than 4000 LLM tokens or 15000 characters (whichever is smaller), split it into multiple parts. See the Splitting Files section for more information.
 * When you see `LINUS CONTINUE` as the last thing in the Conversation History, you can continue writing your response from where you left off.
-* When continuing, you should act as if you are writing a single response, even if it is a continuation of a previous response.
+* When you see `LINUS CONTINUE` as the last thing in the Conversation History, you should act as if you are writing a single response, even if it is a continuation of a previous response.
 
 ## Splitting Files
 
-* A file part cannot be larger than 4000 LLM tokens or 10000 characters (whichever is smaller).
-* Always write an empty file part with the `NoMoreParts: True` metadata field once you have finished writing all the parts of a file. If you can, include it right after the previous file part (i.e. in the same response)
+* A file part cannot be larger than 4000 LLM tokens or 15000 characters (whichever is smaller).
+* The last part of a file has a `NoMoreParts: True` metadata field, if not, it has `NoMoreParts: False`.
+* You can write an empty file part with `NoMoreParts: True` to indicate the end of the file if you need to.
+* If you have enough Response Length left to write the last part of a file, then you should write the last part of the file.
 * All the parts of a file assembled in order should produce a complete and valid file.
 * Try to split a file into the smallest number of parts as possible, while still adhering to Response Length limits.
 * Try to split it at a logical point, such as a function or class definition, while still adhering to Response Length limits.
