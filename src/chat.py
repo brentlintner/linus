@@ -85,7 +85,7 @@ def prompt_prefix(extra_ignore_patterns=None, include_patterns=None):
         with open(PROMPT_PREFIX_FILE, 'r') as f:
             prefix = f.read()
     except FileNotFoundError:
-        return "Could not find background.txt"
+        return "Could not find background.md"
 
     project_structure = generate_project_structure(extra_ignore_patterns)
     project_files = generate_project_file_contents(extra_ignore_patterns, include_patterns)
