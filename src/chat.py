@@ -381,6 +381,7 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
                                 error("-" * 20)
                                 error(section)
                                 error("-" * 20)
+                                print()
                                 continue
 
                             debug("Code block detected, processing...")
