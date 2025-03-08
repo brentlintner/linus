@@ -367,38 +367,46 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
 
                     if not is_code_block:
                         debug("Non-code block detected, processing...")
-                        console.print(Markdown(section), end="")
+                        console.print(Markdown(section, code_theme=EverforestDarkStyle), end="")
                         continue
                     else:
-                        debug("Code block detected, processing...")
                         is_file = parser.is_file(section)
 
                         if is_file:
                             # Now we get a boolean for no_more_parts
-                            file_path, version, file_content, language, part_id, no_more_parts = parser.find_files(section)[0]
+                            files = parser.find_files(section)
 
-                            if no_more_parts is not None:  # We have *some* kind of multi-part file
-                                info(f"Received chunk {part_id} for {file_path} (NoMoreParts: {no_more_parts})")
-                                file_part_buffer.add(file_path, file_content, part_id, no_more_parts, version)
+                            if not files:
+                                error("Expected files in response section but none were found.")
+                                error("-" * 20)
+                                error(section)
+                                error("-" * 20)
+                                continue
 
-                                if file_part_buffer.is_complete(file_path, version):
-                                    info(f"All chunks received for {file_path} (v{version})")
-                                    file_content = (file_part_buffer.assemble(file_path, version) or "").strip('\n')
-                                    assembled_files[(file_path, version)] = file_content  # Store assembled file
-                                    code = generate_diff(file_path, file_content)
-                                    is_diff = os.path.exists(file_path) and file_content != code
-                                    language = "diff" if is_diff else parser.get_language_from_extension(file_path)
+                            debug("Code block detected, processing...")
 
-                                    console.print()
-                                    console.print(Markdown(f"#### {file_path}"))
-                                    section = f"```{language}\n{code}\n```"
-                                    print_markdown_code(section)
-                                else:
-                                    debug(f"Waiting for more chunks of {file_path}")
-                                    continue  # Important: Don't process incomplete chunks
+                            # TODO: need to look for multiple files here? I think we can assume not because we're streaming
+                            file_path, version, file_content, language, part_id, no_more_parts = files[0]
+
+                            info(f"Received chunk {part_id} for {file_path} (NoMoreParts: {no_more_parts})")
+                            file_part_buffer.add(file_path, file_content, part_id, no_more_parts, version)
+
+                            if file_part_buffer.is_complete(file_path, version):
+                                info(f"All chunks received for {file_path} (v{version})")
+                                file_content = (file_part_buffer.assemble(file_path, version) or "").strip('\n')
+                                assembled_files[(file_path, version)] = file_content  # Store assembled file
+                                code = generate_diff(file_path, file_content)
+                                is_diff = os.path.exists(file_path) and file_content != code
+                                language = "diff" if is_diff else parser.get_language_from_extension(file_path)
+
+                                console.print()
+                                console.print(Markdown(f"#### {file_path}"))
+                                section = f"```{language}\n{code}\n```"
+                                print_markdown_code(section)
                             else:
-                                # This logic is no longer relevant. Delete it.
-                                pass
+                                debug(f"Waiting for more chunks of {file_path}")
+                                continue  # Important: Don't process incomplete chunks
+
                         else:
                             debug('Snippet handling')
                             file_path = None

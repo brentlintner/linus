@@ -53,11 +53,15 @@ def safe_int(value, default=1):
         return default
 
 def find_files(content):
-    regex = rf'{FILE_METADATA_START}.*?\nPath: (.*?)\nLanguage: (.*?)\n(?:Version: (\d+)\n)(?:Part: (\d+)\n)(?:NoMoreParts: (True|False)\n).*?{FILE_METADATA_END}\n?(.*?)\n?{END_OF_FILE}'
+    regex = (
+        rf'{FILE_METADATA_START}.*?' +
+        rf'\nPath: (.*?)\nLanguage: (.*?)\n(?:Version: (\d+)\n)' +
+        rf'(?:Part: (\d+)\n)(?:NoMoreParts: (True|False)\n).*?{FILE_METADATA_END}\n?(.*?)\n?{END_OF_FILE}'
+    )
 
     file_matches = re.finditer(regex, content, flags=re.DOTALL)
 
-    all_file_parts =  [(
+    all_file_parts = [(
         match.group(1), # Path
         safe_int(match.group(3)), # Version
         match.group(6),  # Content
