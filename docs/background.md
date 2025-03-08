@@ -19,9 +19,8 @@ The text below is a markdown document with a number of sections. Each section ha
 ## Splitting Files
 
 * A file part cannot be larger than 4000 LLM tokens or 15000 characters (whichever is smaller).
-* The last part of a file has a `NoMoreParts: True` metadata field, if not, it has `NoMoreParts: False`.
-* You can write an empty file part with `NoMoreParts: True` to indicate the end of the file if you need to.
-* If you have enough Response Length left to write the last part of a file, then you should write the last part of the file.
+* Once you have written all the file's parts, always write a special, empty file part with `NoMoreParts: True` metadata to indicate all parts have been written.
+* Try to write the special file part immediately after the last non-special file part, in the same response.
 * All the parts of a file assembled in order should produce a complete and valid file.
 * Try to split a file into the smallest number of parts as possible, while still adhering to Response Length limits.
 * Try to split it at a logical point, such as a function or class definition, while still adhering to Response Length limits.
@@ -66,6 +65,8 @@ print('Hello, world!')
 
 ### File
 
+A single file, not split into parts:
+
 {{{START FILE METADATA}}}
 Path: hello_world.py
 Language: python
@@ -78,6 +79,8 @@ print('Goodbye, world!')
 {{{END OF FILE}}}
 
 ### Multi-Part File
+
+A single file, split up into 3 parts:
 
 {{{START FILE METADATA}}}
 Path: hello_world.py
@@ -109,6 +112,8 @@ NoMoreParts: False
 print('Hello, world, from the end of the file!')
 {{{END OF FILE}}}
 
+The special final part that goes with the above:
+
 {{{START FILE METADATA}}}
 Path: hello_world.py
 Language: python
@@ -120,6 +125,8 @@ NoMoreParts: True
 
 ### File Versions
 
+A file with a current version:
+
 {{{START FILE METADATA}}}
 Path: hello_world.py
 Language: python
@@ -129,6 +136,8 @@ NoMoreParts: True
 {{{END FILE METADATA}}}
 print('Helo, world!')
 {{{END OF FILE}}}
+
+A file with a new version:
 
 {{{START FILE METADATA}}}
 Path: hello_world.py
