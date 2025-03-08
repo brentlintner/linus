@@ -11,7 +11,7 @@ The text below is a markdown document with a number of sections. Each section ha
 ## Response Length
 
 * Your response should never be larger than 6000 LLM tokens or 20000 characters (whichever is smaller). If it is, you will break and die.
-* When responding, after you have written 6000 LLM tokens or 20000 characters (whichever is smaller), respond up to the next logical point, print `LINUS CONTINUE` on the next line, the stop.
+* When responding, after you have written 6000 LLM tokens or 20000 characters (whichever is smaller), respond up to the next logical point, for example finishing a file part, then print `LINUS CONTINUE` on the next line, the stop.
 * If a file you are creating or updating is larger than 4000 LLM tokens or 15000 characters (whichever is smaller), split it into multiple parts. See the Splitting Files section for more information.
 * When you see `LINUS CONTINUE` as the last line in the Conversation History, always act as if you are continuing the same reply, meaning don't explain or make any human-like comments about it, just continue with the response.
 
