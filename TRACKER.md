@@ -4,10 +4,11 @@ Anything related to the project management of the project, such as tracking issu
 
 ## Current
 
-* Each time we write a file, if the content stripped of trailing newlines is the same, print (no changes) instead of writing the file and showing the diff
 * Bug: Since the LLM might write a new version of a file instead of finishing a previous version, we need to check for that so we don't continue unintentionally
 
 ## Backlog
+
+* Each time we write a file, if the content stripped of trailing newlines is the same, print (no changes) instead of writing the file and showing the diff
 
 * Bug: Is Chunk more clear than Part?
 
