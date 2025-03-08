@@ -29,9 +29,15 @@ def find_file_references(content):
     return [re.sub(r"[^\w\s]+$", '', file_reference) for file_reference in file_references]
 
 def find_in_progress_file(content):
-    regex = rf'{FILE_METADATA_START}.*?\nPath: (.*?)\n.*?{FILE_METADATA_END}.*?[^{END_OF_FILE}].*?'
-    file_match = re.match(regex, content, flags=re.DOTALL)
-    return file_match.group(1) if file_match else None
+    regex = rf'{FILE_METADATA_START}.*?\nPath: (.*?)\n.*?NoMoreParts: (True|False).*?{FILE_METADATA_END}.*?'
+    file_match = re.search(regex, content, flags=re.DOTALL)
+
+    if file_match:
+        file_path = file_match.group(1)
+        no_more_parts = file_match.group(2) == 'True'
+        return (file_path, no_more_parts)
+    else:
+        return None
 
 def find_in_progress_snippet(content):
     regex = rf'{SNIPPET_METADATA_START}.*?\nLanguage: (.*?)\n{SNIPPET_METADATA_END}.*?[^{END_OF_FILE}].*?'
@@ -47,36 +53,35 @@ def safe_int(value, default=1):
         return default
 
 def find_files(content, parts=False):
-    # TODO: get metadata first then extract key-value pairs
-    regex = rf'{FILE_METADATA_START}.*?\nPath: (.*?)\nLanguage: (.*?)\n(?:Version: (\d+)\n)(?:Part: (\d+)\n)(?:Parts: (\d+)\n).*?{FILE_METADATA_END}\n?(.*?)\n?{END_OF_FILE}'
+    regex = rf'{FILE_METADATA_START}.*?\nPath: (.*?)\nLanguage: (.*?)\n(?:Version: (\d+)\n)(?:Part: (\d+)\n)(?:NoMoreParts: (True|False)\n).*?{FILE_METADATA_END}\n?(.*?)\n?{END_OF_FILE}'
     file_matches = re.finditer(regex, content, flags=re.DOTALL)
 
     all_file_parts =  [(
-        match.group(1),
-        safe_int(match.group(3)),
-        match.group(6),
-        match.group(2),
-        safe_int(match.group(4)),
-        safe_int(match.group(5))) for match in file_matches] # (path, version, content, language, part, parts)
+        match.group(1), # Path
+        safe_int(match.group(3)), # Version
+        match.group(6),  # Content
+        match.group(2),  # Language
+        safe_int(match.group(4)), # Part
+        match.group(5) == 'True') # NoMoreParts
+        for match in file_matches]
 
     if parts:
         return all_file_parts
     else:
         all_files = {}
-        for path, version, content, language, part, parts in all_file_parts:
+        for path, version, content, language, part, no_more_parts in all_file_parts:
             file_key = (path, version)
             if file_key not in all_files:
                 all_files[file_key] = []
-            all_files[file_key].append((content, language, part, parts))
+            all_files[file_key].append((content, language, part, no_more_parts))
             all_files[file_key].sort(key=lambda x: x[2]) # Sort by part
         result = []
         for key_tuple, parts_array in all_files.items():
-            # HACK
             joined_content = ''.join([part[0] for part in parts_array])
             language = parts_array[-1][1]
             part_ids = sorted([part[2] for part in parts_array])
-            parts = parts_array[-1][3]
-            result.append(list(key_tuple) + [joined_content, language, part_ids, parts])
+            no_more_parts = parts_array[-1][3]
+            result.append(list(key_tuple) + [joined_content, language, part_ids, no_more_parts])
         return result
 
 def find_snippets(content):
@@ -108,7 +113,7 @@ def match_snippet():
 def match_before_conversation_history():
     return rf'^(.*?){CONVERSATION_START_SEP}'
 
-def file_block(file_path, content, language=None, part=1, parts=1, version=1):
+def file_block(file_path, content, language=None, part=1, version=1):
     language = get_language_from_extension(file_path) if not language else language
     return f"""
 {FILE_METADATA_START}
@@ -116,7 +121,6 @@ Path: {file_path}
 Language: {language}
 Version: {version}
 Part: {part}
-Parts: {parts}
 {FILE_METADATA_END}
 {content}
 {END_OF_FILE}

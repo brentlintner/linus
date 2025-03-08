@@ -65,9 +65,8 @@ print('Hello, world!')
 {{{START FILE METADATA}}}
 Path: hello_world.py
 Language: python
-Version: 1
 Part: 1
-Parts: 1
+NoMoreParts: True
 {{{END FILE METADATA}}}
 print('Hello, world!')
 print('Goodbye, world!')
@@ -78,9 +77,8 @@ print('Goodbye, world!')
 {{{START FILE METADATA}}}
 Path: hello_world.py
 Language: python
-Version: 1
 Part: 1
-Parts: 3
+NoMoreParts: False
 {{{END FILE METADATA}}}
 print('Hello, world, from the start of the file!')
 {{{END OF FILE}}}
@@ -88,9 +86,8 @@ print('Hello, world, from the start of the file!')
 {{{START FILE METADATA}}}
 Path: hello_world.py
 Language: python
-Version: 1
 Part: 2
-Parts: 3
+NoMoreParts: False
 {{{END FILE METADATA}}}
 print('Hello, world, from the middle of the file!')
 {{{END OF FILE}}}
@@ -98,11 +95,18 @@ print('Hello, world, from the middle of the file!')
 {{{START FILE METADATA}}}
 Path: hello_world.py
 Language: python
-Version: 1
 Part: 3
-Parts: 3
+NoMoreParts: False
 {{{END FILE METADATA}}}
 print('Hello, world, from the end of the file!')
+{{{END OF FILE}}}
+
+{{{START FILE METADATA}}}
+Path: hello_world.py
+Language: python
+Part: 4
+NoMoreParts: True
+{{{END FILE METADATA}}}
 {{{END OF FILE}}}
 
 ### File Versions
@@ -112,7 +116,7 @@ Path: hello_world.py
 Language: python
 Version: 1
 Part: 1
-Parts: 1
+NoMoreParts: True
 {{{END FILE METADATA}}}
 print('Helo, world!')
 {{{END OF FILE}}}
@@ -122,7 +126,7 @@ Path: hello_world.py
 Language: python
 Version: 2
 Part: 1
-Parts: 1
+NoMoreParts: True
 {{{END FILE METADATA}}}
 print('Hello, world!')
 {{{END OF FILE}}}

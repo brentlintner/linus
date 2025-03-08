@@ -154,17 +154,28 @@ def list_available_models():
 class FilePartBuffer:
     def __init__(self):
         self.buffer = defaultdict(lambda: defaultdict(str))
-        self.total_parts = {}
+        # Remove total_parts, no longer needed
+        self.final_parts = {} # Keep track of files with a final part
 
-    def add(self, file_path, part_data, current_part, total_parts, version):
+    def add(self, file_path, part_data, current_part, no_more_parts, version):
         self.buffer[(file_path, version)][current_part] = part_data
-        self.total_parts[(file_path, version)] = total_parts
-        info(f"Added part {current_part} of {total_parts} for {file_path} (v{version})")
+        if no_more_parts:
+            # We only care about the *last* part having this flag
+            self.final_parts[(file_path, version)] = current_part
+        info(f"Added part {current_part} of {file_path} (v{version}) (NoMoreParts: {no_more_parts})")
 
     def is_complete(self, file_path, version):
-        if (file_path, version) not in self.total_parts:
-            return False
-        return len(self.buffer[(file_path, version)]) == self.total_parts[(file_path, version)]
+        if (file_path, version) not in self.final_parts:
+            return False  # We haven't seen a final part yet
+
+        final_part_index = self.final_parts[(file_path, version)]
+
+        # Check if *all* parts up to and including the final part exist
+        for part_num in range(1, final_part_index + 1):
+            if part_num not in self.buffer[(file_path, version)]:
+                return False  # Missing a part
+
+        return True
 
     def assemble(self, file_path, version):
         if not self.is_complete(file_path, version):
@@ -173,7 +184,7 @@ class FilePartBuffer:
         sorted_parts = sorted(self.buffer[(file_path, version)].items())
         full_content = ''.join(part_data for _, part_data in sorted_parts)
         del self.buffer[(file_path, version)]
-        del self.total_parts[(file_path, version)]
+        del self.final_parts[(file_path, version)]  # Clean up
         return full_content
 
 def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_files=[]):
@@ -344,12 +355,12 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
                         is_file = parser.is_file(section)
 
                         if is_file:
-                            # HACK: we can reasonably assume that we only have one part and version in this section
-                            file_path, version, file_content, language, [part_id], part_total = parser.find_files(section)[0]
+                            # Now we get a boolean for no_more_parts
+                            file_path, version, file_content, language, part_id, no_more_parts = parser.find_files(section)[0]
 
-                            if part_total > 1:
-                                info(f"Received chunk {part_id} for {file_path}")
-                                file_part_buffer.add(file_path, file_content, part_id, part_total, version)
+                            if no_more_parts is not None:  # We have *some* kind of multi-part file
+                                info(f"Received chunk {part_id} for {file_path} (NoMoreParts: {no_more_parts})")
+                                file_part_buffer.add(file_path, file_content, part_id, no_more_parts, version)
 
                                 if file_part_buffer.is_complete(file_path, version):
                                     info(f"All chunks received for {file_path} (v{version})")
@@ -367,16 +378,8 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
                                     debug(f"Waiting for more chunks of {file_path}")
                                     continue  # Important: Don't process incomplete chunks
                             else:
-                                debug('Regular file handling (no chunks)')
-                                assembled_files[(file_path, version)] = file_content.strip('\n')  # Store even single-part files
-                                code = generate_diff(file_path, file_content.strip('\n'))
-                                is_diff = os.path.exists(file_path) and file_content != code
-                                language = "diff" if is_diff else parser.get_language_from_extension(file_path)
-                                console.print()
-                                console.print(Markdown(f"#### {file_path}"))
-                                section = f"```{language}\n{code}\n```"
-                                print_markdown_code(section)
-
+                                # This logic is no longer relevant. Delete it.
+                                pass
                         else:
                             debug('Snippet handling')
                             file_path = None
@@ -417,11 +420,16 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
         # - Check for incomplete file blocks for any files (i.e. parts_total not in parts)
         #   If this is the case, return True, ""
         #
-        # Do this both for not all parts and cut off (i.e model messed up and needs to be re-fed)
+        # Do this both for not all parts and cut off (i.e. model messed up and needs to be re-fed)
         # If either of this is the case, keep track, and only print the Linus part once
         files = parser.find_files(full_response_text)
-        files_with_parts = [(file_path, part_ids, parts) for file_path, _, _, _, part_ids, parts in files]
-        unfinished_files = [(file_path, part_ids, parts) for file_path, part_ids, parts in files_with_parts if parts not in part_ids]
+        unfinished_files = []
+
+        # Check for unfinished files
+        for file_path, version, _, _, _, no_more_parts in files:
+            if (file_path, version) not in assembled_files:  # Only check files we haven't already assembled
+                if not file_part_buffer.is_complete(file_path, version):
+                    unfinished_files.append((file_path, version))
 
         if len(unfinished_files) > 0:
             debug(f"Unfinished files: {unfinished_files}")
