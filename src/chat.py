@@ -342,6 +342,7 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
                 # if queued_has_incomplete_file:
 
                 if not queued_has_complete_code_block:
+                    status.update("Linus is typing...")
                     debug("No complete code block detected, queueing...")
                     continue
 
@@ -389,10 +390,13 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
                             # TODO: need to look for multiple files here? I think we can assume not because we're streaming
                             file_path, version, file_content, language, part_id, no_more_parts = files[0]
 
+                            status.update(f"Linus is writing {file_path}...")
+
                             info(f"Received chunk {part_id} for {file_path} (NoMoreParts: {no_more_parts})")
                             file_part_buffer.add(file_path, file_content, part_id, no_more_parts, version)
 
                             if file_part_buffer.is_complete(file_path, version):
+                                status.update("Linus is typing...")
                                 info(f"All chunks received for {file_path} (v{version})")
                                 file_content = (file_part_buffer.assemble(file_path, version) or "").strip('\n')
                                 assembled_files[(file_path, version)] = file_content  # Store assembled file
@@ -409,6 +413,7 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
                                 continue  # Important: Don't process incomplete chunks
 
                         else:
+                            status.update("Linus is typing...")
                             debug('Snippet handling')
                             file_path = None
                             language, code = parser.find_snippets(section)[0]
