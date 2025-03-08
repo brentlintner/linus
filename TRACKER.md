@@ -7,19 +7,28 @@ Anything related to the project management of the project, such as tracking issu
 * Print Linus is coding file (part 1/X), or typing if streaming, or thinking if stream idles
 
 * Add tests (smoke tests (fake API), realworld tests (real API), and unit tests
+    * This is good, but you forgot a very important case for test_find_files. If there is a duplicate
+file entry within the same conversation history, and they are the same version, the find_files
+method should only return the one with the highest part number and all the concatenated content
+(as it already does in general for multipart files). This is important because earlier parts of
+the file could be invalid, and you will get errors.
 
 * Possible to enforce model to consistently make large parts (though it could be trying to be safe)
+    * Convey that if you see a mistake in the file you just wrote, make a new version of it, that isn't a part (hmmm use Chunk)
     * Use Chunk instead of Part
-
+* Bug: Linus prefix should be appended to first, and if force continue, then don't for each new part
 * Remove code snippets from output formats, leave ai to write as markdown
     * Assume all text is markdown and print in Markdown() wrapper so snippet code blocks work
 
 ## Backlog
 
+* If a newer version is given across force continues, then don't print the previous
+
 * Bug: each file the ai writes is opposite of trailing newline the editor does
 
 * Splitting Files
     * Consider using the role="model" for unfinished file part convos for the LLM to understand the context better?
+    * Build in a fallback that if a part is not seen in the next force continue, then consider it done
 
 * Update to latest google-genai version
 
