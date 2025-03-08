@@ -52,8 +52,9 @@ def safe_int(value, default=1):
     except ValueError:
         return default
 
-def find_files(content, parts=False):
+def find_files(content):
     regex = rf'{FILE_METADATA_START}.*?\nPath: (.*?)\nLanguage: (.*?)\n(?:Version: (\d+)\n)(?:Part: (\d+)\n)(?:NoMoreParts: (True|False)\n).*?{FILE_METADATA_END}\n?(.*?)\n?{END_OF_FILE}'
+
     file_matches = re.finditer(regex, content, flags=re.DOTALL)
 
     all_file_parts =  [(
@@ -65,24 +66,24 @@ def find_files(content, parts=False):
         match.group(5) == 'True') # NoMoreParts
         for match in file_matches]
 
-    if parts:
-        return all_file_parts
-    else:
-        all_files = {}
-        for path, version, content, language, part, no_more_parts in all_file_parts:
-            file_key = (path, version)
-            if file_key not in all_files:
-                all_files[file_key] = []
-            all_files[file_key].append((content, language, part, no_more_parts))
-            all_files[file_key].sort(key=lambda x: x[2]) # Sort by part
-        result = []
-        for key_tuple, parts_array in all_files.items():
-            joined_content = ''.join([part[0] for part in parts_array])
-            language = parts_array[-1][1]
-            part_ids = sorted([part[2] for part in parts_array])
-            no_more_parts = parts_array[-1][3]
-            result.append(list(key_tuple) + [joined_content, language, part_ids, no_more_parts])
-        return result
+    all_files = {}
+
+    for path, version, content, language, part, no_more_parts in all_file_parts:
+        file_key = (path, version)
+        if file_key not in all_files:
+            all_files[file_key] = []
+        all_files[file_key].append((content, language, part, no_more_parts))
+        all_files[file_key].sort(key=lambda x: x[2]) # Sort by part
+    result = []
+
+    for key_tuple, parts_array in all_files.items():
+        joined_content = ''.join([part[0] for part in parts_array]) # Join all content parts
+        language = parts_array[-1][1] # Get the language from the last part
+        part_id = max([part[2] for part in parts_array]) # Get the highest part number
+        no_more_parts = parts_array[-1][3] # Get the no more parts flag from the last part
+        result.append(list(key_tuple) + [joined_content, language, part_id, no_more_parts])
+
+    return result
 
 def find_snippets(content):
     regex = rf'{SNIPPET_METADATA_START}.*?\nLanguage: (.*?)\n{SNIPPET_METADATA_END}(.*?){END_OF_FILE}'
