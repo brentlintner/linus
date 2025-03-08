@@ -16,6 +16,8 @@ Anything related to the project management of the project, such as tracking issu
 
 ## Backlog
 
+* Bug: each file the ai writes (or the parser parses) never has a trailing new line
+
 * Add tests (smoke tests (fake API), realworld tests (real API), and unit tests
 
 * Bug?: If a newer version is given across force continues, then don't print the previous
@@ -23,8 +25,6 @@ Anything related to the project management of the project, such as tracking issu
 * ? Possible to enforce model to consistently make large parts (though it could be trying to be safe)
     * Convey that if you see a mistake in the file you just wrote, make a new version of it, that isn't a part (hmmm use Chunk)
     * Use Chunk instead of Part?
-
-* Bug: each file the ai writes is opposite of trailing newline the editor does
 
 * Splitting Files
     * Consider using the role="model" for unfinished file part convos for the LLM to understand the context better?
@@ -43,6 +43,7 @@ Anything related to the project management of the project, such as tracking issu
     * If too many files are open on boot, have a threshold or error out (too big for context window)
     * Start using concept "open files", i.e periodically or on threshold: compact versions etc, and bring all into Open Files section instead of File References section (that way we can optimize the file references section succinctly)
         * If you don't have an open file, then ask to open them (can use function calling here)
+    * Auto compact versions if too many files are open (perhaps like 100K too many characters)
     * Consider pre-asking the llm (if there is no file referenced) if it thinks the request is just a conversational response or a task (which means data etc should be provided)
         * Else if there is a file reference or it might be a request that needs the project, do a vector lookup and update open files
     * If the file references (aka open files) etc is bigger than certain amount, do a simple optimization for now (how? need vector db...)
