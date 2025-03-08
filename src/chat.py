@@ -320,17 +320,19 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
                 in_progress_file = parser.find_in_progress_file(queued_response_text)
 
                 if in_progress_file:
+                    in_progress_file_path, _ = in_progress_file
+                    status.update(f"Linus is writing {in_progress_file_path}...")
+
                     # Split into before_file and rest
                     before_file, rest = queued_response_text.split(parser.FILE_METADATA_START, 1)
                     queued_response_text = parser.FILE_METADATA_START + rest
 
-                    # Print accumulated text (before_file part) using Markdown
-                    console.print(Markdown(before_file.strip(), code_theme=EverforestDarkStyle), end="")
+                    if before_file:
+                        console.print(Markdown(before_file.strip(), code_theme=EverforestDarkStyle), end="")
 
                 queued_has_complete_code_block = re.search(parser.match_code_block(), queued_response_text, flags=re.DOTALL)
 
                 if not queued_has_complete_code_block:
-                    status.update("Linus is typing...")
                     debug("No complete code block detected, queueing...")
                     continue
 
@@ -377,13 +379,10 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
                             # TODO: need to look for multiple files here? I think we can assume not because we're streaming
                             file_path, version, file_content, language, part_id, no_more_parts = files[0]
 
-                            status.update(f"Linus is writing part {part_id} of {file_path}...")
-
                             info(f"Received chunk {part_id} for {file_path} (NoMoreParts: {no_more_parts})")
                             file_part_buffer.add(file_path, file_content, part_id, no_more_parts, version)
 
                             if file_part_buffer.is_complete(file_path, version):
-                                status.update("Linus is typing...")
                                 info(f"All chunks received for {file_path} (v{version})")
                                 file_content = (file_part_buffer.assemble(file_path, version) or "").strip('\n')
                                 assembled_files[(file_path, version)] = file_content  # Store assembled file
@@ -395,6 +394,7 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
                                 console.print(Markdown(f"#### {file_path}"))
                                 section = f"```{language}\n{code}\n```"
                                 print_markdown_code(section)
+                                status.update("Linus is typing...")
                             else:
                                 debug(f"Waiting for more chunks of {file_path}")
                                 continue  # Important: Don't process incomplete chunks
