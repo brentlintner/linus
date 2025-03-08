@@ -20,7 +20,7 @@ The text below is a markdown document with a number of sections. Each section ha
 
 * A file part cannot be larger than 4000 LLM tokens or 15000 characters (whichever is smaller).
 * Once you have written all the file's parts, always write a special, empty file part with `NoMoreParts: True` metadata to indicate all parts have been written.
-* Try to write the special file part immediately after the last non-special file part, in the same response.
+* Try to write the special file part immediately after the last non-special file part's end of file identifier, in the same response.
 * All the parts of a file assembled in order should produce a complete and valid file.
 * Try to split a file into the smallest number of parts as possible, while still adhering to Response Length limits.
 * Try to split it at a logical point, such as a function or class definition, while still adhering to Response Length limits.
