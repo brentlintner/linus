@@ -1,4 +1,3 @@
-
 import os
 import sys
 import time
@@ -172,7 +171,7 @@ class FilePartBuffer:
             return None
 
         sorted_parts = sorted(self.buffer[(file_path, version)].items())
-        full_content = '\n'.join(part_data for _, part_data in sorted_parts)
+        full_content = ''.join(part_data for _, part_data in sorted_parts)
         del self.buffer[(file_path, version)]
         del self.total_parts[(file_path, version)]
         return full_content
@@ -296,6 +295,8 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
         full_response_text = ""
         queued_response_text = ""
 
+        assembled_files = {}  # Store successfully assembled files here.
+
         with console.status("Linus is thinking...", spinner="point") as status:
             for chunk in stream:
                 if not chunk.text:
@@ -353,6 +354,7 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
                                 if file_part_buffer.is_complete(file_path, version):
                                     info(f"All chunks received for {file_path} (v{version})")
                                     file_content = (file_part_buffer.assemble(file_path, version) or "").strip('\n')
+                                    assembled_files[(file_path, version)] = file_content  # Store assembled file
                                     code = generate_diff(file_path, file_content)
                                     is_diff = os.path.exists(file_path) and file_content != code
                                     language = "diff" if is_diff else parser.get_language_from_extension(file_path)
@@ -366,6 +368,7 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
                                     continue  # Important: Don't process incomplete chunks
                             else:
                                 debug('Regular file handling (no chunks)')
+                                assembled_files[(file_path, version)] = file_content.strip('\n')  # Store even single-part files
                                 code = generate_diff(file_path, file_content.strip('\n'))
                                 is_diff = os.path.exists(file_path) and file_content != code
                                 language = "diff" if is_diff else parser.get_language_from_extension(file_path)
@@ -431,27 +434,18 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
         history.append(f'\n**Linus:**\n\n{full_response_text}\n')
 
         if writeable:
-            # Assume no parts here because we've force continued above until we had them all
-
-
-            # Use the entire response text with file parts (or... just look up the whole history for the versino of the file found in response text, we can assume all parts are there)
-            found_files = parser.find_files(full_response_text)
-
-
-            # We iterate over the *original* full_response_text. This is important
-            # because we want to write *all* file chunks, not just complete files.
-            # TODO: handle newer versions in the same response
-            for file_path, _, file_content, _, _, _ in found_files:
+            # Write all assembled files
+            for (file_path, _), file_content in assembled_files.items():
                 info(f":w {file_path}")
                 directory = os.path.dirname(file_path)
                 if directory and not os.path.exists(directory):
                     os.makedirs(directory)
-
                 with open(file_path, 'w') as f:
                     f.write(file_content)
 
-            if len(found_files) > 0:
+            if len(assembled_files) > 0:
                 print()
+
 
         if history_filename:
             with open(history_filename, 'w') as f:
