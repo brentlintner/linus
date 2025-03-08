@@ -296,7 +296,7 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
 
             history.append(get_file_contents(file_path))
 
-    def send_request_to_ai():
+    def send_request_to_ai(is_continuation=False):
         """Sends a request to the AI and processes the streamed response."""
         nonlocal session_total_tokens
 
@@ -307,7 +307,6 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
         start_time = time.time()
 
         stream = client.models.generate_content_stream(model=GEMINI_MODEL, contents=contents)
-
 
         # Initialize counters for this request
         prompt_token_count = 0
@@ -390,7 +389,7 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
                             # TODO: need to look for multiple files here? I think we can assume not because we're streaming
                             file_path, version, file_content, language, part_id, no_more_parts = files[0]
 
-                            status.update(f"Linus is writing {file_path}...")
+                            status.update(f"Linus is writing part {part_id} of {file_path}...")
 
                             info(f"Received chunk {part_id} for {file_path} (NoMoreParts: {no_more_parts})")
                             file_part_buffer.add(file_path, file_content, part_id, no_more_parts, version)
@@ -470,7 +469,10 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
                     f.write(''.join(history))
             return True
 
-        history.append(f'\n**Linus:**\n\n{full_response_text}\n')
+        if not is_continuation:
+            history.append(f'\n**Linus:**\n\n{full_response_text}\n')
+        else:
+            history.append(f'\n{full_response_text}\n')
 
         if writeable:
             # Write all assembled files
@@ -527,12 +529,12 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
     while True:
         try:
             if force_continue:
-                info("Forcing continue...")
+                info("CONTINUE")
                 if force_continue_counter > 5:
                     error("Model is stuck. Please restart.")
                     break
                 force_continue_counter += 1
-                force_continue = send_request_to_ai()
+                force_continue = send_request_to_ai(is_continuation=True)
                 continue
             else:
                 force_continue_counter = 0
@@ -552,12 +554,14 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
 
             if prompt_text.startswith('$continue'):
                 process_user_input()
-                force_continue = send_request_to_ai()
+                # Pass force_continue to send_request_to_ai
+                force_continue = send_request_to_ai(is_continuation=True)
                 continue
 
             process_user_input(prompt_text)
 
-            force_continue = send_request_to_ai()
+            # Not a continuation, so pass False
+            force_continue = send_request_to_ai(is_continuation=False)
 
         except KeyboardInterrupt:
             if input("\nReally quit? (y/n) ").lower() == 'y':
