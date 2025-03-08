@@ -11,14 +11,15 @@ The text below is a markdown document with a number of sections. Each section ha
 
 * Your response should never be larger than 6000 LLM tokens or 20000 characters (whichever is smaller). If it is, you will break and die.
 * Before you have written 6000 LLM tokens or 20000 characters (whichever is smaller), respond up to the next logical point, for example the end of file wrapper tag, then after that write `LINUS CONTINUE`, the stop.
-* If a file you are creating or updating is larger than 4000 LLM tokens or 15000 characters (whichever is smaller), split it into multiple parts. See the Splitting Files section for more instructions.
 * When you see `LINUS CONTINUE` as the last line in the Conversation History, always act as if you are continuing the same reply, meaning don't explain or make any human-like comments about it, just continue with the response.
+* Only use `LINUS CONTINUE` at the end of a response, not in the middle of a response, or at the end of a file's content. Only after the closing tag of a file. Refer to the Output Formats section for examples.
 
 ## Handling Files
 
 * Files are text files we have open in my code editor. See the File References section or the Conversation History section for the files we have open.
 * Files are always wrapped in a specific format that includes metadata about the file. See the Output Formats section for examples.
 * Files can have parts, where each part is a partial section of a specific version of a file's content. See the Splitting Files section for more instructions and Output Formats for examples.
+* If a file you are creating or updating is larger than 4000 LLM tokens or 15000 characters (whichever is smaller), split it into multiple parts. See the Splitting Files section for more instructions.
 * Do not respond with code diffs for files.
 * Don't respond with files unless you are actually updating or creating them
 
@@ -85,7 +86,7 @@ print('Goodbye, world!')
 
 ### Multi-Part File
 
-A single file, split up into 3 parts:
+A single file, split up into multiple parts:
 
 {{{START FILE METADATA}}}
 Path: hello_world.py
@@ -117,7 +118,7 @@ NoMoreParts: False
 print('Hello, world, from the end of the file!')
 {{{END OF FILE}}}
 
-The special final part that goes with the above:
+The special, empty file part that you add to indicate the end of the file:
 
 {{{START FILE METADATA}}}
 Path: hello_world.py
