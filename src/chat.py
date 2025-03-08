@@ -245,6 +245,9 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
 
     session = create_prompt_session()
 
+    # Initialize session-level token count
+    session_total_tokens = 0
+
     def calculate_history_stats():
         # token_count = client.models.count_tokens(model=GEMINI_MODEL, contents=''.join(history))
         total_characters = sum(len(entry) for entry in history)
@@ -295,6 +298,8 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
 
     def send_request_to_ai():
         """Sends a request to the AI and processes the streamed response."""
+        nonlocal session_total_tokens
+
         request_text = ''.join(history) + f'\n{parser.CONVERSATION_END_SEP}\n'
 
         contents = [types.Part.from_text(text=request_text)]
@@ -302,6 +307,13 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
         start_time = time.time()
 
         stream = client.models.generate_content_stream(model=GEMINI_MODEL, contents=contents)
+
+
+        # Initialize counters for this request
+        prompt_token_count = 0
+        candidates_token_count = 0
+        cached_content_token_count = 0
+        total_token_count = 0
 
         full_response_text = ""
         queued_response_text = ""
@@ -312,6 +324,13 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
             for chunk in stream:
                 if not chunk.text:
                     continue
+
+                # Accumulate token counts from usage metadata, handling potential None values
+                if chunk.usage_metadata:
+                    prompt_token_count += chunk.usage_metadata.prompt_token_count or 0
+                    candidates_token_count += chunk.usage_metadata.candidates_token_count or 0
+                    cached_content_token_count += chunk.usage_metadata.cached_content_token_count or 0
+                    total_token_count += chunk.usage_metadata.total_token_count or 0
 
                 queued_response_text += chunk.text
                 full_response_text += chunk.text
@@ -407,8 +426,6 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
 
         status.stop()
 
-        end_time = time.time()
-        duration = end_time - start_time
         # --- History and File Writing ---
 
         # History prune first before appending, but also after the response is fully processed
@@ -459,9 +476,20 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
             with open(history_filename, 'w') as f:
                 f.write(''.join(history))
 
+        # Update session total tokens
+        session_total_tokens += total_token_count
+
         if verbose:
+            end_time = time.time()
+            duration = end_time - start_time
             total_characters, total_lines = calculate_history_stats()
-            info(f"{total_lines} lines, {total_characters} characters, {duration:.2f}s ({GEMINI_MODEL})")
+            console.print(
+                f"{total_lines} lines, "
+                f"{total_characters} characters, "
+                f"{total_token_count} tokens, "
+                f"{session_total_tokens} total, "
+                f"{duration:.2f}s ({GEMINI_MODEL.replace('gemini-', '')})"
+            )
 
         return False
 
@@ -469,7 +497,13 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
         end_time = time.time()
         duration = end_time - start_time
         total_characters, total_lines = calculate_history_stats()
-        info(f"{total_lines} lines, {total_characters} characters, {duration:.2f}s ({GEMINI_MODEL})")
+        console.print(
+            f"{total_lines} lines, "
+            f"{total_characters} characters, "
+            f"0 tokens, "
+            f"0 total, "
+            f"{duration:.2f}s ({GEMINI_MODEL.replace('gemini-', '')})"
+        )
 
     # TODO: fill up file part buffer from history on resume
     file_part_buffer = FilePartBuffer()
