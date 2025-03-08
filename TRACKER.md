@@ -4,29 +4,30 @@ Anything related to the project management of the project, such as tracking issu
 
 ## Current
 
-* Add tests (smoke tests (fake API), realworld tests (real API), and unit tests
 * Bug: Each file part is immediately written to the file (should be batched?)
-* Print Linus is coding file (part 1/X), or typing if streaming, or thinking if stream idles
 
+* Print Linus is coding file (part 1/X), or typing if streaming, or thinking if stream idles
+* Add tests (smoke tests (fake API), realworld tests (real API), and unit tests
 * Log token metadata on each response (usage_metadata=GenerateContentResponseUsageMetadata)
     * As the model produces the output, the library can monitor the token count live (show in status if verbose)
-
 * Possible to enforce model to consistently make large parts (though it could be trying to be safe)
-    * Remove the "minimize number of parts" part? (maybe thinks minimize in the response not entire response which it doesn't understand before it makes it)
-    * It's predictive... it can't look ahead really, but it can look at the past
+    * Use Chunk instead of Part
+    * Way to remove parts from the metadata as it makes it harder for llm to guess length
 
 ## Backlog
+
+* Bug: each file the ai writes is opposite of trailing newline the editor does
+
+* Splitting Files
+    * Consider using the role="model" for unfinished file part convos for the LLM to understand the context better?
 
 * Update to latest google-genai version
 
 * Bugs
     * Fix code snippets having backticks in them (maybe we just ignore them having wrappers, and only have files?)
 
-* Splitting Files
-    * Use Chunk instead of Part
-    * Consider using the role="model" for unfinished file part convos for the LLM to understand the context better?
-
 * Flexible History
+    * On resume, should show full files not the last part
     * Use sqlite to store history, file, and project data
     * Bug: Prune is disabled right now (NOTE: we are going to change this anyways when we introduce only "open files")
 
