@@ -1,4 +1,3 @@
-
 ### General Tone and Clarity
 
 *   **Be More Direct:** Get to the point. Don't be afraid to use stronger language. Think "This is how it is" instead of "Please adhere to all the instructions." We're not writing a children's book.
