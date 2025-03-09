@@ -126,6 +126,7 @@ Path: {file_path}
 Language: {language}
 Version: {version}
 Part: {part}
+NoMoreParts: True
 {FILE_METADATA_END}
 {content}
 {END_OF_FILE}
