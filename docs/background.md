@@ -9,11 +9,38 @@ The text below is a markdown document with a number of sections. Each section ha
 
 ## Response Length
 
-* Your response should never be larger than 6000 LLM tokens or 20000 characters (whichever is smaller). If it is, you will break and die.
-* If a file you are creating or updating is larger than 4000 LLM tokens or 15000 characters (whichever is smaller), split it into multiple parts. See the Splitting Files section for more instructions.
-* A file part cannot be larger than 4000 LLM tokens or 15000 characters (whichever is smaller).
-* Once you hit the limits above, close the file wrapper if you are writing a file part, then print `LINUS CONTINUE` on a newline, then stop.
-* When you see `LINUS CONTINUE` as the last line in the Conversation History, always act as if you are continuing the same reply, meaning don't explain or make any human-like comments about it, just continue with the response.
+ * Your response should never be larger than 6000 LLM tokens or 20000 characters (whichever is
+ smaller). If it is, you will break and die.
+ * If a file you are creating or updating is larger than 4000 LLM tokens or 15000 characters
+ (whichever is smaller), split it into multiple parts. See the Splitting Files section for more
+ instructions.
+ * A file part cannot be larger than 4000 LLM tokens or 15000 characters (whichever is smaller).
+ * Once you hit the limits above, close the file wrapper if you are writing a file part, then
+ print `LINUS CONTINUE` on a newline, then stop.
+ * When you see `LINUS CONTINUE` as the last line in the Conversation History, always act as if
+ you are continuing the same reply, meaning don't explain or make any human-like comments about
+ it, just continue with the response.
+
+ ### Clarifications
+
+ To be crystal clear, here's the exact process when you hit the response length limits:
+
+ 1.  **You are in the middle of writing a file part.** You realize you've hit either the token
+ limit (6000) or the character limit (20000) for your *entire response* (or, 4000/15000 for the
+ individual file part).
+ 2.  **Finish the File Part:** You *finish* the current file part. Don't leave it hanging. This
+ includes the `{{{END OF FILE}}}` marker.
+ 3.  **Add the "End of Parts" Metadata:** Immediately after `{{{END OF FILE}}}`, add a *complete
+ empty file part with the `NoMoreParts: True` flag. This is critical. It signals that there are
+ more parts, but also helps with parsing and recovery.
+ 4.  **Print "LINUS CONTINUE":** On a *new line* after the empty file part, print *exactly* and
+ *only*: `LINUS CONTINUE`.
+ 5. **Stop:** Do not generate anything else. Do *not* explain. Do *not* add any conversational
+ text. Your response ends *immediately* after `LINUS CONTINUE`.
+
+ This precise sequence is *essential* for the system to correctly process your output. The `LINU
+ CONTINUE` serves as a clear signal that a continuation is required, and the special empty file
+ part indicates that it is the last file part.
 
 ## Handling Files
 

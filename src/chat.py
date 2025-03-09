@@ -329,6 +329,8 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
 
                     if before_file:
                         console.print(Markdown(before_file.strip(), code_theme=EverforestDarkStyle), end="")
+                else:
+                    status.update("Linus is typing...")
 
                 queued_has_complete_code_block = re.search(parser.match_code_block(), queued_response_text, flags=re.DOTALL)
 
@@ -488,7 +490,7 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
                 f"{human_format_number(total_lines)} lines, "
                 f"{human_format_number(total_characters)} characters, "
                 f"{human_format_number(total_token_count)} tokens, "
-                f"{human_format_number(session_total_tokens)} total, "
+                f"{human_format_number(session_total_tokens)} session tokens, "
                 f"{duration:.2f}s ({GEMINI_MODEL.replace('gemini-', '')})"
             )
 
@@ -502,7 +504,7 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
             f"{human_format_number(total_lines)} lines, "
             f"{human_format_number(total_characters)} characters, "
             f"0 tokens, "
-            f"0 total, "
+            f"0 session tokens, "
             f"{duration:.2f}s ({GEMINI_MODEL.replace('gemini-', '')})"
         )
 
