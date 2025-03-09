@@ -5,23 +5,23 @@ from pygments.util import ClassNotFound
 from pygments.lexers import get_lexer_for_filename
 
 # NOTE: We must use this way to generate the placeholder wrapper so this parsing doesn't fail for this file when using this project on itself
-def uid(placeholder):
+def placeholder(placeholder):
     return r'{{{' + placeholder + r'}}}'
 
-FILE_METADATA_START =       uid('START FILE METADATA')
-FILE_METADATA_END =         uid('END FILE METADATA')
-SNIPPET_METADATA_START =    uid('START CODE SNIPPET METADATA')
-SNIPPET_METADATA_END =      uid('END CODE SNIPPET METADATA')
-TERMINAL_METADATA_START =   uid('START TERMINAL METADATA')
-TERMINAL_METADATA_END =     uid('END TERMINAL METADATA')
-END_OF_FILE =               uid('END OF FILE')
-FILE_TREE_PLACEHOLDER =     uid('FILE_TREE_JSON')
-FILES_PLACEHOLDER =         uid('FILE_REFERENCES')
-FILES_START_SEP =           uid('FILE_REFERENCES START')
-FILES_END_SEP =             uid('FILE_REFERENCES END')
-CONVERSATION_START_SEP =    uid('CONVERSATION_HISTORY START')
-CONVERSATION_END_SEP =      uid('CONVERSATION_HISTORY END')
-TERMINAL_LOGS_PLACEHOLDER = uid('TERMINAL_LOGS')
+FILE_METADATA_START =       placeholder('START FILE METADATA')
+FILE_METADATA_END =         placeholder('END FILE METADATA')
+SNIPPET_METADATA_START =    placeholder('START CODE SNIPPET METADATA')
+SNIPPET_METADATA_END =      placeholder('END CODE SNIPPET METADATA')
+TERMINAL_METADATA_START =   placeholder('START TERMINAL METADATA')
+TERMINAL_METADATA_END =     placeholder('END TERMINAL METADATA')
+END_OF_FILE =               placeholder('END OF FILE')
+FILE_TREE_PLACEHOLDER =     placeholder('FILE_TREE_JSON')
+FILES_PLACEHOLDER =         placeholder('FILE_REFERENCES')
+FILES_START_SEP =           placeholder('FILE_REFERENCES START')
+FILES_END_SEP =             placeholder('FILE_REFERENCES END')
+CONVERSATION_START_SEP =    placeholder('CONVERSATION_HISTORY START')
+CONVERSATION_END_SEP =      placeholder('CONVERSATION_HISTORY END')
+TERMINAL_LOGS_PLACEHOLDER = placeholder('TERMINAL_LOGS')
 
 def find_file_references(content):
     file_references = re.findall(r'@(\S+)', content)
