@@ -4,15 +4,17 @@ Anything related to the project management of the project, such as tracking issu
 
 ## Current
 
-* Bug: Since the LLM might write a new version of a file instead of finishing a previous version, we need to check for that so we don't continue unintentionally
-
 ## Backlog
 
-* Each time we write a file, if the content stripped of trailing newlines is the same, print (no changes) instead of writing the file and showing the diff
-
-* Bug: Is Chunk more clear than Part?
-
-* Turn down the token and character limits?
+* File Handling
+    * If missing no more parts is still issue:
+        * Make it required for all files
+        * Make Part: only required for a non special file part
+    * Each time we write a file, if the content stripped of trailing newlines is the same, print (no changes) instead of writing the file and showing the diff
+    * Ensure trailing newlines don't happen a lot
+        * This means we drop an empty last part too
+    * Bug: Is Chunk more clear than Part? (apparently not?)
+    * Bug: Since the LLM might write a new version of a file instead of finishing a previous version, we need to check for that so we don't continue unintentionally
 
 * Remove code snippets from output formats and the stream parsing, leave ai to write as markdown
 
