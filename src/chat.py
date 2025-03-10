@@ -428,25 +428,25 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
 
         # --- History and File Writing ---
 
-        files = parser.find_files(full_response_text)
-        unfinished_files = []
+        linus_continue = re.match(r"^LINUS\sCONTINUE$", full_response_text, flags=re.MULTILINE)
 
         # Check for unfinished files
-        for file_path, version, _, _, _, no_more_parts in files:
-            if (file_path, version) not in assembled_files:  # Only check files we haven't already assembled
-                if not file_part_buffer.is_complete(file_path, version):
-                    unfinished_files.append((file_path, version))
+        # files = parser.find_files(full_response_text)
+        # for file_path, version, _, _, _, no_more_parts in files:
+            # if (file_path, version) not in assembled_files:  # Only check files we haven't already assembled
+                # if not file_part_buffer.is_complete(file_path, version):
+                    # unfinished_files.append((file_path, version))
 
-        # TODO: technically the LLM might write a new version of a file without writing a part with not_more_parts set to True, so we should check for that
-        if len(unfinished_files) > 0:
-            debug(f"Unfinished files: {unfinished_files}")
-            history.append(f'\n\n{full_response_text}\n\n')
+        if linus_continue:
+            # debug(f"Unfinished files: {unfinished_files}")
+            history.append(f'\n{full_response_text}\n')
             if history_filename:
                 with open(history_filename, 'w') as f:
                     f.write(''.join(history))
             return True
 
         if not is_continuation:
+            full_response_text = re.sub(r"^LINUS\sCONTINUE$", "", full_response_text, flags=re.MULTILINE)
             history.append(f'\n**Linus:**\n\n{full_response_text}\n')
         else:
             history.append(f'\n{full_response_text}\n')
