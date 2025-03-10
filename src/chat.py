@@ -274,6 +274,8 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
 
     def process_user_input(prompt_text=""):
         """Processes user input, updating history and handling file references."""
+        # nonlocal history  # Make sure we're modifying the global history
+
         if not prompt_text:
             return
 
@@ -282,9 +284,21 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
         file_references = parser.find_file_references(prompt_text)
 
         for file_path in file_references:
-            if not os.path.isfile(file_path): continue
+            if not os.path.isfile(file_path):
+                continue
 
-            history.append(get_file_contents(file_path))
+            # Find the highest existing version of the referenced file.
+            highest_version = 0
+            for entry in history:
+                for existing_file_path, version, _, _, _, _ in parser.find_files(entry):
+                    if existing_file_path == file_path:
+                        highest_version = max(highest_version, version)
+
+            new_version = highest_version + 1
+
+            # TODO:
+            # prune_file_history(file_path, history) # Remove old files
+            history.append(get_file_contents(file_path, new_version))
 
     def send_request_to_ai(is_continuation=False):
         """Sends a request to the AI and processes the streamed response."""

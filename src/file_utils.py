@@ -130,11 +130,11 @@ def generate_project_file_list(extra_ignore_patterns=None, include_patterns=None
 
     return "\n".join(output)  # Join with newlines
 
-def get_file_contents(file_path):
+def get_file_contents(file_path, version=1):
     try:
         with open(file_path, 'r') as f:
             contents = f.read()
-        block = file_block(file_path, contents, get_language_from_extension(file_path))
+        block = file_block(file_path, contents, get_language_from_extension(file_path), version=version)
         return f"{block}\n"
     except Exception as e:
         # TODO: use logging here not return
@@ -144,7 +144,7 @@ def prune_file_history(file_path, history):
     """Removes previous mentions of the given file from the history."""
     for index, entry in enumerate(history):
         if re.match(match_file(file_path), entry):
-            history[index] = re.sub(match_file(file_path), '', entry)
+            history[index] = re.sub(match_file(file_path), '', entry, flags=re.DOTALL)
 
 def human_format_number(num):
     """Converts an integer to a human-readable string (e.g., 1.3M, 450K)."""
