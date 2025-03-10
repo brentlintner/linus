@@ -77,9 +77,9 @@ def my_snippet():
 """
 
 def test_find_files():
-    assert parser.find_files(TEST_FILE_1) == [('test_file_1.py', 1, "print('Hello from test file 1')", 'python', 1, True)]
-    assert parser.find_files(TEST_FILE_2_PARTS) == [('test_file_2.py', 1, 'def some_function():\n    pass', 'python', 2, True)]
-    assert parser.find_files(TEST_FILE_3_MULTIPLE_VERSIONS) == [('test_file_3.py', 2, '# New version', 'python', 1, True)]
+    assert parser.find_files(TEST_FILE_1) == [['test_file_1.py', 1, "print('Hello from test file 1')", 'python', 1, True]]
+    assert parser.find_files(TEST_FILE_2_PARTS) == [['test_file_2.py', 1, 'def some_function():\n    pass', 'python', 2, True]]
+    assert parser.find_files(TEST_FILE_3_MULTIPLE_VERSIONS) == [['test_file_3.py', 2, '# New version', 'python', 1, True]]
     assert parser.find_files("Some random text with no file blocks") == []
 
 
@@ -104,7 +104,7 @@ NoMoreParts: False
 {parser.placeholder('END FILE METADATA')}
     """
     assert parser.find_in_progress_file(in_progress) == ('incomplete.py', False)
-    assert parser.find_in_progress_file(TEST_FILE_1) == None  # Complete file
+    assert parser.find_in_progress_file(TEST_FILE_1) == ('test_file_1.py', True)  # Complete file
     assert parser.find_in_progress_file("No file metadata here") == None
 
 def test_find_in_progress_snippet():

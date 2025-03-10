@@ -4,3 +4,4 @@ tmp
 .ignore
 .tool-versions
 .pytest
+.pytest_cache

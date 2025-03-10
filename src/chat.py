@@ -207,9 +207,11 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
 
         for file_path, _, content, _, _, _ in files:
             language = parser.get_language_from_extension(file_path)
+            # HACK: ideally we avoid doing this per file, but it's a quick fix for now
+            replaced_content = content.replace("\\", "\\\\")
             recap = re.sub(
                 parser.match_file(file_path),
-                rf'#### {file_path}\n\n```{language}\n{content}\n```',
+                rf'#### {file_path}\n\n```{language}\n{replaced_content}\n```',
                 recap,
                 flags=re.DOTALL,
                 count=1)
@@ -451,8 +453,8 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
 
         if writeable:
             # Write all assembled files
+            console.print("Files Changed\n", style="bold") if assembled_files else None
             for (file_path, _), file_content in assembled_files.items():
-                console.print("Files Changed\n", style="bold")
                 console.print(f"  {file_path}", style="bold green")
                 directory = os.path.dirname(file_path)
                 if directory and not os.path.exists(directory):

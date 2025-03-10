@@ -2,7 +2,7 @@ import os
 import re
 import shlex
 from pygments.util import ClassNotFound
-from pygments.lexers import get_lexer_for_filename
+from pygments.lexers import get_lexer_for_filename, guess_lexer_for_filename
 
 # NOTE: We must use this way to generate the placeholder wrapper so this parsing doesn't fail for this file when using this project on itself
 def placeholder(placeholder):
@@ -29,7 +29,7 @@ def find_file_references(content):
     return [re.sub(r"[^\w\s]+$", '', file_reference) for file_reference in file_references]
 
 def find_in_progress_file(content):
-    regex = rf'{FILE_METADATA_START}.*?\nPath: (.*?)\n.*?NoMoreParts: (True|False).*?{FILE_METADATA_END}.*?'
+    regex = rf'{FILE_METADATA_START}.*?\nPath: (.*?)\n.*?NoMoreParts: (True|False).*?{FILE_METADATA_END}'
     file_match = re.search(regex, content, flags=re.DOTALL)
 
     if file_match:
@@ -40,8 +40,8 @@ def find_in_progress_file(content):
         return None
 
 def find_in_progress_snippet(content):
-    regex = rf'{SNIPPET_METADATA_START}.*?\nLanguage: (.*?)\n{SNIPPET_METADATA_END}.*?[^{END_OF_FILE}].*?'
-    snippet_match = re.match(regex, content, flags=re.DOTALL)
+    regex = rf'{SNIPPET_METADATA_START}.*?\nLanguage: (.*?)\n{SNIPPET_METADATA_END}(?:(?!{END_OF_FILE}).)*$'
+    snippet_match = re.search(regex, content, flags=re.DOTALL)
     return snippet_match.group(1) if snippet_match else None
 
 def safe_int(value, default=1):
@@ -53,10 +53,11 @@ def safe_int(value, default=1):
         return default
 
 def find_files(content):
+    # This regex should correctly capture all parts of a file block, including the content.
     regex = (
-        rf'{FILE_METADATA_START}.*?' +
-        rf'\nPath: (.*?)\nLanguage: (.*?)\n(?:Version: (\d+)\n)' +
-        rf'(?:Part: (\d+)\n)(?:NoMoreParts: (True|False)\n).*?{FILE_METADATA_END}\n?(.*?){END_OF_FILE}'
+        rf'{FILE_METADATA_START}.*?' +  # Match the start of the metadata
+        rf'\nPath: (.*?)\nLanguage: (.*?)\n(?:Version: (\d+)\n)' + # Capture Path, Language, and optional Version
+        rf'(?:Part: (\d+)\n)(?:NoMoreParts: (True|False)\n).*?{FILE_METADATA_END}\n?(.*?)(?:{END_OF_FILE})' # Capture Part and NoMoreParts, then the content, and finally the end of file marker
     )
 
     file_matches = re.finditer(regex, content, flags=re.DOTALL)
@@ -72,36 +73,38 @@ def find_files(content):
 
     all_files = {}
 
+    # Assemble the parts for each (file, version)
     for path, version, content, language, part, no_more_parts in all_file_parts:
         file_key = (path, version)
         if file_key not in all_files:
             all_files[file_key] = []
         all_files[file_key].append((content, language, part, no_more_parts))
-        all_files[file_key].sort(key=lambda x: x[2]) # Sort by part
+        all_files[file_key].sort(key=lambda x: x[2]) # Ensure parts are in order
+
     result = []
 
     for key_tuple, parts_array in all_files.items():
         joined_content = ''.join([part[0] for part in parts_array]) # Join all content parts
-        language = parts_array[-1][1] # Get the language from the last part
+        language = parts_array[-1][1] # Get the language from the LAST part
         part_id = max([part[2] for part in parts_array]) # Get the highest part number
-        no_more_parts = parts_array[-1][3] # Get the no more parts flag from the last part
-        result.append(list(key_tuple) + [joined_content, language, part_id, no_more_parts])
+        no_more_parts = parts_array[-1][3] # Get the no more parts flag from the LAST part
+        result.append(list(key_tuple) + [joined_content.strip(), language, part_id, no_more_parts]) # Use strip here.  Important!
 
     return result
 
 def find_snippets(content):
-    regex = rf'{SNIPPET_METADATA_START}.*?\nLanguage: (.*?)\n{SNIPPET_METADATA_END}\n?(.*?){END_OF_FILE}'
+    regex = rf'{SNIPPET_METADATA_START}.*?\nLanguage: (.*?)\n{SNIPPET_METADATA_END}\n?(.*?)(?:{END_OF_FILE})'
     snippet_matches = re.finditer(regex, content, flags=re.DOTALL)
-    return [(match.group(1), match.group(2)) for match in snippet_matches]
+    return [(match.group(1), match.group(2).rstrip('\n')) for match in snippet_matches] # Still rstrip this one, it seems.
 
 def is_file(content):
-    return str(content).startswith(FILE_METADATA_START)
+    return str(content).strip().startswith(FILE_METADATA_START)
 
 def is_snippet(content):
-    return str(content).startswith(SNIPPET_METADATA_START)
+    return str(content).strip().startswith(SNIPPET_METADATA_START)
 
 def is_terminal_log(content):
-    return str(content).startswith(TERMINAL_METADATA_START)
+    return str(content).strip().startswith(TERMINAL_METADATA_START)
 
 def match_code_block():
     file_regex = rf'{FILE_METADATA_START}.*?{FILE_METADATA_END}.*?{END_OF_FILE}'
@@ -168,23 +171,44 @@ def get_language_from_extension(filename):
                 elif program == "sh":
                     return "sh"
                 # Could add more mappings here, but keep it minimal
-            return "text" # Fallback
+
+            # Use guess_lexer_for_filename, passing filename *and* first_line
+            try:
+                lexer = guess_lexer_for_filename(filename, first_line)
+                return lexer.name.lower()
+            except ClassNotFound:
+                return "text"  # Special case if guess_lexer can't figure it out.
+
     except ClassNotFound:
         return "text"
     except FileNotFoundError:
+        return "text"
+    except Exception as e:
+        print(f"Error in get_language_from_extension: {e}")
         return "text"
 
 def get_program_from_shebang(shebang_line):
     if not shebang_line.startswith("#!"):
         return None
 
-    lexer = shlex.shlex(shebang_line)
-    lexer.wordchars += ".-"
-    try:
-        lexer.get_token()  # Skip "#!"
-        program = lexer.get_token()
-        if program == "env":
-            program = lexer.get_token() # Get the *next* token after 'env'
-        return os.path.basename(program) if program else None
-    except EOFError:
+    # Split shebang using shlex, to correctly handle arguments and spaces
+    lexer = shlex.shlex(shebang_line[2:], posix=True)  # [2:] to skip the '#!'
+    lexer.whitespace_split = True
+    parts = list(lexer)
+
+    if not parts:
         return None
+
+    program = parts[0]  # First element after splitting
+    # print(f"Initial program: {program}")  # Debug print
+
+    if program == "env":
+        if len(parts) > 1:
+            program = parts[1]
+            # print(f"Program after 'env': {program}") # Debug print
+        else:
+            # print("'env' with no program") # Debug print
+            return None
+
+    # print(f"Returning program: {os.path.basename(program)}")  # Debug print
+    return program.strip() # Remove .strip()

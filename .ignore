@@ -1,5 +1,6 @@
 node_modules
 .pytest
+.pytest_cache
 deployment
 vendor
 coverage
