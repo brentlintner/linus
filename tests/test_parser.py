@@ -1,4 +1,6 @@
 import pytest
+import os
+import re
 from src import parser
 
 # Test data using multi-line strings and the placeholder function

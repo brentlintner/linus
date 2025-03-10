@@ -201,13 +201,11 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
     previous_session = last_session()
 
     if resume and previous_session:
-        session_file = os.path.join(os.path.dirname(__file__), f"../tmp/{previous_session[0]}")
-        with open(session_file, 'r') as f:
-            session_history = f.read()
+        prompt_history_file = os.path.join(os.path.dirname(__file__), f"../tmp/{previous_session[0]}")
+        with open(prompt_history_file, 'r') as f:
+            prompt_history = f.read()
 
-        history.append(session_history)
-
-        recap = re.sub(parser.match_before_conversation_history(), '', session_history, flags=re.DOTALL)
+        recap = re.sub(parser.match_before_conversation_history(), '', prompt_history, flags=re.DOTALL)
 
         files = parser.find_files(recap)
 
