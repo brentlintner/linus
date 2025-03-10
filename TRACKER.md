@@ -4,15 +4,21 @@ Anything related to the project management of the project, such as tracking issu
 
 ## Current
 
+* If LINUS CONTINUE is seen, then continue, don't look for unfinished files
+* Newline is added to start of file when parsed on recap
+
 ## Backlog
+
+* Don't pretty print JSON data (unless debug)
+
+* Ensure trailing newlines don't happen a lot
+    * This means we drop an empty last part too?
 
 * File Handling
     * If missing no more parts is still issue:
         * Make it required for all files
         * Make Part: only required for a non special file part
     * Each time we write a file, if the content stripped of trailing newlines is the same, print (no changes) instead of writing the file and showing the diff
-    * Ensure trailing newlines don't happen a lot
-        * This means we drop an empty last part too
     * Bug: Is Chunk more clear than Part? (apparently not?)
     * Bug: Since the LLM might write a new version of a file instead of finishing a previous version, we need to check for that so we don't continue unintentionally
 
@@ -21,6 +27,7 @@ Anything related to the project management of the project, such as tracking issu
 * Add tests (smoke tests (fake API), realworld tests (real API), and unit tests
 
 * Open Files / Optimize Prompt
+    * Always say Files Changed if verbose vs :w
     * If too many files are open on boot, have a threshold or error out (too big for context window)
     * Start using concept "open files", i.e periodically or on threshold: compact versions etc, and bring all into Open Files section instead of File References section (that way we can optimize the file references section succinctly)
         * If you don't have an open file, then ask to open them (can use function calling here)
@@ -97,7 +104,6 @@ Anything related to the project management of the project, such as tracking issu
 
 ### Performance
 
-* Don't pretty print JSON data?
 * Try out other models like Claude using a dedicated vertex AI instance
 * Try turning down the temperature for more focused responses, maybe helps wrapping? (SET TO 0.4 to 0.6)
 * Explore getting the LLM to consistently examine it's changes and consider if it made any mistakes
