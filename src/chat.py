@@ -382,8 +382,9 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
                                 is_diff = os.path.exists(file_path) and file_content != code
                                 language = "diff" if is_diff else parser.get_language_from_extension(file_path)
 
-                                console.print()
-                                console.print(Markdown(f"#### {file_path}"))
+                                if not is_diff:
+                                    console.print()
+                                    console.print(Markdown(f"#### {file_path}"))
                                 console.print()
                                 section = f"```{language}\n{code}\n```"
                                 print_markdown_code(section)
