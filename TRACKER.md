@@ -4,9 +4,10 @@ Anything related to the project management of the project, such as tracking issu
 
 ## Current
 
-* If LINUS CONTINUE is seen, then continue, don't look for unfinished files
-* Remove LINUS CONTINUE from the history once a conversation message is complete
-* Bug: When referencing a file, always give it a new version (since prune doesn't work)
+* Splitting Files
+    * ?? Have every file have a special end (i.e. every file is a part, much simpler for LLM)
+    * Try using the role="model" for unfinished file part convos for the LLM to understand the context better?
+    * Prune old versions of files (eventually will do the open files optimization)
 
 ## Backlog
 
@@ -33,17 +34,14 @@ Anything related to the project management of the project, such as tracking issu
     * Use a vector database to store embeddings of files and their contents, and optimize prompt generation for large projects and files
     * For very large projects, consider using an external memory mechanism like a vector database (with embeddings generated).
 
+* Bug with resuming session with no pre-prompty (resume after -n)?, we really need to go back to subjects, or fix the issue
+
 ## Icebox
 
 * Ensure trailing newlines don't happen a lot
     * This means we drop an empty last part too?
 
-* Bug?: If a newer version is given across force continues, then don't print the previous
 * ? Remove code snippets from output formats and the stream parsing, leave ai to write as markdown
-
-* Splitting Files
-    * Consider using the role="model" for unfinished file part convos for the LLM to understand the context better?
-    * Build in a fallback that if a part is not seen in the next force continue, then consider it done
 
 * Update to latest google-genai version
 
