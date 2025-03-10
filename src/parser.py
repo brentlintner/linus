@@ -56,7 +56,7 @@ def find_files(content):
     regex = (
         rf'{FILE_METADATA_START}.*?' +
         rf'\nPath: (.*?)\nLanguage: (.*?)\n(?:Version: (\d+)\n)' +
-        rf'(?:Part: (\d+)\n)(?:NoMoreParts: (True|False)\n).*?{FILE_METADATA_END}\n?(.*?)\n?{END_OF_FILE}'
+        rf'(?:Part: (\d+)\n)(?:NoMoreParts: (True|False)\n).*?{FILE_METADATA_END}\n?(.*?){END_OF_FILE}'
     )
 
     file_matches = re.finditer(regex, content, flags=re.DOTALL)
@@ -90,7 +90,7 @@ def find_files(content):
     return result
 
 def find_snippets(content):
-    regex = rf'{SNIPPET_METADATA_START}.*?\nLanguage: (.*?)\n{SNIPPET_METADATA_END}(.*?){END_OF_FILE}'
+    regex = rf'{SNIPPET_METADATA_START}.*?\nLanguage: (.*?)\n{SNIPPET_METADATA_END}\n?(.*?){END_OF_FILE}'
     snippet_matches = re.finditer(regex, content, flags=re.DOTALL)
     return [(match.group(1), match.group(2)) for match in snippet_matches]
 
@@ -110,10 +110,10 @@ def match_code_block():
 
 def match_file(file_path):
     escaped = re.escape(file_path)
-    return rf'{FILE_METADATA_START}.*?\nPath: {escaped}\n.*?{FILE_METADATA_END}(.*?){END_OF_FILE}'
+    return rf'{FILE_METADATA_START}.*?\nPath: {escaped}\n.*?{FILE_METADATA_END}\n?(.*?){END_OF_FILE}'
 
 def match_snippet():
-    return rf'{SNIPPET_METADATA_START}.*?\nLanguage: (.*?)\n.*?{SNIPPET_METADATA_END}(.*?){END_OF_FILE}'
+    return rf'{SNIPPET_METADATA_START}.*?\nLanguage: (.*?)\n.*?{SNIPPET_METADATA_END}\n?(.*?){END_OF_FILE}'
 
 def match_before_conversation_history():
     return rf'^(.*?){CONVERSATION_START_SEP}'

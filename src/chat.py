@@ -379,11 +379,11 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
                             # TODO: need to look for multiple files here? I think we can assume not because we're streaming
                             file_path, version, file_content, language, part_id, no_more_parts = files[0]
 
-                            info(f"Received chunk {part_id} for {file_path} (NoMoreParts: {no_more_parts})")
+                            debug(f"Received chunk {part_id} for {file_path} (NoMoreParts: {no_more_parts})")
                             file_part_buffer.add(file_path, file_content, part_id, no_more_parts, version)
 
                             if file_part_buffer.is_complete(file_path, version):
-                                info(f"All chunks received for {file_path} (v{version})")
+                                debug(f"All chunks received for {file_path} (v{version})")
                                 file_content = (file_part_buffer.assemble(file_path, version) or "").strip('\n')
                                 assembled_files[(file_path, version)] = file_content  # Store assembled file
                                 code = generate_diff(file_path, file_content)
@@ -462,7 +462,8 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
         if writeable:
             # Write all assembled files
             for (file_path, _), file_content in assembled_files.items():
-                info(f":w {file_path}")
+                console.print("Files Changed\n", style="bold")
+                console.print(f"  {file_path}", style="bold green")
                 directory = os.path.dirname(file_path)
                 if directory and not os.path.exists(directory):
                     os.makedirs(directory)
@@ -513,9 +514,9 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
     while True:
         try:
             if force_continue:
-                info("CONTINUE")
+                debug(f"Forcing continuation... count={force_continue_counter}")
                 if force_continue_counter > 5:
-                    error("Model is stuck. Please restart.")
+                    error(f"Model is stuck (maxCount = {force_continue_counter}. Please restart.")
                     break
                 force_continue_counter += 1
                 force_continue = send_request_to_ai(is_continuation=True)
