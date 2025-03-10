@@ -349,7 +349,6 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
                         continue
 
                     if not is_code_block:
-                        debug("Non-code block detected, processing...")
                         console.print(Markdown(section, code_theme=EverforestDarkStyle), end="")
                         continue
                     else:
@@ -365,8 +364,6 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
                                 error(section)
                                 error("")
                                 continue
-
-                            debug("Code block detected, processing...")
 
                             # TODO: need to look for multiple files here? I think we can assume not because we're streaming
                             file_path, version, file_content, language, part_id, no_more_parts = files[0]
@@ -390,12 +387,10 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
                                 print_markdown_code(section)
                                 status.update("Linus is typing...")
                             else:
-                                debug(f"Waiting for more chunks of {file_path}")
                                 continue  # Important: Don't process incomplete chunks
 
                         else:
                             status.update("Linus is typing...")
-                            debug('Snippet handling')
                             file_path = None
                             language, code = parser.find_snippets(section)[0]
                             console.print()
@@ -406,7 +401,7 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
 
             # Handle any remaining text in the queue (non-code block parts)
             if queued_response_text:
-                debug("Processing remaining queued text...")
+                debug("Processing remaining queued text")
                 console.print()
                 console.print(Markdown(queued_response_text.strip('\n')))
                 console.print()
