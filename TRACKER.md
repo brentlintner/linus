@@ -5,34 +5,38 @@ Anything related to the project management of the project, such as tracking issu
 ## Current
 
 * If LINUS CONTINUE is seen, then continue, don't look for unfinished files
+* Remove LINUS CONTINUE from the history once a conversation message is complete
+* Bug: When referencing a file, always give it a new version (since prune doesn't work)
 
 ## Backlog
 
 * Add tests (smoke tests (fake API), realworld tests (real API), and unit tests
 
+* Ensuring Code Complete
+    * Explore getting the LLM to consistently examine it's changes and consider if it made any mistakes
+    * Add to prompt? "check your code after, and if you see a mistake, make a new version of the file"
+    * If something I ask to do results in bad code (ex: recursive import), then ask me what to do, we can always make a new version for it
+    * Double ensure if Linus thinks he is stumped, then asks me for help, as I can write code too.
+
 * Open Files / Compaction Optimizations
-    * Always say Files Changed if verbose vs :w
-    * If too many files are open on boot, have a threshold or error out (too big for context window)
     * Start using concept "open files", i.e periodically or on threshold: compact versions etc, and bring all into Open Files section instead of File References section (that way we can optimize the file references section succinctly)
         * If you don't have an open file, then ask to open them (can use function calling here)
+    * If too many files are open on boot, have a threshold or error out (too big for context window)
     * Auto compact versions if too many files are open (perhaps like 100K too many characters)
     * Consider pre-asking the llm (if there is no file referenced) if it thinks the request is just a conversational response or a task (which means data etc should be provided)
         * Else if there is a file reference or it might be a request that needs the project, do a vector lookup and update open files
     * If the file references (aka open files) etc is bigger than certain amount, do a simple optimization for now (how? need vector db...)
         * Simple calculation for now (limit size), eventually use a vector database to store embeddings of files and their contents, and include most related files each time
         * This will be especially useful for the random part lengths the model produces
-    * Flexible History
-        * Use sqlite to store history, file, and project data
-        * Bug: Prune is disabled right now (NOTE: we are going to change this anyways when we introduce only "open files")
+    * Flexible History, using sqlite to store history, file, and project data
+    * Prune is disabled right now (NOTE: we are going to change this anyways when we introduce only "open files")
+    * Use a vector database to store embeddings of files and their contents, and optimize prompt generation for large projects and files
+    * For very large projects, consider using an external memory mechanism like a vector database (with embeddings generated).
 
 ## Icebox
 
 * Ensure trailing newlines don't happen a lot
     * This means we drop an empty last part too?
-
-* Ensuring Code Complete
-    * Add to prompt? "check your code after, and if you see a mistake, make a new version of the file"
-    * If something I ask to do results in bad code (ex: recursive import), then ask me what to do, we can always make a new version for it
 
 * Bug?: If a newer version is given across force continues, then don't print the previous
 * ? Remove code snippets from output formats and the stream parsing, leave ai to write as markdown
@@ -76,7 +80,6 @@ Anything related to the project management of the project, such as tracking issu
             * ex: Always use spaces to indent not tabs (look for .editorconfig files or other files as a reference)
 
 * Auto update the project file structure when new files are added or updated (db setup + function calling for this?)
-* Use a vector database to store embeddings of files and their contents, and optimize prompt generation for large projects and files
 * Track versions of files even after pruning (need to use local db setup + function calling for this?)
 * Handle renaming or deleting file references, for example when refactoring
 * Show the token output count for each final response if verbose
@@ -94,9 +97,7 @@ Anything related to the project management of the project, such as tracking issu
 
 * Try out other models like Claude using a dedicated vertex AI instance
 * Try turning down the temperature for more focused responses, maybe helps wrapping? (SET TO 0.4 to 0.6)
-* Explore getting the LLM to consistently examine it's changes and consider if it made any mistakes
 * For very long conversation histories, consider summarizing earlier parts of the conversation.
-* For very large projects, consider using an external memory mechanism like a vector database (with embeddings generated).
 * Potentiall start asking for diffs instead of full files, if file-by-file + part-by-part isn't feasible enough)
 * If you have exceptionally large files, consider breaking them into smaller chunks and providing them to the LLM separately.
 * You could add more metadata to your JSON directory structure, such as timestamps, types, function/class summaries.
