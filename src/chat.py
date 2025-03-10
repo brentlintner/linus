@@ -274,7 +274,7 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
 
     def process_user_input(prompt_text=""):
         """Processes user input, updating history and handling file references."""
-        nonlocal history  # Make sure we're modifying the global history
+        global history  # Make sure we're modifying the global history
 
         if not prompt_text:
             return
