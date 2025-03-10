@@ -15,6 +15,7 @@ SNIPPET_METADATA_END =      placeholder('END CODE SNIPPET METADATA')
 TERMINAL_METADATA_START =   placeholder('START TERMINAL METADATA')
 TERMINAL_METADATA_END =     placeholder('END TERMINAL METADATA')
 END_OF_FILE =               placeholder('END OF FILE')
+END_OF_SNIPPET =            placeholder('END OF CODE SNIPPET')
 FILE_TREE_PLACEHOLDER =     placeholder('FILE_TREE_JSON')
 FILES_PLACEHOLDER =         placeholder('FILE_REFERENCES')
 FILES_START_SEP =           placeholder('FILE_REFERENCES START')
@@ -108,7 +109,7 @@ def is_terminal_log(content):
 
 def match_code_block():
     file_regex = rf'{FILE_METADATA_START}.*?{FILE_METADATA_END}.*?{END_OF_FILE}'
-    snippet_regex = rf'{SNIPPET_METADATA_START}.*?{SNIPPET_METADATA_END}.*?{END_OF_FILE}'
+    snippet_regex = rf'{SNIPPET_METADATA_START}.*?{SNIPPET_METADATA_END}.*?{END_OF_SNIPPET}'
     return rf'({file_regex}|{snippet_regex})'
 
 def match_file(file_path):
@@ -116,7 +117,7 @@ def match_file(file_path):
     return rf'{FILE_METADATA_START}.*?\nPath: {escaped}\n.*?{FILE_METADATA_END}\n?(.*?){END_OF_FILE}'
 
 def match_snippet():
-    return rf'{SNIPPET_METADATA_START}.*?\nLanguage: (.*?)\n.*?{SNIPPET_METADATA_END}\n?(.*?){END_OF_FILE}'
+    return rf'{SNIPPET_METADATA_START}.*?\nLanguage: (.*?)\n.*?{SNIPPET_METADATA_END}\n?(.*?){END_OF_SNIPPET}'
 
 def match_before_conversation_history():
     return rf'^(.*?){CONVERSATION_START_SEP}'
@@ -141,7 +142,7 @@ def snippet_block(content, language):
 Language: {language}
 {SNIPPET_METADATA_END}
 {content}
-{END_OF_FILE}
+{END_OF_SNIPPET}
 """
 
 def terminal_log_block(content, title):

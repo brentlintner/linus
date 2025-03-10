@@ -413,8 +413,6 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
                             file_path = None
                             language, code = parser.find_snippets(section)[0]
                             console.print()
-                            console.print(Markdown(f"#### {file_path or language}"))
-                            console.print()
                             section = f"```{language}\n{code}\n```"
                             print_markdown_code(section)
 
