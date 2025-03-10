@@ -405,7 +405,7 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
             if queued_response_text:
                 debug("Processing remaining queued text")
                 console.print()
-                console.print(Markdown(queued_response_text.strip('\n')))
+                console.print(Markdown(queued_response_text.strip('\n'), code_theme=EverforestDarkStyle))
                 console.print()
                 queued_response_text = ""
 
