@@ -253,3 +253,32 @@ Session: My Terminal
 {parser.END_OF_FILE}
 """
     assert parser.terminal_log_block(content, "My Terminal") == expected
+
+def test_find_files_multiple_versions():
+    test_input = f"""
+{parser.placeholder('START FILE METADATA')}
+Path: test.py
+Language: python
+Version: 1
+Part: 1
+NoMoreParts: True
+{parser.placeholder('END FILE METADATA')}
+Version 1 content
+{parser.placeholder('END OF FILE')}
+
+{parser.placeholder('START FILE METADATA')}
+Path: test.py
+Language: python
+Version: 2
+Part: 1
+NoMoreParts: True
+{parser.placeholder('END FILE METADATA')}
+Version 2 content
+{parser.placeholder('END OF FILE')}
+"""
+
+    expected_output = [
+        ['test.py', 2, 'Version 2 content', 'python', 1, True]
+    ]
+
+    assert parser.find_files(test_input) == expected_output

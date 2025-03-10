@@ -274,7 +274,7 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
 
     def process_user_input(prompt_text=""):
         """Processes user input, updating history and handling file references."""
-        # nonlocal history  # Make sure we're modifying the global history
+        nonlocal history  # Make sure we're modifying the global history
 
         if not prompt_text:
             return
@@ -296,9 +296,12 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
 
             new_version = highest_version + 1
 
-            # TODO:
-            # prune_file_history(file_path, history) # Remove old files
             history.append(get_file_contents(file_path, new_version))
+            prune_file_history(file_path, history, new_version) # Prune after appending
+
+        if history_filename:
+            with open(history_filename, 'w') as f:
+                f.write(''.join(history))
 
     def send_request_to_ai(is_continuation=False):
         """Sends a request to the AI and processes the streamed response."""
