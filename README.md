@@ -1,6 +1,6 @@
 # Linus
 
-A terminal-based AI coding partner that helps you write software more efficiently.
+A terminal-based conversational AI coding partner that helps you write software more efficiently.
 
 ## Features
 
