@@ -5,28 +5,12 @@ Anything related to the project management of the project, such as tracking issu
 ## Current
 
 * If LINUS CONTINUE is seen, then continue, don't look for unfinished files
-* Newline is added to start of file when parsed on recap
 
 ## Backlog
 
-* Don't pretty print JSON data (unless debug)
-
-* Ensure trailing newlines don't happen a lot
-    * This means we drop an empty last part too?
-
-* File Handling
-    * If missing no more parts is still issue:
-        * Make it required for all files
-        * Make Part: only required for a non special file part
-    * Each time we write a file, if the content stripped of trailing newlines is the same, print (no changes) instead of writing the file and showing the diff
-    * Bug: Is Chunk more clear than Part? (apparently not?)
-    * Bug: Since the LLM might write a new version of a file instead of finishing a previous version, we need to check for that so we don't continue unintentionally
-
-* Remove code snippets from output formats and the stream parsing, leave ai to write as markdown
-
 * Add tests (smoke tests (fake API), realworld tests (real API), and unit tests
 
-* Open Files / Optimize Prompt
+* Open Files / Compaction Optimizations
     * Always say Files Changed if verbose vs :w
     * If too many files are open on boot, have a threshold or error out (too big for context window)
     * Start using concept "open files", i.e periodically or on threshold: compact versions etc, and bring all into Open Files section instead of File References section (that way we can optimize the file references section succinctly)
@@ -37,17 +21,21 @@ Anything related to the project management of the project, such as tracking issu
     * If the file references (aka open files) etc is bigger than certain amount, do a simple optimization for now (how? need vector db...)
         * Simple calculation for now (limit size), eventually use a vector database to store embeddings of files and their contents, and include most related files each time
         * This will be especially useful for the random part lengths the model produces
-
-* Flexible History
-    * On resume, should show full files not the last part
-    * Use sqlite to store history, file, and project data
-    * Bug: Prune is disabled right now (NOTE: we are going to change this anyways when we introduce only "open files")
+    * Flexible History
+        * Use sqlite to store history, file, and project data
+        * Bug: Prune is disabled right now (NOTE: we are going to change this anyways when we introduce only "open files")
 
 ## Icebox
 
-* File Splitting Issues
-    * Convey that if you see a mistake in the file you just wrote, make a new version of it, that isn't a part (hmmm use Chunk)
-    * Bug?: If a newer version is given across force continues, then don't print the previous
+* Ensure trailing newlines don't happen a lot
+    * This means we drop an empty last part too?
+
+* Ensuring Code Complete
+    * Add to prompt? "check your code after, and if you see a mistake, make a new version of the file"
+    * If something I ask to do results in bad code (ex: recursive import), then ask me what to do, we can always make a new version for it
+
+* Bug?: If a newer version is given across force continues, then don't print the previous
+* ? Remove code snippets from output formats and the stream parsing, leave ai to write as markdown
 
 * Splitting Files
     * Consider using the role="model" for unfinished file part convos for the LLM to understand the context better?
