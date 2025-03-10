@@ -442,7 +442,7 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
 
         # --- History and File Writing ---
 
-        linus_continue = re.match(r"^LINUS\sCONTINUE$", full_response_text, flags=re.MULTILINE)
+        linus_continue = re.search(r"^LINUS\sCONTINUE$", full_response_text, flags=re.MULTILINE)
 
         # Check for unfinished files
         # files = parser.find_files(full_response_text)
