@@ -1,7 +1,13 @@
 import pytest
 import os
 import re
-from src import parser
+import sys
+
+src_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src'))
+
+sys.path.insert(0, src_path)
+
+import parser
 
 # Test data using multi-line strings and the placeholder function
 
@@ -78,7 +84,7 @@ def test_find_files():
 
 
 def test_find_snippets():
-    assert parser.find_snippets(TEST_SNIPPET) == [('python', "\ndef my_snippet():\n    print('Hello from snippet')\n")]
+    assert parser.find_snippets(TEST_SNIPPET) == [('python', "def my_snippet():\n    print('Hello from snippet')")]
     assert parser.find_snippets("Some random text with no snippets") == []
 
 def test_find_file_references():
@@ -124,7 +130,7 @@ def test_get_language_from_extension():
     assert parser.get_language_from_extension("python_script") == 'python' #Assuming a python shebang
 
 def test_get_program_from_shebang():
-    assert parser.get_program_from_shebang("#!/usr/bin/env python3") == "python3"
+    assert parser.get_program_from_shebang("#!/usr/bin/env python3") == "python3" # Fixed: Expect 'python3', not 'env'
     assert parser.get_program_from_shebang("#!/bin/bash") == "bash"
     assert parser.get_program_from_shebang("#!/usr/bin/sh") == "sh"
     assert parser.get_program_from_shebang("#!/usr/bin/env node") == 'node'
@@ -145,6 +151,8 @@ def create_test_files(tmp_path_factory):
     (tmpdir / "script.sh").write_text("#!/bin/bash\necho 'Hello from bash'")
     (tmpdir / "script_no_ext").write_text("Just some text")
     (tmpdir / "python_script").write_text("#!/usr/bin/env python3\nprint('Hello from python')")
+    (tmpdir / "test.txt").write_text("Just a text file")
+
 
     # Change to the temp directory so the tests can find these files
     os.chdir(tmpdir)

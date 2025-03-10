@@ -1,4 +1,5 @@
 node_modules
+.pytest
 deployment
 vendor
 coverage
