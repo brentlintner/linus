@@ -48,6 +48,8 @@ Anything related to the project management of the project, such as tracking issu
 
 * Use -f ., and if not set don't add any files or directory structures
 
+* Even quicker streaming (look for \n\n, and leave right side of it for next prompt)
+
 * Prompt Customization
     * Pull in language specific files to help the LLM (ex: https://dotcursorrules.com/)
     * If a PROJECT.md exists, pull that into the prompt (right near the top)
