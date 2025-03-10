@@ -1,7 +1,6 @@
 import os
 import re
 import difflib
-import json
 import pathspec
 
 from .config import DEFAULT_IGNORE_PATTERNS
@@ -89,7 +88,7 @@ def generate_project_structure(extra_ignore_patterns=None):
 
     file_tree = sorted(file_tree, key=lambda x: x['id'])
 
-    return json.dumps(file_tree, indent=2)
+    return file_tree
 
 def generate_project_file_contents(extra_ignore_patterns=None, include_patterns=None):
     ignore_patterns = load_ignore_patterns(extra_ignore_patterns, include_patterns)

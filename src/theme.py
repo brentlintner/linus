@@ -15,7 +15,7 @@ from pygments.token import (
 class EverforestDarkStyle(Style):
     name = "everforest-dark"
 
-    background_color = "#1e1e1e"
+    background_color = "#0f0f0f"
     line_number_color = "#627e79"
 
     styles = {
@@ -61,5 +61,5 @@ class EverforestDarkStyle(Style):
         Generic.Output: "#d3c6aa",
         Generic.Traceback: "#e67e80",
         Error: "border:#e67e80",
-        Text: "#d699b6"
+        Text: "#dcdcdc",
     }

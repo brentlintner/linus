@@ -4,6 +4,7 @@ import time
 import hashlib
 import re
 import uuid
+import json
 from datetime import datetime, timezone
 from collections import deque, defaultdict
 from rich.console import Console
@@ -52,12 +53,6 @@ def debug(message):
         message = f"DEBUG: {message}" if message else ""
         console.print(message, style="bold yellow")
 
-def info(message):
-    global verbose
-    if verbose:
-        message = f"INFO: {message}" if message else ""
-        console.print(message, style="bold")
-
 def error(message):
     console.print(f"ERROR: {message}", style="bold red")
 
@@ -88,7 +83,8 @@ def prompt_prefix(extra_ignore_patterns=None, include_patterns=None):
     except FileNotFoundError:
         return "Could not find background.md"
 
-    project_structure = generate_project_structure(extra_ignore_patterns)
+    project_structure_json = generate_project_structure(extra_ignore_patterns)
+    project_structure = json.dumps(project_structure_json, indent=2) if debug_mode else json.dumps(project_structure_json, separators=(',', ':'))
     project_files = generate_project_file_contents(extra_ignore_patterns, include_patterns)
 
     prefix = prefix.replace(parser.FILE_TREE_PLACEHOLDER, f'\n{project_structure}\n')
@@ -138,7 +134,7 @@ def history_filename_for_directory(directory):
 def last_session():
     history_file = history_filename_for_directory(os.getcwd())
     if os.path.exists(history_file):
-        info(f"Resuming from:\n\n {history_file}\n")
+        debug(f"Resuming from:\n\n {history_file}\n")
         return (os.path.basename(history_file), datetime.now())  # Return a dummy timestamp, not used for sorting now
     else:
         return None
@@ -163,7 +159,7 @@ class FilePartBuffer:
         if no_more_parts:
             # We only care about the *last* part having this flag
             self.final_parts[(file_path, version)] = current_part
-        info(f"Added part {current_part} of {file_path} (v{version}) (NoMoreParts: {no_more_parts})")
+        debug(f"Added part {current_part} of {file_path} (v{version}) (NoMoreParts: {no_more_parts})")
 
     def is_complete(self, file_path, version):
         if (file_path, version) not in self.final_parts:
@@ -209,17 +205,16 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
 
         files = parser.find_files(recap)
 
-        # TODO: what happens with multiple file parts here?
-
-        for file_path, _, _, _, _, _ in files:
-            print(f"Reading file: {file_path}")
-            print()
+        for file_path, _, content, _, _, _ in files:
             language = parser.get_language_from_extension(file_path)
             recap = re.sub(
                 parser.match_file(file_path),
-                rf'#### {file_path}\n\n```{language}\n\1\n```',
+                rf'#### {file_path}\n\n```{language}\n{content}\n```',
                 recap,
-                flags=re.DOTALL)
+                flags=re.DOTALL,
+                count=1)
+            # HACK: extra parts are not removed just the first one
+            recap = re.sub(parser.match_file(file_path), '', recap, flags=re.DOTALL)
 
         recap = re.sub(
             parser.match_snippet(),
@@ -322,18 +317,17 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
                     status.update(f"Linus is writing {in_progress_file_path}...")
 
                     # Split into before_file and rest
-                    before_file, rest = queued_response_text.split(parser.FILE_METADATA_START, 1)
+                    before_file_start, rest = queued_response_text.split(parser.FILE_METADATA_START, 1)
                     queued_response_text = parser.FILE_METADATA_START + rest
 
-                    if before_file:
-                        console.print(Markdown(before_file.strip(), code_theme=EverforestDarkStyle), end="")
+                    if before_file_start:
+                        console.print(Markdown(before_file_start, code_theme=EverforestDarkStyle), end="")
                 else:
                     status.update("Linus is typing...")
 
                 queued_has_complete_code_block = re.search(parser.match_code_block(), queued_response_text, flags=re.DOTALL)
 
                 if not queued_has_complete_code_block:
-                    debug("No complete code block detected, queueing...")
                     continue
 
                 sections = re.split(parser.match_code_block(), queued_response_text, flags=re.DOTALL)
@@ -351,7 +345,6 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
 
                     if not is_code_block and is_last_section:
                         # Continue on, because another file could be right after
-                        debug("Last section is not a full code block, queueing...")
                         queued_response_text += section
                         continue
 
@@ -392,6 +385,7 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
 
                                 console.print()
                                 console.print(Markdown(f"#### {file_path}"))
+                                console.print()
                                 section = f"```{language}\n{code}\n```"
                                 print_markdown_code(section)
                                 status.update("Linus is typing...")
@@ -406,6 +400,7 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
                             language, code = parser.find_snippets(section)[0]
                             console.print()
                             console.print(Markdown(f"#### {file_path or language}"))
+                            console.print()
                             section = f"```{language}\n{code}\n```"
                             print_markdown_code(section)
 
@@ -472,7 +467,6 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
 
             if len(assembled_files) > 0:
                 print()
-
 
         if history_filename:
             with open(history_filename, 'w') as f:
