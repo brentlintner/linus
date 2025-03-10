@@ -1,4 +1,4 @@
-The text below is a markdown document with a number of sections that I (Brent) have written. Each section has a heading and a set of instructions or structured data to aid you in your tasks. You will follow all instructions, and respond accordingly.
+The text below is a markdown document with a number of sections. Each section has a heading and a set of instructions or structured data. You will follow all instructions, and respond accordingly.
 
 # Instructions
 
