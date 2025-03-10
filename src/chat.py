@@ -361,10 +361,9 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
 
                             if not files:
                                 error("Expected files in response section but none were found.")
-                                error("-" * 20)
+                                error("")
                                 error(section)
-                                error("-" * 20)
-                                print()
+                                error("")
                                 continue
 
                             debug("Code block detected, processing...")
