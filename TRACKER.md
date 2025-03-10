@@ -58,6 +58,7 @@ Anything related to the project management of the project, such as tracking issu
     * Have own .linignore file to ignore files and directories
 
 * Terminal Integration
+    * Be able to see test output in the terminal (ex: pytest, etc), just let it run the commnads?
     * Be able to look at console history with @symbol lookup (ex: a tmux session so the recent log to reference (ex: errors, etc))
     * Be able to allow the ai to writing command blocks (whitelist each command) that run in a subshell.
         * Use automatic function calling for this (have a cli flag to enable this, else it will ask to run it)
