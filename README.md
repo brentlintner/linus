@@ -51,3 +51,28 @@ Show detailed stats about the current session:
 ```sh
 bin/ai -iwfv
 ```
+
+## Development
+
+```sh
+pipenv install --dev
+bin/ai --debug
+```
+
+## Testing
+
+```sh
+bin/test
+```
+
+## Linting
+
+```sh
+bin/lint
+```
+
+## Stats
+
+```sh
+bin/stats
+```
