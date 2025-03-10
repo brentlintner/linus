@@ -5,9 +5,8 @@ Anything related to the project management of the project, such as tracking issu
 ## Current
 
 * Splitting Files
-    * ?? Have every file have a special end (i.e. every file is a part, much simpler for LLM)
+    * Have every file have a special end (i.e. every file is a part, much simpler for LLM)
     * Try using the role="model" for unfinished file part convos for the LLM to understand the context better?
-    * Prune old versions of files (eventually will do the open files optimization)
 
 ## Backlog
 
@@ -43,9 +42,18 @@ Anything related to the project management of the project, such as tracking issu
 
 * ? Remove code snippets from output formats and the stream parsing, leave ai to write as markdown
 
+* Bug: if model stops mid file, even if continue, it won't write the file
+
 * Update to latest google-genai version
 
 * Use -f ., and if not set don't add any files or directory structures
+
+* Prompt Customization
+    * Pull in language specific files to help the LLM (ex: https://dotcursorrules.com/)
+    * If a PROJECT.md exists, pull that into the prompt (right near the top)
+        * Create one for this project to test out
+        * Have defaults as well
+            * ex: Always use spaces to indent not tabs (look for .editorconfig files or other files as a reference)
 
 * Bugs
     * Files and tree data should be refreshed every time the project is resumed, depending on the flags enabled
@@ -70,13 +78,6 @@ Anything related to the project management of the project, such as tracking issu
         * Just show a Chunk: 1/2 (Or Preview: True), and tell LLM to ask for more if they need tha file (for now manual @ load it all)
     * Keep two versions not pruned instead of only one
     * Before writing files ask for confirmation to accept changes (needs db)
-
-* Prompt Customization
-    * Pull in language specific files to help the LLM (ex: https://dotcursorrules.com/)
-    * If a PROJECT.md exists, pull that into the prompt (right near the top)
-        * Create one for this project to test out
-        * Have defaults as well
-            * ex: Always use spaces to indent not tabs (look for .editorconfig files or other files as a reference)
 
 * Auto update the project file structure when new files are added or updated (db setup + function calling for this?)
 * Track versions of files even after pruning (need to use local db setup + function calling for this?)
