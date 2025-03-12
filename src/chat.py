@@ -309,11 +309,17 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
 
         request_text = ''.join(history) + f'\n{parser.CONVERSATION_END_SEP}\n'
 
-        contents = [types.Part.from_text(text=request_text)]
+        contents = [
+            types.Part.from_text(text=request_text),
+        ]
 
         start_time = time.time()
+        role = "model" if is_continuation else "user"
 
-        stream = client.models.generate_content_stream(model=GEMINI_MODEL, contents=contents)
+        stream = client.models.generate_content_stream(
+                model=GEMINI_MODEL,
+                contents=contents,
+                config=types.GenerateContentConfig(role=role))
 
         full_response_text = ""
         queued_response_text = ""
@@ -520,11 +526,11 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
     while True:
         try:
             if force_continue:
-                debug(f"Forcing continuation... count={force_continue_counter}")
                 if force_continue_counter > 5:
                     error(f"Model is stuck (maxCount = {force_continue_counter}. Please restart.")
                     break
                 force_continue_counter += 1
+                debug(f"Forcing continuation... attempts={force_continue_counter}")
                 force_continue = send_request_to_ai(is_continuation=True)
                 continue
             else:
