@@ -485,6 +485,7 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
             end_time = time.time()
             duration = end_time - start_time
             total_characters, total_lines = calculate_history_stats()
+            console.print()
             console.print(
                 f"{human_format_number(total_lines)} lines, "
                 f"{human_format_number(total_characters)} characters, "
@@ -512,7 +513,6 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
             else:
                 force_continue_counter = 0
 
-            console.print()
             prompt_text = session.prompt("> ")
 
             if should_exit(prompt_text):

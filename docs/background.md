@@ -72,7 +72,7 @@ Examples of how to format files, code snippets, and other content you output in 
 
 ### File
 
-**A file with only one part:**
+**A file with one normal part and one special empty part:**
 
 {{{START FILE METADATA}}}
 Path: hello_world.py
@@ -85,8 +85,6 @@ print('Hello, world!')
 print('Goodbye, world!')
 {{{END OF FILE}}}
 
-**Special empty file part to indicate the end of the file:**
-
 {{{START FILE METADATA}}}
 Path: hello_world.py
 Language: python
@@ -98,7 +96,7 @@ NoMoreParts: True
 
 ### Multi-Part File
 
-**A file split into multiple parts:**
+**A file split into 4 parts, including the special empty part:**
 
 {{{START FILE METADATA}}}
 Path: hello_world.py
@@ -130,8 +128,6 @@ NoMoreParts: False
 print('Hello, world, from the end of the file!')
 {{{END OF FILE}}}
 
-**Special empty file part to indicate the end of the file:**
-
 {{{START FILE METADATA}}}
 Path: hello_world.py
 Language: python
@@ -155,8 +151,6 @@ NoMoreParts: False
 print('Helo, world!')
 {{{END OF FILE}}}
 
-**Special empty file part to indicate the end of the file:**
-
 {{{START FILE METADATA}}}
 Path: hello_world.py
 Language: python
@@ -177,8 +171,6 @@ NoMoreParts: False
 {{{END FILE METADATA}}}
 print('Hello, world!')
 {{{END OF FILE}}}
-
-**Special empty file part to indicate the end of the file:**
 
 {{{START FILE METADATA}}}
 Path: hello_world.py
