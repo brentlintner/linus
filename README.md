@@ -37,7 +37,7 @@ bin/ai
 Start a fully featured chat repl with file system integrations:
 
 ```sh
-bin/ai -iwf
+bin/ai -wf
 ```
 
 List the files the model can access if `-w` is enabled:
@@ -49,7 +49,7 @@ bin/ai -l
 Show detailed stats about the current session:
 
 ```sh
-bin/ai -iwfv
+bin/ai -ifv
 ```
 
 ## Development
