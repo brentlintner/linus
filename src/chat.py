@@ -314,12 +314,10 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
         ]
 
         start_time = time.time()
-        role = "model" if is_continuation else "user"
 
         stream = client.models.generate_content_stream(
                 model=GEMINI_MODEL,
-                contents=contents,
-                config=types.GenerateContentConfig(role=role))
+                contents=contents)
 
         full_response_text = ""
         queued_response_text = ""
