@@ -4,10 +4,6 @@ Anything related to the project management of the project, such as tracking issu
 
 ## Current
 
-* Splitting Files
-    * Have every file have a special end (i.e. every file is a part, much simpler for LLM)
-    * Try using the role="model" for unfinished file part convos for the LLM to understand the context better?
-
 ## Backlog
 
 * Add tests (smoke tests (fake API), realworld tests (real API), and unit tests

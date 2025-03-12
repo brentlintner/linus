@@ -333,10 +333,10 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
                 full_response_text += chunk.text
 
                 # Check for the *start* of a file block
-                in_progress_file = parser.find_in_progress_file(queued_response_text)
+                in_progress_file, _ = parser.find_in_progress_file(queued_response_text)
 
                 if in_progress_file:
-                    in_progress_file_path, _ = in_progress_file
+                    in_progress_file_path = in_progress_file
                     status.update(f"Linus is writing {in_progress_file_path}...")
 
                     # Split into before_file and rest

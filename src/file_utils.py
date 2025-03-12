@@ -134,7 +134,7 @@ def get_file_contents(file_path, version=1):
     try:
         with open(file_path, 'r') as f:
             contents = f.read()
-        block = file_block(file_path, contents, get_language_from_extension(file_path), version=version)
+        block = file_block(file_path, contents, get_language_from_extension(file_path), version)
         return f"{block}\n"
     except Exception as e:
         # TODO: use logging here not return

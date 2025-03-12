@@ -38,7 +38,7 @@ def find_in_progress_file(content):
         no_more_parts = file_match.group(2) == 'True'
         return (file_path, no_more_parts)
     else:
-        return None
+        return (None, None)
 
 def find_in_progress_snippet(content):
     regex = rf'{SNIPPET_METADATA_START}.*?\nLanguage: (.*?)\n{SNIPPET_METADATA_END}(?:(?!{END_OF_FILE}).)*$'
@@ -122,14 +122,23 @@ def match_snippet():
 def match_before_conversation_history():
     return rf'^(.*?){CONVERSATION_START_SEP}'
 
-def file_block(file_path, content, language=None, part=1, version=1):
+def file_block(file_path, content, language=None, version=1):
     language = get_language_from_extension(file_path) if not language else language
+    part = 1
     return f"""
 {FILE_METADATA_START}
 Path: {file_path}
 Language: {language}
 Version: {version}
 Part: {part}
+{FILE_METADATA_END}
+{content}
+{END_OF_FILE}
+
+{FILE_METADATA_START}
+Path: {file_path}
+Language: {language}
+Version: {version}
 NoMoreParts: True
 {FILE_METADATA_END}
 {content}

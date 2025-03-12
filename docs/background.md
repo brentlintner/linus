@@ -21,11 +21,11 @@ The text below is a markdown document with a number of sections. Each section ha
 
 1.  **Mid-File Part:** You hit the token (6000) or character (20000) limit for the *entire response*, or (4000/15000) for the *file part*.
 2.  **Finish the Part:** Complete the current file part, including its end of file identifier.
-3.  **Add Empty Part:** Immediately after, if that current file part was the last part for the file you are writing, add an empty file part with `NoMoreParts: True`.
+3.  **Add Empty Part:** Immediately after, if that current file part was the last part for the file you are writing, add the special empty file part with `NoMoreParts: True`.
 4.  **"LINUS CONTINUE":** On a new line, print *only*: `LINUS CONTINUE`.
 5.  **Stop:** Nothing else. No explanations.
 
-This sequence is *critical*. `LINUS CONTINUE` signals a continuation. A empty file part with `NoMoreParts: True` signals all parts are written for that file.
+This sequence is *critical*. `LINUS CONTINUE` signals a continuation. A special, empty file part with `NoMoreParts: True` signals all parts are written for that file.
 
 ## Handling Files
 
@@ -33,11 +33,11 @@ This sequence is *critical*. `LINUS CONTINUE` signals a continuation. A empty fi
 * Files are wrapped in a specific format that includes metadata about the file. See the Output Formats section for examples.
 * Files can be split into multiple parts, where each part is a partial section of a specific version of a file's content. See the Splitting Files section for more instructions and Output Formats for examples.
 * Only respond with files when creating or updating them. No diffs.
-* Before creating a new file version, ensure all previous versions have `NoMoreParts: True`. Add the special, empty part if needed.
+* Before creating a new file version, ensure all previous versions have `NoMoreParts: True`. Add the special empty part if needed.
 
 ## Splitting Files
 
-* Split files into the fewest parts possible, splitting at logical points (functions, classes) when possible. If splitting, always add a special, empty file part with `NoMoreParts: True` metadata immediately after the last non-special file part's end of file identifier, in the same response.
+* Split files into the fewest parts possible, splitting at logical points (functions, classes) when possible. Always add a special empty file part with `NoMoreParts: True` metadata immediately after the last non-special file part's end of file identifier, in the same response.
 * All the parts of a file assembled in order should produce a complete and valid file.
 
 ## Writing Code
@@ -72,22 +72,33 @@ Examples of how to format files, code snippets, and other content you output in 
 
 ### File
 
-**A single file without a special end part, usually a small file:**
+**A file with only one part:**
 
 {{{START FILE METADATA}}}
 Path: hello_world.py
 Language: python
 Version: 1
 Part: 1
-NoMoreParts: True
+NoMoreParts: False
 {{{END FILE METADATA}}}
 print('Hello, world!')
 print('Goodbye, world!')
 {{{END OF FILE}}}
 
+**Special empty file part to indicate the end of the file:**
+
+{{{START FILE METADATA}}}
+Path: hello_world.py
+Language: python
+Version: 1
+Part: 2
+NoMoreParts: True
+{{{END FILE METADATA}}}
+{{{END OF FILE}}}
+
 ### Multi-Part File
 
-**Single file split up into multiple parts, usually a longer file:**
+**A file split into multiple parts:**
 
 {{{START FILE METADATA}}}
 Path: hello_world.py
@@ -119,7 +130,7 @@ NoMoreParts: False
 print('Hello, world, from the end of the file!')
 {{{END OF FILE}}}
 
-**Special, empty file part to indicate the end of the file:**
+**Special empty file part to indicate the end of the file:**
 
 {{{START FILE METADATA}}}
 Path: hello_world.py
@@ -139,9 +150,20 @@ Path: hello_world.py
 Language: python
 Version: 1
 Part: 1
-NoMoreParts: True
+NoMoreParts: False
 {{{END FILE METADATA}}}
 print('Helo, world!')
+{{{END OF FILE}}}
+
+**Special empty file part to indicate the end of the file:**
+
+{{{START FILE METADATA}}}
+Path: hello_world.py
+Language: python
+Version: 1
+Part: 2
+NoMoreParts: True
+{{{END FILE METADATA}}}
 {{{END OF FILE}}}
 
 **A file with a new version:**
@@ -151,9 +173,20 @@ Path: hello_world.py
 Language: python
 Version: 2
 Part: 1
-NoMoreParts: True
+NoMoreParts: False
 {{{END FILE METADATA}}}
 print('Hello, world!')
+{{{END OF FILE}}}
+
+**Special empty file part to indicate the end of the file:**
+
+{{{START FILE METADATA}}}
+Path: hello_world.py
+Language: python
+Version: 2
+Part: 2
+NoMoreParts: True
+{{{END FILE METADATA}}}
 {{{END OF FILE}}}
 
 ### Code Snippet
