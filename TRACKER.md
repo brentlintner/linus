@@ -6,9 +6,15 @@ Anything related to the project management of the project, such as tracking issu
 
 ## Backlog
 
+* Use -f ., and if not set don't add any files or directory structures
+
+* Update to latest google-genai version
+
+* Even quicker streaming (look for \n\n, and leave right side of it for next prompt)
+
 * Add tests (smoke tests (fake API), realworld tests (real API), and unit tests
 
-* Ensuring Code Complete
+* Ensuring Code Complete / Fallback Error Handling
     * Explore getting the LLM to consistently examine it's changes and consider if it made any mistakes
     * Add to prompt? "check your code after, and if you see a mistake, make a new version of the file"
     * If something I ask to do results in bad code (ex: recursive import), then ask me what to do, we can always make a new version for it
@@ -29,22 +35,20 @@ Anything related to the project management of the project, such as tracking issu
     * Use a vector database to store embeddings of files and their contents, and optimize prompt generation for large projects and files
     * For very large projects, consider using an external memory mechanism like a vector database (with embeddings generated).
 
-* Bug with resuming session with no pre-prompty (resume after -n)?, we really need to go back to subjects, or fix the issue
-
 ## Icebox
 
+### Bugs
+
+* If model stops mid file, even if continue, it won't write the file
+* Files and tree data should be refreshed every time the project is resumed, depending on the flags enabled
+* Resume is really slow for giant files
 * Ensure trailing newlines don't happen a lot
     * This means we drop an empty last part too?
+* Bug with resuming session with no pre-prompty (resume after -n)?, we really need to go back to subjects, or fix the issue
+
+### Features
 
 * ? Remove code snippets from output formats and the stream parsing, leave ai to write as markdown
-
-* Bug: if model stops mid file, even if continue, it won't write the file
-
-* Update to latest google-genai version
-
-* Use -f ., and if not set don't add any files or directory structures
-
-* Even quicker streaming (look for \n\n, and leave right side of it for next prompt)
 
 * Prompt Customization
     * Pull in language specific files to help the LLM (ex: https://dotcursorrules.com/)
@@ -52,10 +56,6 @@ Anything related to the project management of the project, such as tracking issu
         * Create one for this project to test out
         * Have defaults as well
             * ex: Always use spaces to indent not tabs (look for .editorconfig files or other files as a reference)
-
-* Bugs
-    * Files and tree data should be refreshed every time the project is resumed, depending on the flags enabled
-    * Resume is really slow for giant files
 
 * Ignoring Files
     * Auto ignore binary files as well as other common files/dirs that are not code (get list from AI)
