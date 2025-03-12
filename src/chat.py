@@ -58,7 +58,6 @@ def error(message):
 
 def print_markdown_code(code_block):
     console.print(Markdown(code_block, code_theme=EverforestDarkStyle))
-    console.print()
 
 def tail(filename, n=10):
     try:
@@ -309,15 +308,11 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
 
         request_text = ''.join(history) + f'\n{parser.CONVERSATION_END_SEP}\n'
 
-        contents = [
-            types.Part.from_text(text=request_text),
-        ]
+        contents = [types.Part.from_text(text=request_text)]
 
         start_time = time.time()
 
-        stream = client.models.generate_content_stream(
-                model=GEMINI_MODEL,
-                contents=contents)
+        stream = client.models.generate_content_stream(model=GEMINI_MODEL, contents=contents)
 
         full_response_text = ""
         queued_response_text = ""
@@ -403,9 +398,7 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
                                 language = "diff" if is_diff else parser.get_language_from_extension(file_path)
 
                                 if not is_diff:
-                                    console.print()
                                     console.print(Markdown(f"#### {file_path}"))
-                                console.print()
                                 section = f"```{language}\n{code}\n```"
                                 print_markdown_code(section)
                                 status.update("Linus is typing...")
@@ -416,16 +409,13 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
                             status.update("Linus is typing...")
                             file_path = None
                             language, code = parser.find_snippets(section)[0]
-                            console.print()
                             section = f"```{language}\n{code}\n```"
                             print_markdown_code(section)
 
             # Handle any remaining text in the queue (non-code block parts)
             if queued_response_text:
                 debug("Processing remaining queued text")
-                console.print()
                 console.print(Markdown(queued_response_text.strip('\n'), code_theme=EverforestDarkStyle))
-                console.print()
                 queued_response_text = ""
 
         status.stop()
@@ -505,18 +495,6 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
 
         return False
 
-    if verbose:
-        end_time = time.time()
-        duration = end_time - start_time
-        total_characters, total_lines = calculate_history_stats()
-        console.print(
-            f"{human_format_number(total_lines)} lines, "
-            f"{human_format_number(total_characters)} characters, "
-            f"0 tokens, "
-            f"0 session tokens, "
-            f"{duration:.2f}s ({GEMINI_MODEL.replace('gemini-', '')})"
-        )
-
     file_part_buffer = FilePartBuffer()
     force_continue = False
     force_continue_counter = 0
@@ -534,6 +512,7 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
             else:
                 force_continue_counter = 0
 
+            console.print()
             prompt_text = session.prompt("> ")
 
             if should_exit(prompt_text):

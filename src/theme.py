@@ -15,20 +15,20 @@ from pygments.token import (
 class EverforestDarkStyle(Style):
     name = "everforest-dark"
 
-    background_color = "#0f0f0f"
+    background_color = None # OR: #0f0f0f
     line_number_color = "#627e79"
 
     styles = {
         Comment: "noitalic #859289",
         Comment.Preproc: "noitalic #7fbbb3",
         Comment.Special: "noitalic bg:#ffffff",
-        Keyword: "bold #a7c080",
+        Keyword: "bold #e67e80",
         Keyword.Pseudo: "nobold #dcdcdc",
         Keyword.Type: "nobold #e67e80",
         Operator: "#e69875",
-        Operator.Word: "bold #a7c080",
-        Name: "#dcdcdc",
-        Name.Builtin: "#7fbbb3",
+        Operator.Word: "bold #e67e80",
+        Name: "#d3c6aa",
+        Name.Builtin: "#d699b6",
         Name.Function: "#a7c080",
         Name.Class: "#e67e80",
         Name.Namespace: "#e67e80",
