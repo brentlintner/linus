@@ -105,7 +105,7 @@ NoMoreParts: False
     """
     assert parser.find_in_progress_file(in_progress) == ('incomplete.py', False)
     assert parser.find_in_progress_file(TEST_FILE_1) == ('test_file_1.py', True)  # Complete file
-    assert parser.find_in_progress_file("No file metadata here") == None
+    assert parser.find_in_progress_file("No file metadata here") == (None, None)
 
 def test_find_in_progress_snippet():
     in_progress = f"""
@@ -130,7 +130,7 @@ def test_get_language_from_extension():
     assert parser.get_language_from_extension("python_script") == 'python' #Assuming a python shebang
 
 def test_get_program_from_shebang():
-    assert parser.get_program_from_shebang("#!/usr/bin/env python3") == "python3" # Fixed: Expect 'python3', not 'env'
+    assert parser.get_program_from_shebang("#!/usr/bin/env python3") == "python3"
     assert parser.get_program_from_shebang("#!/bin/bash") == "bash"
     assert parser.get_program_from_shebang("#!/usr/bin/sh") == "sh"
     assert parser.get_program_from_shebang("#!/usr/bin/env node") == 'node'
@@ -162,13 +162,6 @@ def create_test_files(tmp_path_factory):
     os.chdir(os.path.dirname(__file__))
     # No explicit cleanup of the temporary directory is needed.  pytest handles it!
 
-
-# Shebang script (mock...ish, but it does need to open the file, so...)
-SHEBANG_TEST_SCRIPT = """#!/bin/bash
-echo "Hello from shebang test"
-"""
-
-# Tests for individual components like is_file, is_snippet
 def test_is_file():
     assert parser.is_file(TEST_FILE_1) == True
     assert parser.is_file(TEST_SNIPPET) == False
@@ -179,11 +172,11 @@ def test_is_snippet():
 
 def test_is_terminal_log():
     terminal_log = f"""
-{parser.TERMINAL_METADATA_START}
+{parser.placeholder('START TERMINAL METADATA')}
 Session: Some Terminal
-{parser.TERMINAL_METADATA_END}
+{parser.placeholder('END TERMINAL METADATA')}
 Some terminal output.
-{parser.END_OF_FILE}
+{parser.placeholder('END OF FILE')}
 """
     assert parser.is_terminal_log(terminal_log) == True
     assert parser.is_terminal_log(TEST_FILE_1) == False
@@ -196,8 +189,8 @@ def test_match_code_block():
     # Negative test cases (shouldn't match a full block)
     assert not re.search(parser.match_code_block(), "random text", re.DOTALL)
 
-def test_match_file():
-    assert re.search(parser.match_file("test_file_1.py"), TEST_FILE_1, re.DOTALL)
+def test_match_file(file_to_match="test_file_1.py"):
+    assert re.search(parser.match_file(file_to_match), TEST_FILE_1, re.DOTALL)
     assert not re.search(parser.match_file("wrong_file.py"), TEST_FILE_1, re.DOTALL)
 
 def test_match_snippet():
@@ -220,37 +213,47 @@ def test_match_before_conversation_history():
 def test_file_block():
     content = "print('Hello')"
     expected = f"""
-{parser.FILE_METADATA_START}
+{parser.placeholder('START FILE METADATA')}
 Path: test.py
 Language: python
 Version: 1
 Part: 1
-NoMoreParts: True
-{parser.FILE_METADATA_END}
+NoMoreParts: False
+{parser.placeholder('END FILE METADATA')}
 {content}
-{parser.END_OF_FILE}
+{parser.placeholder('END OF FILE')}
+
+{parser.placeholder('START FILE METADATA')}
+Path: test.py
+Language: python
+Version: 1
+Part: 2
+NoMoreParts: True
+{parser.placeholder('END FILE METADATA')}
+{content}
+{parser.placeholder('END OF FILE')}
 """
     assert parser.file_block("test.py", content) == expected
 
 def test_snippet_block():
     content = "print('Hello')"
     expected = f"""
-{parser.SNIPPET_METADATA_START}
+{parser.placeholder('START CODE SNIPPET METADATA')}
 Language: python
-{parser.SNIPPET_METADATA_END}
+{parser.placeholder('END CODE SNIPPET METADATA')}
 {content}
-{parser.END_OF_FILE}
+{parser.placeholder('END OF FILE')}
 """
     assert parser.snippet_block(content, "python") == expected
 
 def test_terminal_log_block():
     content = "Some terminal output"
     expected = f"""
-{parser.TERMINAL_METADATA_START}
+{parser.placeholder('START TERMINAL METADATA')}
 Session: My Terminal
-{parser.TERMINAL_METADATA_END}
+{parser.placeholder('END TERMINAL METADATA')}
 {content}
-{parser.END_OF_FILE}
+{parser.placeholder('END OF FILE')}
 """
     assert parser.terminal_log_block(content, "My Terminal") == expected
 
@@ -282,3 +285,4 @@ Version 2 content
     ]
 
     assert parser.find_files(test_input) == expected_output
+
