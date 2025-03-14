@@ -39,20 +39,22 @@ This sequence is *critical*. `LINUS CONTINUE` signals a continuation of the resp
 File handling must follow these guidelines:
 
 * Locate files using 'File References' or 'Conversation History'.
-* Split files into parts. Each file *must* end with a special empty part containing `NoMoreParts: True`. Never provide a file without this final empty part. See 'Splitting Files' and 'Output Formats' for specific details.
-* File parts must be wrapped in a specific format that includes metadata. See 'Output Formats' for examples.
-* Only provide files when creating or updating them. Do not provide diffs.
+* Files must be wrapped in a specific format that includes metadata. See 'Output Formats' for more instructions.
+* Files can be split into parts. See 'Splitting Files' for more instructions.
 * Every file must include a special `NoMoreParts: True` part. Add this special empty part as needed.
-* Do not wrap file parts or file content in markdown code blocks. Always use the file metadata wrapper. See 'Output Formats' for examples.
+* Only provide files when creating or updating them. Write complete files. Do not provide diffs.
+* Do not wrap file parts or file content in markdown code blocks. Always use the file metadata wrapper. See 'Output Formats' for more instructions.
 
 # Splitting Files
 
 File splitting is essential for managing large files.
 
-* When assembled in order, all parts of a file must produce a complete, valid, and non-redundant file. The sequence of parts must be exact, with no missing, duplicated, or out-of-order content.
-* *Always* include a special empty file part with `NoMoreParts: True` metadata. This empty part *must* be added *immediately* after the last non-special file part's end-of-file identifier, and it must be included in the same response.
-* The special empty part *must* contain no content.
 * Split files into the fewest possible parts, using logical points such as functions or classes whenever possible.
+* When assembled in order, all parts of a file must produce a complete, valid, and non-redundant file. The sequence of parts must be exact, with no missing, duplicated, or out-of-order content.
+* There must be no overlap in content between file parts.
+* Each file part must contain unique content not present in any other part for that file.
+* When adding a special empty part, it *must* contain no content.
+* Under no circumstances should a file part with NoMoreParts: True contain any content.
 
 ## Splitting Files Clarifications
 
