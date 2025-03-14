@@ -12,9 +12,6 @@ Anything related to the project management of the project, such as tracking issu
 
 * Add tests (smoke tests (fake API), realworld tests (real API), and unit tests
 
-* If parts still an issue...
-    * Parse metadata into dict, then make it so only special parts have NoMoreParts and only non-special parts have Part
-
 * Ensuring Code Complete / Fallback Error Handling
     * Explore getting the LLM to consistently examine it's changes and consider if it made any mistakes
     * Add to prompt? "check your code after, and if you see a mistake, make a new version of the file"
@@ -39,6 +36,11 @@ Anything related to the project management of the project, such as tracking issu
 ## Icebox
 
 ### Bugs
+
+* If parts still an issue...
+    * Parse metadata into dict, then make it so only special parts have NoMoreParts and only non-special parts have Part
+    * Turn down temperature
+    * Just use the damn thinking model sigh...
 
 * Bug with resuming session with no pre-prompty (resume after -n)?, we really need to go back to subjects, or fix the issue
 * If model stops mid file, even if continue, it won't write the file
