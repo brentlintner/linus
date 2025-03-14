@@ -12,6 +12,8 @@ Anything related to the project management of the project, such as tracking issu
 
 * Add tests (smoke tests (fake API), realworld tests (real API), and unit tests
 
+* Sometimes can print a diff if long running? (1.5 pro issue?)
+
 * Ensuring Code Complete / Fallback Error Handling
     * Explore getting the LLM to consistently examine it's changes and consider if it made any mistakes
     * Add to prompt? "check your code after, and if you see a mistake, make a new version of the file"
@@ -42,7 +44,6 @@ Anything related to the project management of the project, such as tracking issu
     * Turn down temperature
     * Just use the damn thinking model sigh...
 
-* Bug with resuming session with no pre-prompty (resume after -n)?, we really need to go back to subjects, or fix the issue
 * If model stops mid file, even if continue, it won't write the file
 * Files and tree data should be refreshed every time the project is resumed, depending on the flags enabled
 * Resume is really slow for giant files

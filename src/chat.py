@@ -200,6 +200,8 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
         with open(prompt_history_file, 'r') as f:
             prompt_history = f.read()
 
+        history.append(prompt_history)
+
         recap = re.sub(parser.match_before_conversation_history(), '', prompt_history, flags=re.DOTALL)
 
         files = parser.find_files(recap)
