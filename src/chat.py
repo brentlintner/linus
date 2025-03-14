@@ -86,8 +86,8 @@ def prompt_prefix(extra_ignore_patterns=None, include_patterns=None):
     project_structure = json.dumps(project_structure_json, indent=2) if debug_mode else json.dumps(project_structure_json, separators=(',', ':'))
     project_files = generate_project_file_contents(extra_ignore_patterns, include_patterns)
 
-    prefix = prefix.replace(parser.FILE_TREE_PLACEHOLDER, f'\n{project_structure}\n')
-    prefix = prefix.replace(parser.FILES_PLACEHOLDER, f'\n{project_files}\n')
+    prefix = prefix.replace(parser.FILE_TREE_PLACEHOLDER, f'{project_structure}')
+    prefix = prefix.replace(parser.FILES_PLACEHOLDER, f'{project_files}')
 
     return prefix
 

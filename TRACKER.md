@@ -14,6 +14,10 @@ Anything related to the project management of the project, such as tracking issu
 
 * Add tests (smoke tests (fake API), realworld tests (real API), and unit tests
 
+* Bug with resuming session with no pre-prompty (resume after -n)?, we really need to go back to subjects, or fix the issue
+
+* Be able to talk to the AI as a normal repl session (like Gemini web app)
+
 * Ensuring Code Complete / Fallback Error Handling
     * Explore getting the LLM to consistently examine it's changes and consider if it made any mistakes
     * Add to prompt? "check your code after, and if you see a mistake, make a new version of the file"
@@ -44,7 +48,6 @@ Anything related to the project management of the project, such as tracking issu
 * Resume is really slow for giant files
 * Ensure trailing newlines don't happen a lot
     * This means we drop an empty last part too?
-* Bug with resuming session with no pre-prompty (resume after -n)?, we really need to go back to subjects, or fix the issue
 
 ### Features
 
