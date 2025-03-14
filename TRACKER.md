@@ -4,6 +4,10 @@ Anything related to the project management of the project, such as tracking issu
 
 ## Current
 
+* If parts still an issue...
+    * Parse metadata into dict, then make it so only special parts have NoMoreParts and only non-special parts have Part
+    * Turn down temperature
+
 ## Backlog
 
 * Use -f ., and if not set don't add any files or directory structures
@@ -11,8 +15,6 @@ Anything related to the project management of the project, such as tracking issu
 * Even quicker streaming (look for \n\n, and leave right side of it for next prompt)
 
 * Add tests (smoke tests (fake API), realworld tests (real API), and unit tests
-
-* Sometimes can print a diff if long running? (1.5 pro issue?)
 
 * Ensuring Code Complete / Fallback Error Handling
     * Explore getting the LLM to consistently examine it's changes and consider if it made any mistakes
@@ -39,10 +41,7 @@ Anything related to the project management of the project, such as tracking issu
 
 ### Bugs
 
-* If parts still an issue...
-    * Parse metadata into dict, then make it so only special parts have NoMoreParts and only non-special parts have Part
-    * Turn down temperature
-    * Just use the damn thinking model sigh...
+* Sometimes can print a diff if long running? (1.5 pro issue?)
 
 * If model stops mid file, even if continue, it won't write the file
 * Files and tree data should be refreshed every time the project is resumed, depending on the flags enabled
