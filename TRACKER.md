@@ -8,15 +8,12 @@ Anything related to the project management of the project, such as tracking issu
 
 * Use -f ., and if not set don't add any files or directory structures
 
-* Update to latest google-genai version
-
 * Even quicker streaming (look for \n\n, and leave right side of it for next prompt)
 
 * Add tests (smoke tests (fake API), realworld tests (real API), and unit tests
 
-* Bug with resuming session with no pre-prompty (resume after -n)?, we really need to go back to subjects, or fix the issue
-
-* Be able to talk to the AI as a normal repl session (like Gemini web app)
+* If parts still an issue...
+    * Parse metadata into dict, then make it so only special parts have NoMoreParts and only non-special parts have Part
 
 * Ensuring Code Complete / Fallback Error Handling
     * Explore getting the LLM to consistently examine it's changes and consider if it made any mistakes
@@ -43,6 +40,7 @@ Anything related to the project management of the project, such as tracking issu
 
 ### Bugs
 
+* Bug with resuming session with no pre-prompty (resume after -n)?, we really need to go back to subjects, or fix the issue
 * If model stops mid file, even if continue, it won't write the file
 * Files and tree data should be refreshed every time the project is resumed, depending on the flags enabled
 * Resume is really slow for giant files
@@ -50,6 +48,8 @@ Anything related to the project management of the project, such as tracking issu
     * This means we drop an empty last part too?
 
 ### Features
+
+* Be able to talk to the AI as a normal repl session (like Gemini web app)
 
 * ? Remove code snippets from output formats and the stream parsing, leave ai to write as markdown
 
