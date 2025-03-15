@@ -156,10 +156,10 @@ class FilePartBuffer:
     def add(self, file_path, part_data, current_part, no_more_parts, version):
         if no_more_parts:
             # We only care about the *last* part having this flag
-            debug(f"Received all parts of {file_path} (v{version}) (NoMoreParts: {no_more_parts})")
+            debug(f"Received **all parts** of {file_path} (v{version})")
             self.final_parts[(file_path, version)] = True
         else:
-            debug(f"Received part {current_part} of {file_path} (v{version}) (NoMoreParts: {no_more_parts})")
+            debug(f"Received part {current_part} of {file_path} (v{version})")
             self.buffer[(file_path, version)][current_part] = part_data
 
     def is_complete(self, file_path, version):
@@ -387,13 +387,13 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
                             if file_part_buffer.is_complete(file_path, version):
                                 file_content = (file_part_buffer.assemble(file_path, version) or "").strip('\n')
                                 assembled_files[(file_path, version)] = file_content  # Store assembled file
-                                code = generate_diff(file_path, file_content)
-                                is_diff = os.path.exists(file_path) and file_content != code
-                                language = "diff" if is_diff else parser.get_language_from_extension(file_path)
+                                diff = generate_diff(file_path, file_content)
+                                language = "diff"
 
-                                if not is_diff:
+                                if not diff:
                                     console.print(Markdown(f"#### {file_path}"))
-                                section = f"```{language}\n{code}\n```"
+                                    diff = "NO CHANGES"
+                                section = f"```{language}\n{diff}\n```"
                                 print_markdown_code(section)
                                 status.update("Linus is typing...")
                             else:

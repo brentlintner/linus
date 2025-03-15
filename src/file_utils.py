@@ -28,20 +28,18 @@ def generate_diff(file_path, current_content):
         with open(file_path, 'r') as f:
             file_content = f.readlines()
     except FileNotFoundError:
-        return current_content  # If file not found, return current content
+        # We are adding a new file, and we want to show a full addition diff
+        file_content = ""
 
     diff = difflib.unified_diff(
         file_content,
         current_content.splitlines(keepends=True),
         fromfile=f"{file_path} (disk)",
         tofile=f"{file_path} (context)",
+        n=5
     )
 
     stringifed_diff = ''.join(diff)
-
-    if len(stringifed_diff) == 0:
-        # If no diff (i.e. we are re-adding the same file), return full (i.e. current) content
-        return current_content
 
     return stringifed_diff
 
