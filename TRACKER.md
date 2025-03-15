@@ -5,6 +5,8 @@ Anything related to the project management of the project, such as tracking issu
 ## Epics
 
 * Add tests (smoke tests (fake API), realworld tests (real API), and unit tests
+* Make stable regardless of file size and output length
+* Make stable in terms of good code generation and context awareness
 
 ## Current
 
@@ -13,18 +15,26 @@ Anything related to the project management of the project, such as tracking issu
 
 ## Backlog
 
-* First system test: Need no color + quiet + test for testing
-
-* Consider using a meta-learning approach to improve the model's performance
-    * ex: $learn command tells model to summarize the conversation into a paragraph, this is stored in the db and all are added to the prompt per project
-
 * Remove '> ' from the prompt? (clean copy/paste)
 * Use -f ., and if not set don't add any files or directory structures
 * Print separate consistency now that you changed end logs earlier
 * Add back the request/response token logging separate
 * Prune history not working (keeps previous version?)
-* Linus keeps using metadata {{{}}} syntax (use PROJECT.md instead)
 * Even quicker streaming (look for \n\n, and leave right side of it for next prompt)
+
+* Prompt Customization
+    * Linus keeps using metadata {{{}}} syntax (use PROJECT.md instead)
+    * Pull in language specific files in the Database to help the LLM (ex: https://dotcursorrules.com/)
+    * Pull in best practices, cheatsheets and other useful information from the Database
+    * If a PROJECT.md exists, pull that into the Database
+        * Create one for this project to test out
+        * For example: don't use the {{}} syntax inline in any file's content, use the placeholder method in parser.py
+        * Have defaults as well
+            * ex: Always use spaces to indent not tabs (look for .editorconfig files or other files as a reference)
+
+* Learning:
+    *Consider using a meta-learning approach to improve the model's performance
+    * ex: $learn command tells model to summarize the conversation into a paragraph, this is stored in the db and all are added to the prompt per project
 
 * Ensuring Code Complete / Fallback Error Handling
     * Explore getting the LLM to consistently examine it's changes and consider if it made any mistakes
@@ -48,6 +58,9 @@ Anything related to the project management of the project, such as tracking issu
     * Use a vector database to store embeddings of files and their contents, and optimize prompt generation for large projects and files
     * For very large projects, consider using an external memory mechanism like a vector database (with embeddings generated).
 
+* Tests
+    * First system test: Need no color + quiet + test for testing
+
 ## Icebox
 
 ### Bugs
@@ -68,14 +81,6 @@ Anything related to the project management of the project, such as tracking issu
 * Be able to talk to the AI as a normal repl session (like Gemini web app)
 
 * ? Remove code snippets from output formats and the stream parsing, leave ai to write as markdown
-
-* Prompt Customization
-    * Pull in language specific files in the Database to help the LLM (ex: https://dotcursorrules.com/)
-    * If a PROJECT.md exists, pull that into the Database
-        * Create one for this project to test out
-        * For example: don't use the {{}} syntax inline in any file's content, use the placeholder method in parser.py
-        * Have defaults as well
-            * ex: Always use spaces to indent not tabs (look for .editorconfig files or other files as a reference)
 
 * Ignoring Files
     * Auto ignore binary files as well as other common files/dirs that are not code (get list from AI)
