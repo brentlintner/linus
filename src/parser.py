@@ -29,16 +29,16 @@ def find_file_references(content):
 
     return [re.sub(r"[^\w\s]+$", '', file_reference) for file_reference in file_references]
 
+# TODO: find all in progress files
 def find_in_progress_file(content):
-    regex = rf'{FILE_METADATA_START}.*?\nPath: (.*?)\n.*?{FILE_METADATA_END}'
+    regex = rf'{FILE_METADATA_START}.*?\nPath: (.*?)\n'
     file_match = re.search(regex, content, flags=re.DOTALL)
 
     if file_match:
         file_path = file_match.group(1)
-        no_more_parts = file_match.group(2) == 'True'
-        return (file_path, no_more_parts)
+        return (file_path)
     else:
-        return (None, None)
+        return (None)
 
 def find_in_progress_snippet(content):
     regex = rf'{SNIPPET_METADATA_START}.*?\nLanguage: (.*?)\n{SNIPPET_METADATA_END}(?:(?!{END_OF_FILE}).)*$'
