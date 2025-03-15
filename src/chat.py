@@ -417,7 +417,14 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
             # Handle any remaining text in the queue (non-code block parts)
             if queued_response_text:
                 debug("Processing remaining queued text")
-                # TODO: if we are mid file block, then remove the last line, close the block, DONT print it, instead add LINUS CONTINUE, then let it force continue later on
+                # TODO: _If_ there is a file in progress, we should:
+                # * Split the queued text into before_file and rest
+                # * Remove the last line from the unfinished file block in case it's incomplete
+                # * Close the block with an end of file identifier
+                # * Print the before_file text instead of the full queued_response_text
+                # * Add a newline and a `LINUS CONTINUE` to queued response text
+                # * Let the code continue down to where it checks for `LINUS CONTINUE` as usual
+                # _Otherwise_, we should just print the queued text as usual (i.e. below)
                 console.print(Markdown(queued_response_text.strip('\n'), code_theme=EverforestDarkStyle))
                 queued_response_text = ""
 
@@ -442,15 +449,7 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
 
         linus_continue = re.search(r"^LINUS\sCONTINUE$", full_response_text, flags=re.MULTILINE)
 
-        # Check for unfinished files
-        # files = parser.find_files(full_response_text)
-        # for file_path, version, _, _, _, no_more_parts in files:
-            # if (file_path, version) not in assembled_files:  # Only check files we haven't already assembled
-                # if not file_part_buffer.is_complete(file_path, version):
-                    # unfinished_files.append((file_path, version))
-
         if linus_continue:
-            # debug(f"Unfinished files: {unfinished_files}")
             history.append(f'\n{full_response_text}\n')
             if history_filename:
                 with open(history_filename, 'w') as f:
