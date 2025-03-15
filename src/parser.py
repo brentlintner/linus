@@ -91,7 +91,6 @@ def find_files(content):
             no_more_parts = metadata['NoMoreParts']
         else:
             no_more_parts = False  # Assume more parts if not specified
-            part = metadata.get('Part', 1) # Only use if NoMoreParts missing
 
         all_file_parts.append({
             'path': metadata.get('Path'),
