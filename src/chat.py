@@ -154,31 +154,24 @@ class FilePartBuffer:
         self.final_parts = {} # Keep track of files with a final part
 
     def add(self, file_path, part_data, current_part, no_more_parts, version):
-        self.buffer[(file_path, version)][current_part] = part_data
         if no_more_parts:
             # We only care about the *last* part having this flag
-            self.final_parts[(file_path, version)] = current_part
-        debug(f"Added part {current_part} of {file_path} (v{version}) (NoMoreParts: {no_more_parts})")
+            debug(f"Received all parts of {file_path} (v{version}) (NoMoreParts: {no_more_parts})")
+            self.final_parts[(file_path, version)] = True
+        else:
+            debug(f"Received part {current_part} of {file_path} (v{version}) (NoMoreParts: {no_more_parts})")
+            self.buffer[(file_path, version)][current_part] = part_data
 
     def is_complete(self, file_path, version):
-        if (file_path, version) not in self.final_parts:
-            return False  # We haven't seen a final part yet
-
-        final_part_index = self.final_parts[(file_path, version)]
-
-        # Check if *all* parts up to and including the final part exist
-        for part_num in range(1, final_part_index + 1):
-            if part_num not in self.buffer[(file_path, version)]:
-                debug(f"Missing part {part_num} for {file_path} (v{version})")
-                return False  # Missing a part
-
-        return True
+        # TODO: debug log if we are missing any parts (i.e. have 2, but not 1)
+        return (file_path, version) in self.final_parts
 
     def assemble(self, file_path, version):
         if not self.is_complete(file_path, version):
             return None
 
         sorted_parts = sorted(self.buffer[(file_path, version)].items())
+        # TODO: ignore the nomoreparts (part 0)? should be empty always
         full_content = ''.join(part_data for _, part_data in sorted_parts)
         del self.buffer[(file_path, version)]
         del self.final_parts[(file_path, version)]  # Clean up
@@ -389,11 +382,9 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
                             # TODO: need to look for multiple files here? I think we can assume not because we're streaming
                             file_path, version, file_content, language, part_id, no_more_parts = files[0]
 
-                            debug(f"Received chunk {part_id} for {file_path} (NoMoreParts: {no_more_parts})")
                             file_part_buffer.add(file_path, file_content, part_id, no_more_parts, version)
 
                             if file_part_buffer.is_complete(file_path, version):
-                                debug(f"All chunks received for {file_path} (v{version})")
                                 file_content = (file_part_buffer.assemble(file_path, version) or "").strip('\n')
                                 assembled_files[(file_path, version)] = file_content  # Store assembled file
                                 code = generate_diff(file_path, file_content)
@@ -417,17 +408,56 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
 
             # Handle any remaining text in the queue (non-code block parts)
             if queued_response_text:
-                debug("Processing remaining queued text")
-                # TODO: _If_ there is a file in progress, we should:
-                # * Split the queued text into before_file and rest
-                # * Remove the last line from the unfinished file block in case it's incomplete
-                # * Close the block with an end of file identifier
-                # * Print the before_file text instead of the full queued_response_text
-                # * Add a newline and a `LINUS CONTINUE` to queued response text
-                # * Let the code continue down to where it checks for `LINUS CONTINUE` as usual
-                # _Otherwise_, we should just print the queued text as usual (i.e. below)
-                console.print(Markdown(queued_response_text.strip('\n'), code_theme=EverforestDarkStyle))
-                queued_response_text = ""
+                in_progress_file = parser.find_in_progress_file(queued_response_text)
+
+                # We have cut off mid file part
+                if in_progress_file:
+                    debug("Stopped mid file part, force continue required...")
+                    # Split into before_file and the incomplete file block
+                    before_file, incomplete_file_block = queued_response_text.split(parser.FILE_METADATA_START, 1)
+                    incomplete_file_block = parser.FILE_METADATA_START + incomplete_file_block
+
+                    # Remove the last line from the incomplete file content, in case its cut off
+                    content_lines = incomplete_file_block.splitlines()
+                    if len(content_lines) > 1:
+                        content_lines.pop() # Remove last line
+                    incomplete_file_block = "\n".join(content_lines)
+
+                    # Now we *need* to add the end of file
+                    files = parser.find_files(incomplete_file_block, incomplete=True)
+
+                    # TODO: be more robust and handle if we are cut off mid file metadata, or there is less than 2 lines in the mid content block
+                    if not files:
+                        error("Expected incomplete file in queued response section but none were found.")
+                        error("")
+                        error(incomplete_file_block)
+                        error("")
+                        return False
+
+                    file_path, version, file_content, language, part_id, no_more_parts = files[0]
+
+                    file_part_buffer.add(file_path, file_content, part_id, no_more_parts, version)
+                    full_response_text = re.sub(parser.match_file(file_path, incomplete=True), f"{file_content}\n{parser.END_OF_FILE}", full_response_text)
+
+                    console.print(Markdown(before_file, code_theme=EverforestDarkStyle), end="")
+                    queued_response_text = ""
+                    is_continuation = True
+
+                else:
+                    files = parser.find_files(full_response_text)
+                    unfinished_files = [file for file in files if not file[5]] # No more parts
+
+                    # We have cut off mid normal text (i.e. have not seen nomoreparts for a file)
+                    if unfinished_files:
+                        debug("Stopped with unfinished files, force continue required...")
+                        console.print(Markdown(queued_response_text, code_theme=EverforestDarkStyle), end="")
+                        queued_response_text = "" # Clear the queue
+                        is_continuation = True
+                    else:
+                        debug('Response text left in queue, but no files or incomplete file parts found.')
+                        console.print(Markdown(queued_response_text, code_theme=EverforestDarkStyle), end="")
+                        queued_response_text = "" # Clear the queue
+                        is_continuation = False # Important, stops potential infinite loops
 
         status.stop()
 
@@ -448,20 +478,18 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
 
         # --- History and File Writing ---
 
-        linus_continue = re.search(r"^LINUS\sCONTINUE$", full_response_text, flags=re.MULTILINE)
-
-        if linus_continue:
+        if is_continuation:
             history.append(f'\n{full_response_text}\n')
             if history_filename:
                 with open(history_filename, 'w') as f:
                     f.write(''.join(history))
             return True
 
-        if not is_continuation:
-            full_response_text = re.sub(r"^LINUS\sCONTINUE$", "", full_response_text, flags=re.MULTILINE)
-            history.append(f'\n**Linus:**\n\n{full_response_text}\n')
         else:
-            history.append(f'\n{full_response_text}\n')
+            history.append(f'\n**Linus:**\n\n{full_response_text}\n')
+            if history_filename:
+                with open(history_filename, 'w') as f:
+                    f.write(''.join(history))
 
         if writeable:
             # Write all assembled files
@@ -476,10 +504,6 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
 
             if len(assembled_files) > 0:
                 print()
-
-        if history_filename:
-            with open(history_filename, 'w') as f:
-                f.write(''.join(history))
 
         # Update session total tokens
         session_total_tokens += total_token_count
@@ -507,12 +531,14 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
         try:
             if force_continue:
                 if force_continue_counter > 5:
-                    error(f"Model is stuck (maxCount = {force_continue_counter}. Please restart.")
-                    break
-                force_continue_counter += 1
-                debug(f"Forcing continuation... attempts={force_continue_counter}")
-                force_continue = send_request_to_ai(is_continuation=True)
-                continue
+                    error(f"Model is stuck (maxCount = {force_continue_counter}. Please manually continue.")
+                    force_continue = False
+                    continue
+                else:
+                    force_continue_counter += 1
+                    debug(f"Forcing continuation... attempts={force_continue_counter}")
+                    force_continue = send_request_to_ai(is_continuation=True)
+                    continue
             else:
                 force_continue_counter = 0
 
@@ -547,3 +573,4 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
         except Exception:
             print("Linus has glitched!\n")
             console.print_exception(show_locals=True)
+

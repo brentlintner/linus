@@ -36,12 +36,12 @@ def find_in_progress_file(content):
 
     if file_match:
         file_path = file_match.group(1)
-        return (file_path)
+        return file_path
     else:
-        return (None)
+        return None
 
 def find_in_progress_snippet(content):
-    regex = rf'{SNIPPET_METADATA_START}.*?\nLanguage: (.*?)\n{SNIPPET_METADATA_END}(?:(?!{END_OF_FILE}).)*$'
+    regex = rf'{SNIPPET_METADATA_START}.*?\nLanguage: (.*?)\n'
     snippet_match = re.search(regex, content, flags=re.DOTALL)
     return snippet_match.group(1) if snippet_match else None
 
@@ -82,10 +82,12 @@ def parse_metadata(metadata_str):
 
     return metadata
 
-def find_files(content):
-    regex = (
-        rf'{FILE_METADATA_START}(.*?){FILE_METADATA_END}\n?(.*?)(?:{END_OF_FILE})'
-    )
+# This finds any file metadata+content blocks up to the end of the string or end of file block
+def find_files(content, incomplete=False):
+    if incomplete:
+        regex = rf'{FILE_METADATA_START}(.*?){FILE_METADATA_END}\n?(.*)(?:{END_OF_FILE})?'
+    else:
+        regex = rf'{FILE_METADATA_START}(.*?){FILE_METADATA_END}\n?(.*?){END_OF_FILE}'
 
     file_matches = re.finditer(regex, content, flags=re.DOTALL)
 
@@ -132,8 +134,7 @@ def find_files(content):
     return result
 
 def find_snippets(content):
-    regex = rf'{SNIPPET_METADATA_START}.*?\nLanguage: (.*?)\n{SNIPPET_METADATA_END}\n?(.*?)(?:{END_OF_FILE})'
-    snippet_matches = re.finditer(regex, content, flags=re.DOTALL)
+    snippet_matches = re.finditer(match_snippet(), content, flags=re.DOTALL)
     return [(match.group(1), match.group(2).rstrip('\n')) for match in snippet_matches] # Still rstrip this one, it seems.
 
 def is_file(content):
@@ -150,9 +151,13 @@ def match_code_block():
     snippet_regex = rf'{SNIPPET_METADATA_START}.*?{SNIPPET_METADATA_END}.*?{END_OF_SNIPPET}'
     return rf'({file_regex}|{snippet_regex})'
 
-def match_file(file_path):
+def match_file(file_path, incomplete=False):
     escaped = re.escape(file_path)
-    return rf'{FILE_METADATA_START}.*?\nPath: {escaped}\n.*?{FILE_METADATA_END}\n?(.*?){END_OF_FILE}'
+
+    if incomplete:
+        return rf'{FILE_METADATA_START}.*?\nPath: {escaped}\n.*?{FILE_METADATA_END}\n?(.*)(?:{END_OF_FILE})?'
+    else:
+        return rf'{FILE_METADATA_START}.*?\nPath: {escaped}\n.*?{FILE_METADATA_END}\n?(.*?){END_OF_FILE}'
 
 def match_snippet():
     return rf'{SNIPPET_METADATA_START}.*?\nLanguage: (.*?)\n.*?{SNIPPET_METADATA_END}\n?(.*?){END_OF_SNIPPET}'
