@@ -2,20 +2,30 @@
 
 Anything related to the project management of the project, such as tracking issues, features, bugs, and chores.
 
+## Epics
+
+* Add tests (smoke tests (fake API), realworld tests (real API), and unit tests
+
 ## Current
 
 * Parts don't have a newline at the end if we strip the last line
-* Bug: Linus keeps using metadata {{{}}} syntax (use PROJECT.md instead)
-* Bug: Prune history not working (keeps previous version?)
-* Add back the request/response token logging separate
+* Try to get Linus to be more correct of code (or is the no pruning causing hallucinations?)
 
 ## Backlog
 
-* Use -f ., and if not set don't add any files or directory structures
-* Even quicker streaming (look for \n\n, and leave right side of it for next prompt)
-* Add tests (smoke tests (fake API), realworld tests (real API), and unit tests
+* First system test: Need no color + quiet + test for testing
 
-* Split open files at a certain threshold (i.e. LLM learns examples from it)
+* Consider using a meta-learning approach to improve the model's performance
+    * ex: $learn command tells model to summarize the conversation into a paragraph, this is stored in the db and all are added to the prompt per project
+
+* Remove '> ' from the prompt? (clean copy/paste)
+* Use -f ., and if not set don't add any files or directory structures
+* Print separate consistency now that you changed end logs earlier
+* Add back the request/response token logging separate
+* Prune history not working (keeps previous version?)
+* Linus keeps using metadata {{{}}} syntax (use PROJECT.md instead)
+* Even quicker streaming (look for \n\n, and leave right side of it for next prompt)
+
 * Ensuring Code Complete / Fallback Error Handling
     * Explore getting the LLM to consistently examine it's changes and consider if it made any mistakes
     * Add to prompt? "check your code after, and if you see a mistake, make a new version of the file"
@@ -23,6 +33,7 @@ Anything related to the project management of the project, such as tracking issu
     * Double ensure if Linus thinks he is stumped, then asks me for help, as I can write code too.
 
 * Open Files / Compaction Optimizations
+    * Split open files at a certain threshold (i.e. LLM learns examples from it)
     * Start using concept "open files", i.e periodically or on threshold: compact versions etc, and bring all into Open Files section instead of File References section (that way we can optimize the file references section succinctly)
         * If you don't have an open file, then ask to open them (can use function calling here)
     * If too many files are open on boot, have a threshold or error out (too big for context window)
