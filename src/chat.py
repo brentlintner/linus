@@ -169,6 +169,7 @@ class FilePartBuffer:
         # Check if *all* parts up to and including the final part exist
         for part_num in range(1, final_part_index + 1):
             if part_num not in self.buffer[(file_path, version)]:
+                debug(f"Missing part {part_num} for {file_path} (v{version})")
                 return False  # Missing a part
 
         return True

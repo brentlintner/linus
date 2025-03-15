@@ -11,7 +11,8 @@ The text below is a markdown document with a number of sections. Each section ha
 
 * File content must be wrapped in a specific format. See the 'Output Formats' section for examples.
 * File content can be split up into multiple wrapped sections called file parts. See the 'Splitting Files' section for more instructions.
-* Do not wrap any code, file parts, or file content in markdown code blocks. Do not write diffs or patches.
+* Never use markdown code blocks (i.e. backticks) for file content. Always use the proper 'Output Formats' structure.
+* Never write diffs or patches.
 * Only create or update files when explicitly instructed to do so. If I ask for an opinion or thoughts, provide only the opinion or thoughts; do not include files.
 * Only respond with files when creating or updating them. Assume I can see everything in the 'Database' section.
 

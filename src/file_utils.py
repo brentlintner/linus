@@ -144,10 +144,11 @@ def prune_file_history(file_path, history, current_version):
     """Removes previous mentions of the given file from the history."""
     for index, entry in enumerate(history):
         # Find all files in the current history entry
-        for existing_file_path, version, _, _, _, _ in find_files(entry):
+        for existing_file_path, version, _, _, part, no_more_parts in find_files(entry):
             # If the file paths match and the version is older, remove the entire file block
             if existing_file_path == file_path and version < current_version:
                 history[index] = re.sub(match_file(existing_file_path), '', entry, flags=re.DOTALL)
+
 
 def human_format_number(num):
     """Converts an integer to a human-readable string (e.g., 1.3M, 450K)."""

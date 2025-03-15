@@ -54,7 +54,9 @@ def safe_int(value, default=1):
         return default
 
 def parse_metadata(metadata_str):
-    """Parses the metadata string into a dictionary."""
+    """Parses the metadata string into a dictionary.
+       Handles missing fields and defaults.  Prioritizes 'NoMoreParts'.
+    """
     metadata = {}
     for line in metadata_str.splitlines():
         match = re.match(r'^\s*([^:]+):\s*(.*?)\s*$', line)
@@ -63,12 +65,21 @@ def parse_metadata(metadata_str):
             value = match.group(2).strip()
             if key == 'NoMoreParts':
                 metadata[key] = value.lower() == 'true'
-            elif key == 'Part':
-                metadata[key] = safe_int(value, 1)  # Safe integer conversion
-            elif key == 'Version':
-                metadata[key] = safe_int(value, 1) # Safe integer conversion
+            elif key in ('Part', 'Version'):
+                metadata[key] = safe_int(value, 1)  # Safe integer conversion for Part and Version
             else:
                 metadata[key] = value
+
+    # Set defaults if not present, but ONLY if NoMoreParts isn't explicitly set.
+    if 'NoMoreParts' not in metadata:
+        metadata['Part'] = metadata.get('Part', 1)
+        metadata['NoMoreParts'] = False  # Default if 'Part' is present but 'NoMoreParts' is not.
+    else:
+        # If NoMoreParts *is* present, 'Part' is irrelevant.  We set it to a consistent 0.
+        metadata['Part'] = 0
+
+    metadata['Version'] = metadata.get('Version', 1)  # Version always defaults to 1 if not present
+
     return metadata
 
 def find_files(content):
@@ -85,22 +96,13 @@ def find_files(content):
 
         metadata = parse_metadata(metadata_str)
 
-        # Determine part number and NoMoreParts status
-
-        if 'NoMoreParts' in metadata:
-            no_more_parts = metadata['NoMoreParts']
-            part = 0
-        else:
-            no_more_parts = False  # Assume more parts if not specified
-            part = metadata.get('Part', 1)  # Default to part 1
-
         all_file_parts.append({
             'path': metadata.get('Path'),
             'version': metadata.get('Version', 1),
             'content': content.strip(),
             'language': metadata.get('Language'),
-            'part': part,
-            'no_more_parts': no_more_parts
+            'part': metadata.get('Part'),
+            'no_more_parts': metadata.get('NoMoreParts')
         })
 
     all_files = {}
@@ -115,8 +117,9 @@ def find_files(content):
     result = []
 
     for key_tuple, parts_array in all_files.items():
+        # TODO: be robust and just ignore the nomoreparts content?
         joined_content = ''.join([part['content'] for part in parts_array])
-        final_part = parts_array[-1]
+        final_part = parts_array[0] # The first part (0) will have no_more_parts set to True if it exists
         result.append([
             final_part['path'],
             final_part['version'],
