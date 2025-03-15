@@ -8,6 +8,8 @@ Anything related to the project management of the project, such as tracking issu
     * Turn down temperature?
     * Embrace never restricting the length of the prompt?
 
+* Bug: File content gets wiped with no more parts
+
 * Add back the request/response token logging separate
 
 ## Backlog
