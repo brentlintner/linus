@@ -16,7 +16,6 @@ TEST_FILE_1 = f"""
 Path: test_file_1.py
 Language: python
 Version: 1
-Part: 1
 NoMoreParts: True
 {parser.placeholder('END FILE METADATA')}
 print('Hello from test file 1')
@@ -29,7 +28,6 @@ Path: test_file_2.py
 Language: python
 Version: 1
 Part: 1
-NoMoreParts: False
 {parser.placeholder('END FILE METADATA')}
 def some_function():
 {parser.placeholder('END OF FILE')}
@@ -39,7 +37,6 @@ Path: test_file_2.py
 Language: python
 Version: 1
 Part: 2
-NoMoreParts: True
 {parser.placeholder('END FILE METADATA')}
     pass
 {parser.placeholder('END OF FILE')}
@@ -50,7 +47,6 @@ TEST_FILE_3_MULTIPLE_VERSIONS = f"""
 Path: test_file_3.py
 Language: python
 Version: 1
-Part: 1
 NoMoreParts: True
 {parser.placeholder('END FILE METADATA')}
 # Old version
@@ -60,10 +56,30 @@ NoMoreParts: True
 Path: test_file_3.py
 Language: python
 Version: 2
-Part: 1
 NoMoreParts: True
 {parser.placeholder('END FILE METADATA')}
 # New version
+{parser.placeholder('END OF FILE')}
+"""
+
+TEST_FILE_4_NO_PART = f"""
+{parser.placeholder('START FILE METADATA')}
+Path: test_file_4.py
+Language: python
+Version: 1
+{parser.placeholder('END FILE METADATA')}
+# File with no Part, assumes part 1.
+{parser.placeholder('END OF FILE')}
+"""
+
+TEST_FILE_5_ONLY_PART = f"""
+{parser.placeholder('START FILE METADATA')}
+Path: test_file_5.py
+Language: python
+Version: 1
+Part: 2
+{parser.placeholder('END FILE METADATA')}
+# File with only Part, assumes *not* the last part.
 {parser.placeholder('END OF FILE')}
 """
 
@@ -78,10 +94,12 @@ def my_snippet():
 
 def test_find_files():
     assert parser.find_files(TEST_FILE_1) == [['test_file_1.py', 1, "print('Hello from test file 1')", 'python', 1, True]]
-    assert parser.find_files(TEST_FILE_2_PARTS) == [['test_file_2.py', 1, 'def some_function():\n    pass', 'python', 2, True]]
+    # test_file_2 needs to have NoMoreParts: True now.
+    assert parser.find_files(TEST_FILE_2_PARTS) == [['test_file_2.py', 1, 'def some_function():\n    pass', 'python', 2, False]]
     assert parser.find_files(TEST_FILE_3_MULTIPLE_VERSIONS) == [['test_file_3.py', 2, '# New version', 'python', 1, True]]
     assert parser.find_files("Some random text with no file blocks") == []
-
+    assert parser.find_files(TEST_FILE_4_NO_PART) == [['test_file_4.py', 1, '# File with no Part, assumes part 1.', 'python', 1, False]]
+    assert parser.find_files(TEST_FILE_5_ONLY_PART) == [['test_file_5.py', 1, '# File with only Part, assumes *not* the last part.', 'python', 2, False]]
 
 def test_find_snippets():
     assert parser.find_snippets(TEST_SNIPPET) == [('python', "def my_snippet():\n    print('Hello from snippet')")]
@@ -263,7 +281,6 @@ def test_find_files_multiple_versions():
 Path: test.py
 Language: python
 Version: 1
-Part: 1
 NoMoreParts: True
 {parser.placeholder('END FILE METADATA')}
 Version 1 content
@@ -273,7 +290,6 @@ Version 1 content
 Path: test.py
 Language: python
 Version: 2
-Part: 1
 NoMoreParts: True
 {parser.placeholder('END FILE METADATA')}
 Version 2 content
@@ -286,3 +302,80 @@ Version 2 content
 
     assert parser.find_files(test_input) == expected_output
 
+def test_parse_metadata():
+    metadata_str = """
+Path: test.py
+Language: python
+Version: 2
+Part: 3
+NoMoreParts: True
+    """
+    expected_metadata = {
+        'Path': 'test.py',
+        'Language': 'python',
+        'Version': 2,
+        'Part': 3,
+        'NoMoreParts': True
+    }
+    assert parser.parse_metadata(metadata_str) == expected_metadata
+
+    # Test with missing fields
+    metadata_str_missing = """
+Path: test.py
+Language: python
+    """
+    expected_missing = {
+        'Path': 'test.py',
+        'Language': 'python',
+        'Version': 1,  # Default
+        'Part': 1,  # Default
+        'NoMoreParts': False # Default
+    }
+    assert parser.parse_metadata(metadata_str_missing) == expected_missing
+
+     # Test with extra spaces
+    metadata_str_spaces = """
+ Path :  test.py
+Language  :  python
+Version:   2
+    """
+    expected_spaces = {
+        'Path': 'test.py',
+        'Language': 'python',
+        'Version': 2,
+        'Part': 1,
+        'NoMoreParts': False
+    }
+    assert parser.parse_metadata(metadata_str_spaces) == expected_spaces
+
+    #Test with No Part, but with NoMoreParts
+    metadata_str_no_part = """
+Path: test.py
+Language: python
+Version: 1
+NoMoreParts: True
+"""
+    expected_no_part = {
+        'Path': 'test.py',
+        'Language': 'python',
+        'Version': 1,
+        'NoMoreParts': True,
+        'Part': 1 # Default
+    }
+    assert parser.parse_metadata(metadata_str_no_part) == expected_no_part
+
+    # Test with only Part, no NoMoreParts (should default to False)
+    metadata_str_only_part = """
+    Path: test.py
+    Language: python
+    Version: 1
+    Part: 2
+    """
+    expected_only_part = {
+        'Path': 'test.py',
+        'Language': 'python',
+        'Version': 1,
+        'Part': 2,
+        'NoMoreParts': False
+    }
+    assert parser.parse_metadata(metadata_str_only_part) == expected_only_part
