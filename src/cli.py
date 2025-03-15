@@ -27,6 +27,7 @@ def add_general_args(parser):
     group.add_argument("-m", "--models", action="store_true", help="List available generative AI models.")
     group.add_argument("-c", "--clean", action="store_true", help="Remove all history files in the tmp/ directory.")
     group.add_argument("-v", "--verbose", action="store_true", help="Log verbose output.")
+    group.add_argument("-q", "--quiet", action="store_true", help="Only print responses, in plain text")
     group.add_argument('--version', action='version', version=f'%(prog)s {__version__}', help="Show the version number and exit.")
     # fmt: on
 
