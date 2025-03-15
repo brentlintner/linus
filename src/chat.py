@@ -392,7 +392,7 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
 
                                 if not diff:
                                     console.print(Markdown(f"#### {file_path}"))
-                                    diff = "NO CHANGES"
+                                    diff = "EMPTY FILE" if not file_content else "NO CHANGES"
                                 section = f"```{language}\n{diff}\n```"
                                 print_markdown_code(section)
                                 status.update("Linus is typing...")
