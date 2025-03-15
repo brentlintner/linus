@@ -4,12 +4,9 @@ Anything related to the project management of the project, such as tracking issu
 
 ## Current
 
-* If parts still an issue...
-    * Turn down temperature?
-    * Embrace never restricting the length of the prompt?
-
-* Bug: File content gets wiped with no more parts
-
+* Parts don't have a newline at the end if we strip the last line
+* Bug: Linus keeps using metadata {{{}}} syntax (use PROJECT.md instead)
+* Bug: Prune history not working (keeps previous version?)
 * Add back the request/response token logging separate
 
 ## Backlog
@@ -46,6 +43,9 @@ Anything related to the project management of the project, such as tracking issu
 
 * Sometimes can print a diff if long running? (1.5 pro issue?)
 
+* If parts still an issue...
+    * Turn down temperature?
+
 * If model stops mid file, even if continue, it won't write the file
 * Files and tree data should be refreshed every time the project is resumed, depending on the flags enabled
 * Resume is really slow for giant files
@@ -59,8 +59,8 @@ Anything related to the project management of the project, such as tracking issu
 * ? Remove code snippets from output formats and the stream parsing, leave ai to write as markdown
 
 * Prompt Customization
-    * Pull in language specific files to help the LLM (ex: https://dotcursorrules.com/)
-    * If a PROJECT.md exists, pull that into the prompt (right near the top)
+    * Pull in language specific files in the Database to help the LLM (ex: https://dotcursorrules.com/)
+    * If a PROJECT.md exists, pull that into the Database
         * Create one for this project to test out
         * For example: don't use the {{}} syntax inline in any file's content, use the placeholder method in parser.py
         * Have defaults as well
