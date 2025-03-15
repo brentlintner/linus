@@ -174,7 +174,6 @@ Language: {language}
 Version: {version}
 NoMoreParts: True
 {FILE_METADATA_END}
-{content}
 {END_OF_FILE}
 """
 

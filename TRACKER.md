@@ -5,17 +5,18 @@ Anything related to the project management of the project, such as tracking issu
 ## Current
 
 * If parts still an issue...
-    * Parse metadata into dict, then make it so only special parts have NoMoreParts and only non-special parts have Part
-    * Turn down temperature
+    * Turn down temperature?
+    * Embrace never restricting the length of the prompt?
+
+* Add back the request/response token logging separate
 
 ## Backlog
 
 * Use -f ., and if not set don't add any files or directory structures
-
 * Even quicker streaming (look for \n\n, and leave right side of it for next prompt)
-
 * Add tests (smoke tests (fake API), realworld tests (real API), and unit tests
 
+* Split open files at a certain threshold (i.e. LLM learns examples from it)
 * Ensuring Code Complete / Fallback Error Handling
     * Explore getting the LLM to consistently examine it's changes and consider if it made any mistakes
     * Add to prompt? "check your code after, and if you see a mistake, make a new version of the file"
@@ -59,6 +60,7 @@ Anything related to the project management of the project, such as tracking issu
     * Pull in language specific files to help the LLM (ex: https://dotcursorrules.com/)
     * If a PROJECT.md exists, pull that into the prompt (right near the top)
         * Create one for this project to test out
+        * For example: don't use the {{}} syntax inline in any file's content, use the placeholder method in parser.py
         * Have defaults as well
             * ex: Always use spaces to indent not tabs (look for .editorconfig files or other files as a reference)
 
