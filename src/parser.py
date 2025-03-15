@@ -30,7 +30,7 @@ def find_file_references(content):
     return [re.sub(r"[^\w\s]+$", '', file_reference) for file_reference in file_references]
 
 def find_in_progress_file(content):
-    regex = rf'{FILE_METADATA_START}.*?\nPath: (.*?)\n.*?NoMoreParts: (True|False).*?{FILE_METADATA_END}'
+    regex = rf'{FILE_METADATA_START}.*?\nPath: (.*?)\n.*?{FILE_METADATA_END}'
     file_match = re.search(regex, content, flags=re.DOTALL)
 
     if file_match:
