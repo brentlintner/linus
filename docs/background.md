@@ -20,7 +20,6 @@ The text below is a markdown document with a number of sections. Each section ha
 * Each file part contains a partial section of a complete file's code. Assembled file parts create a complete file.
 * Each file can be split up into one or more parts, followed by a special empty part that signals all parts have been sent. See 'Output Formats' for examples.
 * When splitting a file, ensure logical breakpoints, such as at the end of a function or loop.
-* If a file is split into parts, the last part must have the `NoMoreParts: True` flag in the file metadata. This flag indicates that all parts of the file have been sent.
 
 ## Writing Code
 

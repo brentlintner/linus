@@ -86,11 +86,13 @@ def find_files(content):
         metadata = parse_metadata(metadata_str)
 
         # Determine part number and NoMoreParts status
-        part = metadata.get('Part', 1)  # Default to part 1
+
         if 'NoMoreParts' in metadata:
             no_more_parts = metadata['NoMoreParts']
+            part = 0
         else:
             no_more_parts = False  # Assume more parts if not specified
+            part = metadata.get('Part', 1)  # Default to part 1
 
         all_file_parts.append({
             'path': metadata.get('Path'),
