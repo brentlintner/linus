@@ -165,7 +165,6 @@ Path: {file_path}
 Language: {language}
 Version: {version}
 Part: {part}
-NoMoreParts: False
 {FILE_METADATA_END}
 {content}
 {END_OF_FILE}
@@ -174,7 +173,6 @@ NoMoreParts: False
 Path: {file_path}
 Language: {language}
 Version: {version}
-Part: {part + 1}
 NoMoreParts: True
 {FILE_METADATA_END}
 {content}

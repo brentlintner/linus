@@ -417,6 +417,7 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
             # Handle any remaining text in the queue (non-code block parts)
             if queued_response_text:
                 debug("Processing remaining queued text")
+                # TODO: if we are mid file block, then remove the last line, close the block, DONT print it, instead add LINUS CONTINUE, then let it force continue later on
                 console.print(Markdown(queued_response_text.strip('\n'), code_theme=EverforestDarkStyle))
                 queued_response_text = ""
 
