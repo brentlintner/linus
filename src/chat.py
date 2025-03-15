@@ -200,13 +200,14 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
 
         files = parser.find_files(recap)
 
-        for file_path, _, content, _, _, _ in files:
+        for file_path, version, content, _, _, _ in files:
             language = parser.get_language_from_extension(file_path)
             # HACK: ideally we avoid doing this per file, but it's a quick fix for now
             replaced_content = content.replace("\\", "\\\\")
+            suffix = " (EMPTY)" if not replaced_content else ""
             recap = re.sub(
                 parser.match_file(file_path),
-                rf'#### {file_path}\n\n```{language}\n{replaced_content}\n```',
+                rf'#### {file_path} (v{version}){suffix}\n\n```{language}\n{replaced_content}\n```',
                 recap,
                 flags=re.DOTALL,
                 count=1)
@@ -387,13 +388,15 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
                             if file_part_buffer.is_complete(file_path, version):
                                 file_content = (file_part_buffer.assemble(file_path, version) or "").strip('\n')
                                 assembled_files[(file_path, version)] = file_content  # Store assembled file
-                                diff = generate_diff(file_path, file_content)
-                                language = "diff"
+                                code = generate_diff(file_path, file_content)
+                                is_diff = os.path.exists(file_path) and code != file_content
+                                language = "diff" if is_diff else parser.get_language_from_extension(file_path)
 
-                                if not diff:
-                                    console.print(Markdown(f"#### {file_path}"))
-                                    diff = "EMPTY FILE" if not file_content else "NO CHANGES"
-                                section = f"```{language}\n{diff}\n```"
+                                suffix = " (EMPTY)" if not file_content else ""
+                                suffix = " (NO CHANGES)" if is_diff else suffix
+                                console.print(Markdown(f"#### {file_path} v({version}){suffix}", code_theme=EverforestDarkStyle), end="")
+
+                                section = f"```{language}\n{code}\n```"
                                 print_markdown_code(section)
                                 status.update("Linus is typing...")
                             else:
