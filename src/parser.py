@@ -53,43 +53,77 @@ def safe_int(value, default=1):
     except ValueError:
         return default
 
+def parse_metadata(metadata_str):
+    """Parses the metadata string into a dictionary."""
+    metadata = {}
+    for line in metadata_str.splitlines():
+        match = re.match(r'^\s*([^:]+):\s*(.*?)\s*$', line)
+        if match:
+            key = match.group(1).strip()
+            value = match.group(2).strip()
+            if key == 'NoMoreParts':
+                metadata[key] = value.lower() == 'true'
+            elif key == 'Part':
+                metadata[key] = safe_int(value, 1)  # Safe integer conversion
+            elif key == 'Version':
+                metadata[key] = safe_int(value, 1) # Safe integer conversion
+            else:
+                metadata[key] = value
+    return metadata
+
 def find_files(content):
-    # This regex should correctly capture all parts of a file block, including the content.
     regex = (
-        rf'{FILE_METADATA_START}.*?' +  # Match the start of the metadata
-        rf'\nPath: (.*?)\nLanguage: (.*?)\n(?:Version: (\d+)\n)' + # Capture Path, Language, and optional Version
-        rf'(?:Part: (\d+)\n)(?:NoMoreParts: (True|False)\n).*?{FILE_METADATA_END}\n?(.*?)(?:{END_OF_FILE})' # Capture Part and NoMoreParts, then the content, and finally the end of file marker
+        rf'{FILE_METADATA_START}(.*?){FILE_METADATA_END}\n?(.*?)(?:{END_OF_FILE})'
     )
 
     file_matches = re.finditer(regex, content, flags=re.DOTALL)
 
-    all_file_parts = [(
-        match.group(1), # Path
-        safe_int(match.group(3)), # Version
-        match.group(6),  # Content
-        match.group(2),  # Language
-        safe_int(match.group(4)), # Part
-        match.group(5) == 'True') # NoMoreParts
-        for match in file_matches]
+    all_file_parts = []
+    for match in file_matches:
+        metadata_str = match.group(1)
+        content = match.group(2)
+
+        metadata = parse_metadata(metadata_str)
+
+        # Determine part number and NoMoreParts status
+        part = metadata.get('Part', 1)  # Default to part 1
+        if 'NoMoreParts' in metadata:
+            no_more_parts = metadata['NoMoreParts']
+        else:
+            no_more_parts = False  # Assume more parts if not specified
+            part = metadata.get('Part', 1) # Only use if NoMoreParts missing
+
+        all_file_parts.append({
+            'path': metadata.get('Path'),
+            'version': metadata.get('Version', 1),
+            'content': content.strip(),
+            'language': metadata.get('Language'),
+            'part': part,
+            'no_more_parts': no_more_parts
+        })
 
     all_files = {}
 
-    # Assemble the parts for each (file, version)
-    for path, version, content, language, part, no_more_parts in all_file_parts:
-        file_key = (path, version)
+    for part_data in all_file_parts:
+        file_key = (part_data['path'], part_data['version'])
         if file_key not in all_files:
             all_files[file_key] = []
-        all_files[file_key].append((content, language, part, no_more_parts))
-        all_files[file_key].sort(key=lambda x: x[2]) # Ensure parts are in order
+        all_files[file_key].append(part_data)
+        all_files[file_key].sort(key=lambda x: x['part'])
 
     result = []
 
     for key_tuple, parts_array in all_files.items():
-        joined_content = ''.join([part[0] for part in parts_array]) # Join all content parts
-        language = parts_array[-1][1] # Get the language from the LAST part
-        part_id = max([part[2] for part in parts_array]) # Get the highest part number
-        no_more_parts = parts_array[-1][3] # Get the no more parts flag from the LAST part
-        result.append(list(key_tuple) + [joined_content.strip(), language, part_id, no_more_parts]) # Use strip here.  Important!
+        joined_content = ''.join([part['content'] for part in parts_array])
+        final_part = parts_array[-1]
+        result.append([
+            final_part['path'],
+            final_part['version'],
+            joined_content,
+            final_part['language'],
+            final_part['part'],
+            final_part['no_more_parts']
+        ])
 
     return result
 
