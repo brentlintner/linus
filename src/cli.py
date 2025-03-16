@@ -60,8 +60,8 @@ def create_parser():
 
     return parser
 
-def clean_history_files(tmp_dir='tmp'):
-    history_file = history_filename_for_directory(os.getcwd())
+def clean_history_files(cwd=os.getcwd()):
+    history_file = history_filename_for_directory(cwd)
     if os.path.exists(history_file):
         try:
             os.remove(history_file)
@@ -72,21 +72,23 @@ def clean_history_files(tmp_dir='tmp'):
         print("No history file found for the current directory.")
 
 def handle_list_files(args):
+    directory = args.directory
     extra_ignore_patterns = args.ignore.split(',') if args.ignore else None
     include_patterns = args.files.split(',') if args.files else None
-    files = generate_project_file_list(extra_ignore_patterns, include_patterns)
+    files = generate_project_file_list(extra_ignore_patterns, include_patterns, directory)
     print(files)
 
 def handle_tokens(args):
+    directory = args.directory
     client = genai.Client(api_key=os.getenv('GOOGLE_API_KEY'))
 
     extra_ignore_patterns = args.ignore.split(',') if args.ignore else []
     include_patterns = args.files.split(',') if args.files else []
-    file_paths = generate_project_file_list(extra_ignore_patterns, include_patterns)
+    file_paths = generate_project_file_list(extra_ignore_patterns, include_patterns, directory)
     total_tokens = 0
     for file_path in file_paths.splitlines():
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(os.path.join(directory, file_path), 'r', encoding='utf-8') as f:
                 content = f.read()
             tokens = client.models.count_tokens(model=os.getenv('GEMINI_MODEL') or '', contents=content).total_tokens
             total_tokens += tokens or 0
@@ -112,7 +114,7 @@ def main():
     configure_logger(args)
 
     if args.clean:
-        clean_history_files()
+        clean_history_files(args.directory)
         sys.exit(0)
 
     check_if_env_vars_set()
@@ -138,7 +140,8 @@ def main():
             handle_tokens(args)
         sys.exit(0)
 
-    os.chdir(args.directory)
+    if args.directory:
+        os.chdir(args.directory)
 
     resume = not args.no_resume
 
@@ -147,6 +150,7 @@ def main():
         writeable=args.writeable,
         ignore_patterns=args.ignore,
         include_patterns=include_files,
+        cwd=args.directory
     )
 
 if __name__ == "__main__":

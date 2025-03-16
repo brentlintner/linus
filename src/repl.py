@@ -21,9 +21,10 @@ def _(event):
     event.current_buffer.history_forward()
 
 class FilePathCompleter(Completer):
-    def __init__(self):
+    def __init__(self, cwd=os.getcwd()):
         self.ignore_patterns = self.load_ignore_patterns()
         self.spec = pathspec.PathSpec.from_lines('gitwildmatch', self.ignore_patterns)
+        self.cwd = cwd
 
     def load_ignore_patterns(self):
         ignore_patterns = [] + DEFAULT_IGNORE_PATTERNS
@@ -42,7 +43,7 @@ class FilePathCompleter(Completer):
         if '@' not in word_before_cursor:
             return
 
-        for root, _, items in os.walk(os.getcwd()):
+        for root, _, items in os.walk(self.cwd):
             for item in items:
                 path = re.sub(r'^\./', '', os.path.relpath(os.path.join(root, item)))
                 if not self.is_ignored(path) and item.startswith(word_before_cursor[1:]):  # Skip the '@' character
@@ -62,10 +63,10 @@ class CommandCompleter(Completer):
             if command.startswith(word_before_cursor[1:]):
                 yield Completion(command, start_position=-len(word_before_cursor) + 1)
 
-def create_prompt_session():
+def create_prompt_session(cwd):
     prompt_style = Style.from_dict({'': '#8CB9B3 bold'})
 
-    file_completer = FuzzyCompleter(FilePathCompleter())
+    file_completer = FuzzyCompleter(FilePathCompleter(cwd))
     command_completer = FuzzyCompleter(CommandCompleter(['reset', 'refresh', 'exit', 'continue']))
 
     # Combine completers

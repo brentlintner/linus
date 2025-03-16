@@ -41,19 +41,20 @@ def generate_diff(file_path, current_content):
     return stringifed_diff
 
 # NOTE: we don't use the args.files here, because we want to include all non-default ignored files
-def generate_project_structure(extra_ignore_patterns=None):
+def generate_project_structure(extra_ignore_patterns=None, directory=None):
+    directory = directory or os.getcwd() # Use provided directory or default to current.
     ignore_patterns = load_ignore_patterns(extra_ignore_patterns)
     spec = pathspec.PathSpec.from_lines('gitwildmatch', ignore_patterns)
 
     file_tree = [{
         "id": "$root",
-        "name": os.path.basename(os.getcwd()),
+        "name": os.path.basename(directory),
         "parent": None,
         "type": "directory"
     }]
 
-    for root, dirs, files in os.walk(os.getcwd()):
-        relative_path = os.path.relpath(root, os.getcwd())
+    for root, dirs, files in os.walk(directory):
+        relative_path = os.path.relpath(root, directory)
         relative_path = '' if relative_path == '.' else relative_path
 
         dirs[:] = [dir for dir in dirs if not spec.match_file(os.path.join(relative_path, dir))]
@@ -85,15 +86,15 @@ def generate_project_structure(extra_ignore_patterns=None):
 
     return file_tree
 
-def generate_project_file_contents(extra_ignore_patterns=None, include_patterns=[]):
+def generate_project_file_contents(extra_ignore_patterns=None, include_patterns=[], directory=None):
+    directory = directory or os.getcwd()  # Use provided directory or default to current
     ignore_patterns = load_ignore_patterns(extra_ignore_patterns)
     ignore_spec = pathspec.PathSpec.from_lines('gitwildmatch', ignore_patterns)
     include_spec = pathspec.PathSpec.from_lines('gitwildmatch', include_patterns)
-    include_all = "." in include_patterns
     output = ""
 
-    for root, _, files in os.walk(os.getcwd()):
-        relative_path = os.path.relpath(root, os.getcwd())
+    for root, _, files in os.walk(directory):
+        relative_path = os.path.relpath(root, directory)
         if relative_path == '.':
             relative_path = ''
 
@@ -106,15 +107,15 @@ def generate_project_file_contents(extra_ignore_patterns=None, include_patterns=
 
     return output
 
-def generate_project_file_list(extra_ignore_patterns=None, include_patterns=[]):
+def generate_project_file_list(extra_ignore_patterns=None, include_patterns=[], directory=None):
+    directory = directory or os.getcwd()  # Use provided directory or default to current.
     ignore_patterns = load_ignore_patterns(extra_ignore_patterns)
     ignore_spec = pathspec.PathSpec.from_lines('gitwildmatch', ignore_patterns)
     include_spec = pathspec.PathSpec.from_lines('gitwildmatch', include_patterns)
-    include_all = "." in include_patterns
     output = []  # Use a list to store file names
 
-    for root, _, files in os.walk(os.getcwd()):
-        relative_path = os.path.relpath(root, os.getcwd())
+    for root, _, files in os.walk(directory):
+        relative_path = os.path.relpath(root, directory)
         if relative_path == '.':
             relative_path = ''
         for file in files:

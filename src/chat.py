@@ -51,7 +51,7 @@ def type_response_out(lines, delay=0.01):
             time.sleep(delay)
         print()  # Newline after each string
 
-def prompt_prefix(extra_ignore_patterns=None, include_patterns=None):
+def prompt_prefix(extra_ignore_patterns=None, include_patterns=None, cwd=os.getcwd()):
     try:
         with open(PROMPT_PREFIX_FILE, 'r', encoding='utf-8') as f:
             prefix = f.read()
@@ -64,12 +64,12 @@ def prompt_prefix(extra_ignore_patterns=None, include_patterns=None):
 
     if include_patterns == ["."]:
         # Include all files in the current working directory, just use the old logic.
-        project_structure_json = generate_project_structure(extra_ignore_patterns)
-        project_files = generate_project_file_contents(extra_ignore_patterns, include_patterns)
+        project_structure_json = generate_project_structure(extra_ignore_patterns, cwd)
+        project_files = generate_project_file_contents(extra_ignore_patterns, include_patterns, cwd)
     else:
         # Use the provided include_patterns
-        project_structure_json = generate_project_structure(extra_ignore_patterns)
-        project_files = generate_project_file_contents(extra_ignore_patterns, include_patterns)
+        project_structure_json = generate_project_structure(extra_ignore_patterns, cwd)
+        project_files = generate_project_file_contents(extra_ignore_patterns, include_patterns, cwd)
 
     project_structure = json.dumps(
         project_structure_json, indent=2) if is_debug() else json.dumps(project_structure_json, separators=(',', ':'))
@@ -118,8 +118,9 @@ def history_filename_for_directory(directory):
     filename = f"linus-history-{dir_name}-{dir_hash}.txt"
     return os.path.join(os.path.dirname(__file__), '../tmp', filename)
 
-def last_session():
-    history_file = history_filename_for_directory(os.getcwd())
+def last_session(cwd=os.getcwd()):
+    # NOTE: directory argument no longer needed, pass it from cli
+    history_file = history_filename_for_directory(cwd)
     if os.path.exists(history_file):
         debug(f"Resuming from:\n\n {history_file}\n")
         return (os.path.basename(history_file), datetime.now())  # Return a dummy timestamp, not used for sorting now
@@ -165,7 +166,7 @@ class FilePartBuffer:
         del self.final_parts[(file_path, version)]  # Clean up
         return full_content
 
-def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_patterns=None):
+def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_patterns=None, cwd=os.getcwd()):
     client = genai.Client(api_key=GOOGLE_API_KEY)
 
     # Split the comma-separated ignore patterns into a list
@@ -175,8 +176,8 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_pat
     if include_patterns is not None and "." in include_patterns:
         include_patterns = ["."]  # Treat "." as a special case, including all files.
 
-    history_filename = history_filename_for_directory(os.getcwd())
-    previous_session = last_session()
+    history_filename = history_filename_for_directory(cwd) # Use the passed directory.
+    previous_session = last_session(cwd)
 
     if resume and previous_session:
         prompt_history_file = os.path.join(os.path.dirname(__file__), f"../tmp/{previous_session[0]}")
@@ -213,18 +214,18 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_pat
     else:
         # Start fresh, but *only* if no history file exists *and* resume is true.  Otherwise, we're in a new session.
         if not previous_session and resume:
-            history.append(prompt_prefix(extra_ignore_patterns, include_patterns))
+            history.append(prompt_prefix(extra_ignore_patterns, include_patterns, cwd)) # Pass directory
             if history_filename:
                 with open(history_filename, 'w', encoding='utf-8') as f:
                     f.write(''.join(history))
         elif previous_session and not resume:
             os.remove(history_filename)
-            history.append(prompt_prefix(extra_ignore_patterns, include_patterns)) # and then start fresh
+            history.append(prompt_prefix(extra_ignore_patterns, include_patterns, cwd)) # and then start fresh, pass directory
             if history_filename:
                 with open(history_filename, 'w', encoding='utf-8') as f:
                     f.write(''.join(history))
 
-    session = create_prompt_session()
+    session = create_prompt_session(cwd)
 
     # Initialize session-level token count
     session_total_tokens = 0
@@ -236,7 +237,7 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_pat
 
     def reset_history():
         history.clear()
-        history.append(prompt_prefix(extra_ignore_patterns, include_patterns))
+        history.append(prompt_prefix(extra_ignore_patterns, include_patterns, cwd))
         if history_filename:
             with open(history_filename, 'w', encoding='utf-8') as f:
                 f.write(''.join(history))
@@ -244,7 +245,7 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_pat
         console.print("History reset.", style="bold yellow")
 
     def refresh_project_context():
-        prefix = prompt_prefix(extra_ignore_patterns, include_patterns)
+        prefix = prompt_prefix(extra_ignore_patterns, include_patterns, cwd)
         history[0] = re.sub(parser.match_before_conversation_history(), prefix, history[0], flags=re.DOTALL)
         if history_filename:
             with open(history_filename, 'w', encoding='utf-8') as f:
@@ -267,7 +268,7 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_pat
         file_references = parser.find_file_references(prompt_text)
 
         for file_path in file_references:
-            if not os.path.isfile(file_path):
+            if not os.path.isfile(os.path.join(cwd, file_path)): # Use os.path.join with directory
                 continue
 
             # Find the highest existing version of the referenced file.
@@ -279,7 +280,7 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_pat
             new_version = highest_version + 1
 
             debug(f"Appending file {file_path} (v{new_version}) to history")
-            history.append(get_file_contents(file_path, new_version))
+            history.append(get_file_contents(os.path.join(cwd, file_path), new_version)) # Use os.path.join
 
             prune_file_history(file_path, history, new_version) # Prune files user sent
 
@@ -375,7 +376,7 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_pat
                             file_content = (file_part_buffer.assemble(file_path, version) or "").strip('\n')
                             assembled_files[(file_path, version)] = file_content  # Store assembled file
                             code = generate_diff(file_path, file_content)
-                            is_diff = os.path.exists(file_path) and code != file_content
+                            is_diff = os.path.exists(os.path.join(cwd, file_path)) and code != file_content # Use os.path.join
                             language = "diff" if is_diff else parser.get_language_from_extension(file_path)
 
                             suffix = " (EMPTY)" if not file_content else ""
@@ -500,10 +501,11 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_pat
                 console.print("Files Changed\n", style="bold")
             for (file_path, version), file_content in assembled_files.items():
                 console.print(f"  {file_path}", style="bold green")
-                directory = os.path.dirname(file_path)
-                if directory and not os.path.exists(directory):
-                    os.makedirs(directory)
-                with open(file_path, 'w', encoding='utf-8') as f:
+                full_path = os.path.join(cwd, file_path)  # Get full path for writing
+                directory_path = os.path.dirname(full_path) # Get directory part of the path
+                if directory_path and not os.path.exists(directory_path):
+                    os.makedirs(directory_path)
+                with open(full_path, 'w', encoding='utf-8') as f: # Use full path
                     f.write(file_content)
 
                 # TODO: doesn't work?
