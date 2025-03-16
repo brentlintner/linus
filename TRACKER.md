@@ -11,10 +11,11 @@ Anything related to the project management of the project, such as tracking issu
 
 ## Current
 
-* Polishing
-    * Remove '> ' from the prompt? (clean copy/paste)
-
 ## Backlog
+
+* Prompt Engineering
+    * Prompt should have flow to where the LLM _will_ start writing and responding
+    * "If you make a mistake that breaks the current codebase, correct it by sending a new version of the file."
 
 * Polishing
     * Add back the request/response token logging separate
@@ -24,6 +25,7 @@ Anything related to the project management of the project, such as tracking issu
     * Always add a trailing newline to files only if the existing one does, else always remove it
     * Finish linting
     * Eventually, -o to set initially open files (now defaults to -f), -f will just limit the files to the project
+    * Remove '> ' from the prompt? (clean copy/paste)
 
 * Smoke test that runs multiple times, with a minimal prompt.
     * Need to escape+enter
