@@ -4,23 +4,23 @@ Anything related to the project management of the project, such as tracking issu
 
 ## Epics
 
-* Add tests (smoke tests (fake API), realworld tests (real API), and unit tests
 * Make stable regardless of file size and output length
 * Make stable in terms of good code generation and context awareness
+* Have a test suite
+* More code correct (or is the no pruning causing hallucinations?)
 
 ## Current
 
+* Smoke test that runs multiple times, with a minimal prompt.
 * Parts don't have a newline at the end if we strip the last line
-* Try to get Linus to be more correct of code (or is the no pruning causing hallucinations?)
-
-## Backlog
-
 * Remove '> ' from the prompt? (clean copy/paste)
 * Use -f ., and if not set don't add any files or directory structures
-* Print separate consistency now that you changed end logs earlier
 * Add back the request/response token logging separate
 * Prune history not working (keeps previous version?)
 * Even quicker streaming (look for \n\n, and leave right side of it for next prompt)
+* Print separate consistency now that you changed end logs earlier
+
+## Backlog
 
 * Prompt Customization
     * Linus keeps using metadata {{{}}} syntax (use PROJECT.md instead)

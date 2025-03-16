@@ -7,18 +7,21 @@ import uuid
 import json
 from datetime import datetime, timezone
 from collections import deque, defaultdict
-from rich.console import Console
-from rich.markdown import Markdown
 from google import genai
 from google.genai import types
-
 from . import parser
 from .repl import create_prompt_session
-from .theme import EverforestDarkStyle
+from .logger import (
+    console,
+    is_verbose,
+    is_debug,
+    debug,
+    error,
+    print_markdown
+)
 from .config import (
     GOOGLE_API_KEY,
     GEMINI_MODEL,
-    CONSOLE_THEME,
     PROMPT_PREFIX_FILE
 )
 from .file_utils import (
@@ -32,36 +35,9 @@ from .file_utils import (
 
 history = []
 
-verbose = False
-
-debug_mode = False
-
-console = Console(theme=CONSOLE_THEME)
-
-def verbose_logging():
-    global verbose
-    verbose = True
-
-def debug_logging():
-    verbose_logging()
-    global debug_mode
-    debug_mode = True
-
-def debug(message):
-    global debug_mode
-    if debug_mode:
-        message = f"DEBUG: {message}" if message else ""
-        console.print(message, style="bold yellow")
-
-def error(message):
-    console.print(f"ERROR: {message}", style="bold red")
-
-def print_markdown_code(code_block):
-    console.print(Markdown(code_block, code_theme=EverforestDarkStyle))
-
 def tail(filename, n=10):
     try:
-        with open(filename) as f:
+        with open(filename, encoding='utf-8') as f:
             return deque(f, n)
     except FileNotFoundError:
         return None
@@ -77,13 +53,14 @@ def type_response_out(lines, delay=0.01):
 
 def prompt_prefix(extra_ignore_patterns=None, include_patterns=None):
     try:
-        with open(PROMPT_PREFIX_FILE, 'r') as f:
+        with open(PROMPT_PREFIX_FILE, 'r', encoding='utf-8') as f:
             prefix = f.read()
     except FileNotFoundError:
         return "Could not find background.md"
 
     project_structure_json = generate_project_structure(extra_ignore_patterns)
-    project_structure = json.dumps(project_structure_json, indent=2) if debug_mode else json.dumps(project_structure_json, separators=(',', ':'))
+    project_structure = json.dumps(
+        project_structure_json, indent=2) if is_debug() else json.dumps(project_structure_json, separators=(',', ':'))
     project_files = generate_project_file_contents(extra_ignore_patterns, include_patterns)
 
     prefix = prefix.replace(parser.FILE_TREE_PLACEHOLDER, f'{project_structure}')
@@ -177,9 +154,7 @@ class FilePartBuffer:
         del self.final_parts[(file_path, version)]  # Clean up
         return full_content
 
-def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_files=[]):
-    start_time = time.time()
-
+def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_files=None):
     client = genai.Client(api_key=GOOGLE_API_KEY)
 
     # Split the comma-separated ignore patterns into a list
@@ -191,7 +166,7 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
 
     if resume and previous_session:
         prompt_history_file = os.path.join(os.path.dirname(__file__), f"../tmp/{previous_session[0]}")
-        with open(prompt_history_file, 'r') as f:
+        with open(prompt_history_file, 'r', encoding='utf-8') as f:
             prompt_history = f.read()
 
         history.append(prompt_history)
@@ -220,19 +195,19 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
             recap,
             flags=re.DOTALL)
 
-        print_markdown_code(recap)
+        print_markdown(recap)
     else:
         # Start fresh, but *only* if no history file exists *and* resume is true.  Otherwise, we're in a new session.
         if not previous_session and resume:
             history.append(prompt_prefix(extra_ignore_patterns, include_patterns))
             if history_filename:
-                with open(history_filename, 'w') as f:
+                with open(history_filename, 'w', encoding='utf-8') as f:
                     f.write(''.join(history))
         elif previous_session and not resume:
             os.remove(history_filename)
             history.append(prompt_prefix(extra_ignore_patterns, include_patterns)) # and then start fresh
             if history_filename:
-                with open(history_filename, 'w') as f:
+                with open(history_filename, 'w', encoding='utf-8') as f:
                     f.write(''.join(history))
 
     session = create_prompt_session()
@@ -246,21 +221,19 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
         return total_characters, total_lines
 
     def reset_history():
-        global history
         history.clear()
         history.append(prompt_prefix(extra_ignore_patterns, include_patterns))
         if history_filename:
-            with open(history_filename, 'w') as f:
+            with open(history_filename, 'w', encoding='utf-8') as f:
                 f.write(''.join(history))
         print(' ', flush=True)
         console.print("History reset.", style="bold yellow")
 
     def refresh_project_context():
-        global history
         prefix = prompt_prefix(extra_ignore_patterns, include_patterns)
         history[0] = re.sub(parser.match_before_conversation_history(), prefix, history[0], flags=re.DOTALL)
         if history_filename:
-            with open(history_filename, 'w') as f:
+            with open(history_filename, 'w', encoding='utf-8') as f:
                 f.write(''.join(history))
         print(' ', flush=True)
         console.print("Project context refreshed.", style="bold yellow")
@@ -270,12 +243,12 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
 
     def process_user_input(prompt_text=""):
         """Processes user input, updating history and handling file references."""
-        global history  # Make sure we're modifying the global history
-
         if not prompt_text:
             return
 
         history.append(f'\n**Brent:**\n\n{prompt_text}\n')
+
+        history_snapshot = '\n'.join(history)
 
         file_references = parser.find_file_references(prompt_text)
 
@@ -285,18 +258,19 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
 
             # Find the highest existing version of the referenced file.
             highest_version = 0
-            for entry in history:
-                for existing_file_path, version, _, _, _, _ in parser.find_files(entry):
-                    if existing_file_path == file_path:
-                        highest_version = max(highest_version, version)
+            for existing_file_path, version, _, _, _, _ in parser.find_files(history_snapshot):
+                if existing_file_path == file_path:
+                    highest_version = max(highest_version, version)
 
             new_version = highest_version + 1
 
+            debug(f"Appending file {file_path} (v{new_version}) to history")
             history.append(get_file_contents(file_path, new_version))
-            prune_file_history(file_path, history, new_version) # Prune after appending
+
+            prune_file_history(file_path, history, new_version) # Prune files user sent
 
         if history_filename:
-            with open(history_filename, 'w') as f:
+            with open(history_filename, 'w', encoding='utf-8') as f:
                 f.write(''.join(history))
 
     def send_request_to_ai(is_continuation=False):
@@ -336,7 +310,7 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
                     queued_response_text = parser.FILE_METADATA_START + rest
 
                     if before_file_start:
-                        console.print(Markdown(before_file_start, code_theme=EverforestDarkStyle), end="")
+                        print_markdown(before_file_start)
                 else:
                     status.update("Linus is typing...")
 
@@ -354,9 +328,7 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
                         continue
 
                     is_code_block = re.match(parser.match_code_block(), section, flags=re.DOTALL)
-
                     is_last_section = index == len(sections) - 1
-
 
                     if not is_code_block and is_last_section:
                         # Continue on, because another file could be right after
@@ -364,50 +336,50 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
                         continue
 
                     if not is_code_block:
-                        console.print(Markdown(section, code_theme=EverforestDarkStyle), end="")
+                        print_markdown(section, end="")
                         continue
-                    else:
-                        is_file = parser.is_file(section)
 
-                        if is_file:
-                            # Now we get a boolean for no_more_parts
-                            files = parser.find_files(section)
+                    is_file = parser.is_file(section)
 
-                            if not files:
-                                error("Expected files in response section but none were found.")
-                                error("")
-                                error(section)
-                                error("")
-                                continue
+                    if is_file:
+                        # Now we get a boolean for no_more_parts
+                        files = parser.find_files(section)
 
-                            # TODO: need to look for multiple files here? I think we can assume not because we're streaming
-                            file_path, version, file_content, language, part_id, no_more_parts = files[0]
+                        if not files:
+                            error("Expected files in response section but none were found.")
+                            error("")
+                            error(section)
+                            error("")
+                            continue
 
-                            file_part_buffer.add(file_path, file_content, part_id, no_more_parts, version)
+                        # TODO: need to look for multiple files here? I think we can assume not because we're streaming
+                        file_path, version, file_content, language, part_id, no_more_parts = files[0]
 
-                            if file_part_buffer.is_complete(file_path, version):
-                                file_content = (file_part_buffer.assemble(file_path, version) or "").strip('\n')
-                                assembled_files[(file_path, version)] = file_content  # Store assembled file
-                                code = generate_diff(file_path, file_content)
-                                is_diff = os.path.exists(file_path) and code != file_content
-                                language = "diff" if is_diff else parser.get_language_from_extension(file_path)
+                        file_part_buffer.add(file_path, file_content, part_id, no_more_parts, version)
 
-                                suffix = " (EMPTY)" if not file_content else ""
-                                suffix = " (NO CHANGES)" if is_diff else suffix
-                                console.print(Markdown(f"#### {file_path} v({version}){suffix}", code_theme=EverforestDarkStyle), end="")
+                        if file_part_buffer.is_complete(file_path, version):
+                            file_content = (file_part_buffer.assemble(file_path, version) or "").strip('\n')
+                            assembled_files[(file_path, version)] = file_content  # Store assembled file
+                            code = generate_diff(file_path, file_content)
+                            is_diff = os.path.exists(file_path) and code != file_content
+                            language = "diff" if is_diff else parser.get_language_from_extension(file_path)
 
-                                section = f"```{language}\n{code}\n```"
-                                print_markdown_code(section)
-                                status.update("Linus is typing...")
-                            else:
-                                continue  # Important: Don't process incomplete chunks
+                            suffix = " (EMPTY)" if not file_content else ""
+                            suffix = " (NO CHANGES)" if is_diff else suffix
+                            print_markdown(f"#### {file_path} v({version}){suffix}", end="")
 
-                        else:
-                            status.update("Linus is typing...")
-                            file_path = None
-                            language, code = parser.find_snippets(section)[0]
                             section = f"```{language}\n{code}\n```"
-                            print_markdown_code(section)
+                            print_markdown(section)
+                            status.update("Linus is typing...")
+                        else:
+                            continue  # Important: Don't process incomplete chunks
+
+                    else:
+                        status.update("Linus is typing...")
+                        file_path = None
+                        language, code = parser.find_snippets(section)[0]
+                        section = f"```{language}\n{code}\n```"
+                        print_markdown(section)
 
             # Handle any remaining text in the queue (non-code block parts)
             if queued_response_text:
@@ -429,7 +401,8 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
                     # Now we *need* to add the end of file
                     files = parser.find_files(incomplete_file_block, incomplete=True)
 
-                    # TODO: be more robust and handle if we are cut off mid file metadata, or there is less than 2 lines in the mid content block
+                    # TODO: be more robust and handle if we are cut off mid file metadata, or there is
+                    # less than 2 lines in the mid content block
                     if not files:
                         error("Expected incomplete file in queued response section but none were found.")
                         error("")
@@ -440,9 +413,13 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
                     file_path, version, file_content, language, part_id, no_more_parts = files[0]
 
                     file_part_buffer.add(file_path, file_content, part_id, no_more_parts, version)
-                    full_response_text = re.sub(parser.match_file(file_path, incomplete=True), f"{file_content}\n{parser.END_OF_FILE}", full_response_text)
 
-                    console.print(Markdown(before_file, code_theme=EverforestDarkStyle), end="")
+                    full_response_text = re.sub(
+                        parser.match_file(file_path, incomplete=True),
+                        f"{file_content}\n{parser.END_OF_FILE}",
+                        full_response_text)
+
+                    print_markdown(before_file, end="")
                     queued_response_text = ""
                     is_continuation = True
 
@@ -453,19 +430,20 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
                     # We have cut off mid normal text (i.e. have not seen nomoreparts for a file)
                     if unfinished_files:
                         debug("Stopped with unfinished files, force continue required...")
-                        console.print(Markdown(queued_response_text, code_theme=EverforestDarkStyle), end="")
+                        print_markdown(queued_response_text, end="")
                         queued_response_text = "" # Clear the queue
                         is_continuation = True
                     else:
                         debug('Response text left in queue, but no files or incomplete file parts found.')
-                        console.print(Markdown(queued_response_text, code_theme=EverforestDarkStyle), end="")
+                        print_markdown(queued_response_text, end="")
                         queued_response_text = "" # Clear the queue
                         is_continuation = False # Important, stops potential infinite loops
 
         status.stop()
 
         # --- Metadata and Logging (AFTER processing all chunks) ---
-        last_chunk = chunk # 'chunk' is still in scope from the loop
+
+        last_chunk = chunk # HACK: 'chunk' is still in scope from the loop
 
         # Initialize counters
         prompt_token_count = 0
@@ -484,26 +462,28 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
         if is_continuation:
             history.append(f'\n{full_response_text}\n')
             if history_filename:
-                with open(history_filename, 'w') as f:
+                with open(history_filename, 'w', encoding='utf-8') as f:
                     f.write(''.join(history))
             return True
 
         else:
             history.append(f'\n**Linus:**\n\n{full_response_text}\n')
             if history_filename:
-                with open(history_filename, 'w') as f:
+                with open(history_filename, 'w', encoding='utf-8') as f:
                     f.write(''.join(history))
 
         if writeable:
             # Write all assembled files
-            console.print("Files Changed\n", style="bold") if assembled_files else None
-            for (file_path, _), file_content in assembled_files.items():
+            if assembled_files:
+                console.print("Files Changed\n", style="bold")
+            for (file_path, version), file_content in assembled_files.items():
                 console.print(f"  {file_path}", style="bold green")
                 directory = os.path.dirname(file_path)
                 if directory and not os.path.exists(directory):
                     os.makedirs(directory)
-                with open(file_path, 'w') as f:
+                with open(file_path, 'w', encoding='utf-8') as f:
                     f.write(file_content)
+                prune_file_history(file_path, history, version) # Prune files LLM has sent
 
             if len(assembled_files) > 0:
                 print()
@@ -511,7 +491,7 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
         # Update session total tokens
         session_total_tokens += total_token_count
 
-        if verbose:
+        if is_verbose():
             end_time = time.time()
             duration = end_time - start_time
             total_characters, total_lines = calculate_history_stats()
@@ -537,12 +517,13 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
                     error(f"Model is stuck (maxCount = {force_continue_counter}. Please manually continue.")
                     force_continue = False
                     continue
-                else:
-                    force_continue_counter += 1
-                    debug(f"Forcing continuation... attempts={force_continue_counter}")
-                    force_continue = send_request_to_ai(is_continuation=True)
-                    continue
-            else:
+
+                force_continue_counter += 1
+                debug(f"Forcing continuation... attempts={force_continue_counter}")
+                force_continue = send_request_to_ai(is_continuation=True)
+                continue
+
+            if not force_continue:
                 force_continue_counter = 0
 
             prompt_text = session.prompt("> ")
@@ -576,4 +557,3 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
         except Exception:
             print("Linus has glitched!\n")
             console.print_exception(show_locals=True)
-

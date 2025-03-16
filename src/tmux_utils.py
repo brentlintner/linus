@@ -4,17 +4,17 @@ import os
 from .chat import error
 from .parser import terminal_log_block
 
-def get_tmux_pane_content(session_name, pane_id):
+def get_tmux_pane_content(__session_name__, pane_id):
     command = ["tmux", "capture-pane", "-p", "-t", f"{pane_id}", "-S", "-"]
-    result = subprocess.run(command, capture_output=True, text=True)
+    result = subprocess.run(command, capture_output=True, text=True, check=True)
     if result.returncode != 0:
         error(f"Error capturing pane {pane_id}: {result.stderr}")
         return ""  # Return empty string on error
     return result.stdout
 
-def get_tmux_pane_ids(session_name, pane_id):
+def get_tmux_pane_ids(session_name, __pane_id__):
     command = ["tmux", "list-panes", "-s", "-F", "#{pane_id}", "-t", session_name]
-    result = subprocess.run(command, capture_output=True, text=True)
+    result = subprocess.run(command, capture_output=True, text=True, check=True)
     if result.returncode != 0:
         error(f"Error listing panes for {session_name}: {result.stderr}")
         return [] # Return empty list on error.  Important!
@@ -48,4 +48,3 @@ def get_tmux_logs():
             title = f"Pane {pane_id}"
             all_logs += terminal_log_block(content, title)
     return all_logs
-

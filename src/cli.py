@@ -6,20 +6,13 @@ from rich.traceback import install
 from dotenv import load_dotenv
 from google import genai
 from .__version__ import __version__
+from .file_utils import generate_project_file_list
+from .logger import debug_logging, verbose_logging, quiet_logging
+from .chat import coding_repl, check_if_env_vars_set, list_available_models
 
 load_dotenv()
 
 install(show_locals=True)
-
-from .file_utils import generate_project_file_list
-
-from .chat import (
-    coding_repl,
-    debug_logging,
-    verbose_logging,
-    check_if_env_vars_set,
-    list_available_models
-)
 
 def add_general_args(parser):
     group = parser.add_argument_group(title="General Options")
@@ -94,7 +87,7 @@ def handle_tokens(args):
     total_tokens = 0
     for file_path in file_paths.splitlines():
         try:
-            with open(file_path, 'r') as f:
+            with open(file_path, 'r', encoding='utf-8') as f:
                 content = f.read()
             tokens = client.models.count_tokens(model=os.getenv('GEMINI_MODEL') or '', contents=content).total_tokens
             total_tokens += tokens or 0
@@ -105,14 +98,20 @@ def handle_tokens(args):
 
     print(f"Total tokens: {total_tokens}")
 
-def main():
-    parser = create_parser()
-    args = parser.parse_args()
-
+def configure_logger(args):
     if args.debug:
         debug_logging()
     if args.verbose:
         verbose_logging()
+    if args.quiet:
+        quiet_logging()
+
+def main():
+    parser = create_parser()
+    args = parser.parse_args()
+
+    configure_logger(args)
+
     if args.clean:
         clean_history_files()
         sys.exit(0)

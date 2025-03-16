@@ -2,9 +2,14 @@ import os
 import re
 import difflib
 import pathspec
-
+from .logger import debug
 from .config import DEFAULT_IGNORE_PATTERNS
 from .parser import find_files, file_block, get_language_from_extension, match_file
+
+def format_number(num, magnitude):
+    # TODO: Add more prefixes if needed (e.g., 'G' for billions)
+    suffixes = ['', 'K', 'M', 'B', 'T']
+    return f'{num:.1f}{suffixes[magnitude]}'
 
 def load_ignore_patterns(extra_ignore_patterns=None, include_patterns=None):
     if include_patterns:
@@ -14,7 +19,7 @@ def load_ignore_patterns(extra_ignore_patterns=None, include_patterns=None):
     ignore_patterns = [] + DEFAULT_IGNORE_PATTERNS
     for ignore_file in ['.gitignore']:
         if os.path.exists(ignore_file):
-            with open(ignore_file) as f:
+            with open(ignore_file, encoding="utf-8") as f:
                 ignore_patterns.extend([line.strip() for line in f if line.strip() and not line.startswith('#')])
     if extra_ignore_patterns:
         ignore_patterns.extend(extra_ignore_patterns)
@@ -25,7 +30,7 @@ def is_ignored(path, spec):
 
 def generate_diff(file_path, current_content):
     try:
-        with open(file_path, 'r') as f:
+        with open(file_path, 'r', encoding='utf-8') as f:
             file_content = f.readlines()
     except FileNotFoundError:
         return current_content
@@ -61,8 +66,8 @@ def generate_project_structure(extra_ignore_patterns=None):
         dirs[:] = [dir for dir in dirs if not is_ignored(os.path.join(relative_path, dir), spec)]
         files[:] = [file for file in files if not is_ignored(os.path.join(relative_path, file), spec)]
 
-        for dir in dirs:
-            dir_path = os.path.join(relative_path, dir)
+        for dir_path in dirs:
+            dir_path = os.path.join(relative_path, dir_path)
             dir_parent = os.path.dirname(dir_path)
 
             file_tree.append({
@@ -129,7 +134,7 @@ def generate_project_file_list(extra_ignore_patterns=None, include_patterns=None
 
 def get_file_contents(file_path, version=1):
     try:
-        with open(file_path, 'r') as f:
+        with open(file_path, 'r', encoding='utf-8') as f:
             contents = f.read()
         block = file_block(file_path, contents, get_language_from_extension(file_path), version)
         return f"{block}\n"
@@ -139,12 +144,20 @@ def get_file_contents(file_path, version=1):
 
 def prune_file_history(file_path, history, current_version):
     """Removes previous mentions of the given file from the history."""
-    for index, entry in enumerate(history):
-        # Find all files in the current history entry
-        for existing_file_path, version, _, _, part, no_more_parts in find_files(entry):
-            # If the file paths match and the version is older, remove the entire file block
-            if existing_file_path == file_path and version < current_version:
-                history[index] = re.sub(match_file(existing_file_path), '', entry, flags=re.DOTALL)
+    pruned_history = '\n'.join(history)
+
+    files = find_files(pruned_history)
+
+    # Find all files in the current history entry
+    for existing_file_path, version, _, _, _, _ in files:
+        # If the file paths match and the version is older, remove all file blocks (i.e. all parts)
+        if existing_file_path == file_path and version < current_version:
+            debug(f"Pruning file {file_path} (v{version}) from history")
+            pruned_history = re.sub(match_file(existing_file_path), '', pruned_history, flags=re.DOTALL)
+
+    history.clear()
+
+    history.append(pruned_history)
 
 
 def human_format_number(num):
@@ -153,5 +166,4 @@ def human_format_number(num):
     while abs(num) >= 1000:
         magnitude += 1
         num /= 1000.0
-    # Add more prefixes if needed (e.g., 'G' for billions)
-    return '%.1f%s' % (num, ['', 'K', 'M', 'B', 'T'][magnitude])
+    return format_number(num, magnitude)

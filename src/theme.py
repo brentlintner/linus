@@ -1,3 +1,4 @@
+from rich.theme import Theme
 from pygments.style import Style
 from pygments.token import (
     Comment,
@@ -11,6 +12,27 @@ from pygments.token import (
     String,
     Text
 )
+
+ConsoleTheme = Theme({
+    "markdown.code": "#a7c080",
+    "markdown.code_block": "#dcdcdc",
+    "markdown.h1": "bold #dcdcdc",
+    "markdown.h2": "bold #dcdcdc",
+    "markdown.h3": "bold #dcdcdc",
+    "markdown.h4": "bold #dcdcdc",
+    "markdown.h5": "bold #dcdcdc",
+    "markdown.h6": "bold #dcdcdc",
+    "markdown.strong": "bold #dcdcdc",
+    "markdown.em": "#a7c080",
+    "markdown.alert": "bold #e67e80",
+    "markdown.paragraph": "#dcdcdc",
+    "markdown.item.bullet": "bold #dbbc7f",
+    "markdown.item.number": "bold #dbbc7f",
+    "markdown.item.text": "#dcdcdc",
+    "diff.add": "#a7c080",
+    "diff.remove": "#e67e80",
+    "diff.header": "#dbbc7f"
+})
 
 class EverforestDarkStyle(Style):
     name = "everforest-dark"
@@ -29,7 +51,7 @@ class EverforestDarkStyle(Style):
     # orange = 83C092
 
     line_number_color = "#627e79"
-    background_color = None
+    background_color = None # HACK: must be None, but Pyright hates this
 
     styles = {
         Comment: "noitalic #859289",

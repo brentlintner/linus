@@ -29,14 +29,14 @@ class FilePathCompleter(Completer):
         ignore_patterns = [] + DEFAULT_IGNORE_PATTERNS
         for ignore_file in ['.gitignore']:
             if os.path.exists(ignore_file):
-                with open(ignore_file) as f:
+                with open(ignore_file, encoding='utf-8') as f:
                     ignore_patterns.extend([line.strip() for line in f if line.strip() and not line.startswith('#')])
         return ignore_patterns
 
     def is_ignored(self, path):
         return self.spec.match_file(path)
 
-    def get_completions(self, document, complete_event):
+    def get_completions(self, document, __complete_event__):
         word_before_cursor = document.get_word_before_cursor()
 
         if '@' not in word_before_cursor:
@@ -52,7 +52,7 @@ class CommandCompleter(Completer):
     def __init__(self, commands):
         self.commands = commands
 
-    def get_completions(self, document, complete_event):
+    def get_completions(self, document, __complete_event__):
         word_before_cursor = document.get_word_before_cursor()
 
         if '$' not in word_before_cursor:
@@ -63,7 +63,7 @@ class CommandCompleter(Completer):
                 yield Completion(command, start_position=-len(word_before_cursor) + 1)
 
 def create_prompt_session():
-    prompt_style = Style.from_dict({ '': '#8CB9B3 bold' })
+    prompt_style = Style.from_dict({'': '#8CB9B3 bold'})
 
     file_completer = FuzzyCompleter(FilePathCompleter())
     command_completer = FuzzyCompleter(CommandCompleter(['reset', 'refresh', 'exit', 'continue']))

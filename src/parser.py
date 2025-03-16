@@ -4,9 +4,10 @@ import shlex
 from pygments.util import ClassNotFound
 from pygments.lexers import get_lexer_for_filename, guess_lexer_for_filename
 
-# NOTE: We must use this way to generate the placeholder wrapper so this parsing doesn't fail for this file when using this project on itself
-def placeholder(placeholder):
-    return r'{{{' + placeholder + r'}}}'
+# NOTE: We must use this way to generate the placeholder wrapper so this parsing doesn't fail for this file when
+#       using this project on itself
+def placeholder(name):
+    return r'{{{' + name + r'}}}'
 
 FILE_METADATA_START =       placeholder('START FILE METADATA')
 FILE_METADATA_END =         placeholder('END FILE METADATA')
@@ -37,8 +38,8 @@ def find_in_progress_file(content):
     if file_match:
         file_path = file_match.group(1)
         return file_path
-    else:
-        return None
+
+    return None
 
 def find_in_progress_snippet(content):
     regex = rf'{SNIPPET_METADATA_START}.*?\nLanguage: (.*?)\n'
@@ -83,11 +84,12 @@ def parse_metadata(metadata_str):
     return metadata
 
 # This finds any file metadata+content blocks up to the end of the string or end of file block
+# TODO: split this method up
 def find_files(content, incomplete=False):
     if incomplete:
-        regex = rf'{FILE_METADATA_START}(.*?){FILE_METADATA_END}\n?(.*)(?:{END_OF_FILE})?'
+        regex = rf'{FILE_METADATA_START}\n?(Path: .*?){FILE_METADATA_END}\n?(.*)(?:{END_OF_FILE})?'
     else:
-        regex = rf'{FILE_METADATA_START}(.*?){FILE_METADATA_END}\n?(.*?){END_OF_FILE}'
+        regex = rf'{FILE_METADATA_START}\n?(Path: .*?){FILE_METADATA_END}\n?(.*?){END_OF_FILE}'
 
     file_matches = re.finditer(regex, content, flags=re.DOTALL)
 
@@ -118,7 +120,7 @@ def find_files(content, incomplete=False):
 
     result = []
 
-    for key_tuple, parts_array in all_files.items():
+    for _key_tuple, parts_array in all_files.items():
         # TODO: be robust and just ignore the nomoreparts content?
         joined_content = ''.join([part['content'] for part in parts_array])
         final_part = parts_array[0] # The first part (0) will have no_more_parts set to True if it exists
@@ -155,9 +157,9 @@ def match_file(file_path, incomplete=False):
     escaped = re.escape(file_path)
 
     if incomplete:
-        return rf'{FILE_METADATA_START}.*?\nPath: {escaped}\n.*?{FILE_METADATA_END}\n?(.*)(?:{END_OF_FILE})?'
-    else:
-        return rf'{FILE_METADATA_START}.*?\nPath: {escaped}\n.*?{FILE_METADATA_END}\n?(.*?){END_OF_FILE}'
+        return rf'{FILE_METADATA_START}\nPath: {escaped}\n.*?{FILE_METADATA_END}\n?(.*)(?:{END_OF_FILE})?'
+
+    return rf'{FILE_METADATA_START}\nPath: {escaped}\n.*?{FILE_METADATA_END}\n?(.*?){END_OF_FILE}'
 
 def match_snippet():
     return rf'{SNIPPET_METADATA_START}.*?\nLanguage: (.*?)\n.*?{SNIPPET_METADATA_END}\n?(.*?){END_OF_SNIPPET}'
@@ -211,25 +213,27 @@ def get_language_from_extension(filename):
         if ext:
             lexer = get_lexer_for_filename(filename)
             return lexer.name.lower()
-        else:
-            with open(filename, 'r') as f:
-                first_line = f.readline()
-            program = get_program_from_shebang(first_line)
-            if program:
-                if program == "python3" or program == "python":
-                    return "python"
-                elif program == "bash":
-                    return "bash"
-                elif program == "sh":
-                    return "sh"
-                # Could add more mappings here, but keep it minimal
 
-            # Use guess_lexer_for_filename, passing filename *and* first_line
-            try:
-                lexer = guess_lexer_for_filename(filename, first_line)
-                return lexer.name.lower()
-            except ClassNotFound:
-                return "text"  # Special case if guess_lexer can't figure it out.
+        with open(filename, 'r', encoding='utf-8') as f:
+            first_line = f.readline()
+
+        program = get_program_from_shebang(first_line)
+
+        if program:
+            if "python" in program:
+                return "python"
+            elif program == "bash":
+                return "bash"
+            elif program == "sh":
+                return "sh"
+            # Could add more mappings here, but keep it minimal
+
+        # Use guess_lexer_for_filename, passing filename *and* first_line
+        try:
+            lexer = guess_lexer_for_filename(filename, first_line)
+            return lexer.name.lower()
+        except ClassNotFound:
+            return "text"  # Special case if guess_lexer can't figure it out.
 
     except ClassNotFound:
         return "text"
