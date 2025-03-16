@@ -11,16 +11,34 @@ Anything related to the project management of the project, such as tracking issu
 
 ## Current
 
-* Smoke test that runs multiple times, with a minimal prompt.
-* Parts don't have a newline at the end if we strip the last line
-* Remove '> ' from the prompt? (clean copy/paste)
-* Use -f ., and if not set don't add any files or directory structures
-* Add back the request/response token logging separate
-* Prune history not working (keeps previous version?)
-* Even quicker streaming (look for \n\n, and leave right side of it for next prompt)
-* Print separate consistency now that you changed end logs earlier
+* Polishing
+    * Remove '> ' from the prompt? (clean copy/paste)
 
 ## Backlog
+
+* Polishing
+    * Add back the request/response token logging separate
+    * Even quicker streaming (look for \n\n, and leave right side of it for next prompt)
+    * Print separate consistency now that you changed end logs earlier
+    * Parts don't have a newline at the end if we strip the last line?
+    * Always add a trailing newline to files only if the existing one does, else always remove it
+    * Finish linting
+    * Eventually, -o to set initially open files (now defaults to -f), -f will just limit the files to the project
+
+* Smoke test that runs multiple times, with a minimal prompt.
+    * Need to escape+enter
+
+* Learning:
+    * Explore getting the LLM to consistently examine it's changes and consider if it made any mistakes
+        * After files have been written, send a hidden reply from me saying "check your last message, did you miss anything or make any mistakes? If so, fix them. If not print only "NOPE"
+        * If it says "NOPE", then it can continue on
+        * If it fixes something, then it will continue on itself (only do this once or twice, i.e. have similar limit like force continue)
+        * Additionally, if the tests fail, then we would ofc tell the model that first, with something akin to "the tests failed, was there something that you missed?" sort of thing
+    * Consider using a meta-learning approach to improve the model's performance
+    * ex: $learn command tells model to summarize the conversation into a paragraph, this is stored in the db and all are added to the prompt per project
+
+* Sqlite DB
+    * Prune history not working (keeps previous version?)
 
 * Prompt Customization
     * Linus keeps using metadata {{{}}} syntax (use PROJECT.md instead)
@@ -31,10 +49,6 @@ Anything related to the project management of the project, such as tracking issu
         * For example: don't use the {{}} syntax inline in any file's content, use the placeholder method in parser.py
         * Have defaults as well
             * ex: Always use spaces to indent not tabs (look for .editorconfig files or other files as a reference)
-
-* Learning:
-    *Consider using a meta-learning approach to improve the model's performance
-    * ex: $learn command tells model to summarize the conversation into a paragraph, this is stored in the db and all are added to the prompt per project
 
 * Ensuring Code Complete / Fallback Error Handling
     * Explore getting the LLM to consistently examine it's changes and consider if it made any mistakes
