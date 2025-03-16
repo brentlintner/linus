@@ -14,6 +14,9 @@ o the console (for now, eventually we will do more with it.)
 
 Checkout the TODO comment on line 420 in chat.py. Can you implement the requirements specified in that TODO comment block? Ensure you use the placeholder method from the parser module if you use any of the {{{}}} syntax, else this program that parses your text will break!
 
+
+Update the program so that when `-f` is _not_ provided, absolutely no files are generated into the prompt (i.e. no generate file structure _or_ generate project directory). When it _is_ provided, keep the same functionality, _except_ if `-f .` is passed, then walk the entire cwd for the file structure and project directory tree generation.
+
 ## Testing
 
 I'm testing your output, so write me a Python file that has a print statement on each line. The print statement logs 80 characters of the letter A. The file has 1000 lines of this print statement. Manually write it all out.
