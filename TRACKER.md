@@ -11,18 +11,19 @@ Anything related to the project management of the project, such as tracking issu
 
 ## Current
 
-* Print separate consistency now that you changed end logs earlier
-* Parts don't have a newline at the end if we strip the last line?
-
 ## Backlog
 
 * Prompt Engineering
+    * Try to avoid writing tests, leave that to separate (causes attention shift for llm?)
+    * Allow llm to say, you're wrong about your request
     * Prompt should have flow to where the LLM _will_ start writing and responding
     * Current "wait before coding" is too good (waits even when it finishes a file and needs to write another?)
     * "If you make a mistake that breaks the current codebase, correct it by sending a new version of the file."
 
 * Polishing
+    * Print separate consistency now that you changed end logs earlier
     * Add back the request/response token logging separate
+    * Parts don't have a newline at the end if we strip the last line?
     * Even quicker streaming (look for \n\n, and leave right side of it for next prompt)
     * Always add a trailing newline to files only if the existing one does, else always remove it
     * Finish linting
