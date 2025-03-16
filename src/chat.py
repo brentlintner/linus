@@ -389,8 +389,14 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
                 if in_progress_file:
                     debug("Stopped mid file part, force continue required...")
                     # Split into before_file and the incomplete file block
-                    before_file, incomplete_file_block = queued_response_text.split(parser.FILE_METADATA_START, 1)
-                    incomplete_file_block = parser.FILE_METADATA_START + incomplete_file_block
+                    before_file, after_file = queued_response_text.split(parser.FILE_METADATA_START, 1)
+
+                    # Queued text *starts* with a file metadata start block
+                    if not before_file:
+                        incomplete_file_block = queued_response_text
+                    # Queued text has a file metadata start block in the middle
+                    else:
+                        incomplete_file_block = after_file
 
                     # Remove the last line from the incomplete file content, in case its cut off
                     content_lines = incomplete_file_block.splitlines()
@@ -419,7 +425,9 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
                         f"{file_content}\n{parser.END_OF_FILE}",
                         full_response_text)
 
-                    print_markdown(before_file, end="")
+                    if before_file:
+                        print_markdown(before_file, end="")
+
                     queued_response_text = ""
                     is_continuation = True
 
