@@ -3,14 +3,11 @@ import os
 import sys
 import shutil
 from rich.traceback import install
-from dotenv import load_dotenv
 from google import genai
 from .__version__ import __version__
 from .file_utils import generate_project_file_list
 from .logger import debug_logging, verbose_logging, quiet_logging
 from .chat import coding_repl, check_if_env_vars_set, list_available_models
-
-load_dotenv()
 
 install(show_locals=True)
 
@@ -147,7 +144,7 @@ def main():
         resume=resume,
         writeable=args.writeable,
         ignore_patterns=args.ignore,
-        include_patterns=include_files, # Pass the processed include_files
+        include_patterns=include_files,
     )
 
 if __name__ == "__main__":
