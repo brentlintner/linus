@@ -81,8 +81,8 @@ def handle_list_files(args):
 def handle_tokens(args):
     client = genai.Client(api_key=os.getenv('GOOGLE_API_KEY'))
 
-    extra_ignore_patterns = args.ignore.split(',') if args.ignore else None
-    include_patterns = args.files.split(',') if args.files else None
+    extra_ignore_patterns = args.ignore.split(',') if args.ignore else []
+    include_patterns = args.files.split(',') if args.files else []
     file_paths = generate_project_file_list(extra_ignore_patterns, include_patterns)
     total_tokens = 0
     for file_path in file_paths.splitlines():
@@ -122,14 +122,24 @@ def main():
         list_available_models()
         sys.exit(0)
 
-    os.chdir(args.directory)
+    # Correctly handle the --files argument
+    if args.files == ".":
+        include_files = ["."]  # Special case for current directory
+    elif args.files:
+        include_files = args.files.split(',')
+    else:
+        include_files = None  # No files specified
 
     if args.list_files:
-        handle_list_files(args)
+        if args.files:
+            handle_list_files(args)
         sys.exit(0)
     elif args.tokens:
-        handle_tokens(args)
+        if args.files:
+            handle_tokens(args)
         sys.exit(0)
+
+    os.chdir(args.directory)
 
     resume = not args.no_resume
 
@@ -137,7 +147,7 @@ def main():
         resume=resume,
         writeable=args.writeable,
         ignore_patterns=args.ignore,
-        include_files=args.files,
+        include_patterns=include_files, # Pass the processed include_files
     )
 
 if __name__ == "__main__":

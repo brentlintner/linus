@@ -58,10 +58,21 @@ def prompt_prefix(extra_ignore_patterns=None, include_patterns=None):
     except FileNotFoundError:
         return "Could not find background.md"
 
-    project_structure_json = generate_project_structure(extra_ignore_patterns)
+    if include_patterns is None or not include_patterns:
+        # No files included, return prefix without file tree and file contents.
+        return prefix.replace(parser.FILE_TREE_PLACEHOLDER, '[]').replace(parser.FILES_PLACEHOLDER, '')
+
+    if include_patterns == ["."]:
+        # Include all files in the current working directory, just use the old logic.
+        project_structure_json = generate_project_structure(extra_ignore_patterns)
+        project_files = generate_project_file_contents(extra_ignore_patterns, include_patterns)
+    else:
+        # Use the provided include_patterns
+        project_structure_json = generate_project_structure(extra_ignore_patterns)
+        project_files = generate_project_file_contents(extra_ignore_patterns, include_patterns)
+
     project_structure = json.dumps(
         project_structure_json, indent=2) if is_debug() else json.dumps(project_structure_json, separators=(',', ':'))
-    project_files = generate_project_file_contents(extra_ignore_patterns, include_patterns)
 
     prefix = prefix.replace(parser.FILE_TREE_PLACEHOLDER, f'{project_structure}')
     prefix = prefix.replace(parser.FILES_PLACEHOLDER, f'{project_files}')
@@ -154,12 +165,15 @@ class FilePartBuffer:
         del self.final_parts[(file_path, version)]  # Clean up
         return full_content
 
-def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_files=None):
+def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_patterns=None):
     client = genai.Client(api_key=GOOGLE_API_KEY)
 
     # Split the comma-separated ignore patterns into a list
     extra_ignore_patterns = ignore_patterns.split(',') if ignore_patterns else None
-    include_patterns = include_files.split(',') if include_files else None
+
+    # Convert include_patterns to a list if it's not None, otherwise keep it as None
+    if include_patterns is not None and "." in include_patterns:
+        include_patterns = ["."]  # Treat "." as a special case, including all files.
 
     history_filename = history_filename_for_directory(os.getcwd())
     previous_session = last_session()
@@ -491,7 +505,9 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_fil
                     os.makedirs(directory)
                 with open(file_path, 'w', encoding='utf-8') as f:
                     f.write(file_content)
-                prune_file_history(file_path, history, version) # Prune files LLM has sent
+
+                # TODO: doesn't work?
+                # prune_file_history(file_path, history, new_version) # Prune files LLM has sent
 
             if len(assembled_files) > 0:
                 print()

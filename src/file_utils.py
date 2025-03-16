@@ -11,11 +11,7 @@ def format_number(num, magnitude):
     suffixes = ['', 'K', 'M', 'B', 'T']
     return f'{num:.1f}{suffixes[magnitude]}'
 
-def load_ignore_patterns(extra_ignore_patterns=None, include_patterns=None):
-    if include_patterns:
-        # If include_patterns are specified, ONLY use those.
-        return [] + include_patterns
-
+def load_ignore_patterns(extra_ignore_patterns=None):
     ignore_patterns = [] + DEFAULT_IGNORE_PATTERNS
     for ignore_file in ['.gitignore']:
         if os.path.exists(ignore_file):
@@ -24,9 +20,6 @@ def load_ignore_patterns(extra_ignore_patterns=None, include_patterns=None):
     if extra_ignore_patterns:
         ignore_patterns.extend(extra_ignore_patterns)
     return ignore_patterns
-
-def is_ignored(path, spec):
-    return spec.match_file(path)
 
 def generate_diff(file_path, current_content):
     try:
@@ -63,8 +56,8 @@ def generate_project_structure(extra_ignore_patterns=None):
         relative_path = os.path.relpath(root, os.getcwd())
         relative_path = '' if relative_path == '.' else relative_path
 
-        dirs[:] = [dir for dir in dirs if not is_ignored(os.path.join(relative_path, dir), spec)]
-        files[:] = [file for file in files if not is_ignored(os.path.join(relative_path, file), spec)]
+        dirs[:] = [dir for dir in dirs if not spec.match_file(os.path.join(relative_path, dir))]
+        files[:] = [file for file in files if not spec.match_file(os.path.join(relative_path, file))]
 
         for dir_path in dirs:
             dir_path = os.path.join(relative_path, dir_path)
@@ -92,9 +85,11 @@ def generate_project_structure(extra_ignore_patterns=None):
 
     return file_tree
 
-def generate_project_file_contents(extra_ignore_patterns=None, include_patterns=None):
-    ignore_patterns = load_ignore_patterns(extra_ignore_patterns, include_patterns)
-    spec = pathspec.PathSpec.from_lines('gitwildmatch', ignore_patterns)
+def generate_project_file_contents(extra_ignore_patterns=None, include_patterns=[]):
+    ignore_patterns = load_ignore_patterns(extra_ignore_patterns)
+    ignore_spec = pathspec.PathSpec.from_lines('gitwildmatch', ignore_patterns)
+    include_spec = pathspec.PathSpec.from_lines('gitwildmatch', include_patterns)
+    include_all = "." in include_patterns
     output = ""
 
     for root, _, files in os.walk(os.getcwd()):
@@ -105,17 +100,17 @@ def generate_project_file_contents(extra_ignore_patterns=None, include_patterns=
         # Output files and their contents
         for file in files:
             file_path = os.path.join(relative_path, file)
-            if include_patterns:
-                if spec.match_file(file_path):
-                    output += get_file_contents(file_path)
-            elif not is_ignored(file_path, spec):
+            is_ignored = ignore_spec.match_file(file_path) and not (include_patterns and include_spec.match_file(file_path))
+            if not is_ignored:
                 output += get_file_contents(file_path)
 
     return output
 
-def generate_project_file_list(extra_ignore_patterns=None, include_patterns=None):
-    ignore_patterns = load_ignore_patterns(extra_ignore_patterns, include_patterns)
-    spec = pathspec.PathSpec.from_lines('gitwildmatch', ignore_patterns)
+def generate_project_file_list(extra_ignore_patterns=None, include_patterns=[]):
+    ignore_patterns = load_ignore_patterns(extra_ignore_patterns)
+    ignore_spec = pathspec.PathSpec.from_lines('gitwildmatch', ignore_patterns)
+    include_spec = pathspec.PathSpec.from_lines('gitwildmatch', include_patterns)
+    include_all = "." in include_patterns
     output = []  # Use a list to store file names
 
     for root, _, files in os.walk(os.getcwd()):
@@ -124,11 +119,9 @@ def generate_project_file_list(extra_ignore_patterns=None, include_patterns=None
             relative_path = ''
         for file in files:
             file_path = os.path.join(relative_path, file)
-            if include_patterns:
-                if spec.match_file(file_path):
-                    output.append(file_path)
-            elif not is_ignored(file_path, spec):
-                output.append(file_path)  # Append file path to the list
+            is_ignored = ignore_spec.match_file(file_path) and not (include_patterns and include_spec.match_file(file_path))
+            if not is_ignored:
+                output.append(file_path)
 
     return "\n".join(output)  # Join with newlines
 
