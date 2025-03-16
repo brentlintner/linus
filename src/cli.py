@@ -7,7 +7,7 @@ from google import genai
 from .__version__ import __version__
 from .file_utils import generate_project_file_list
 from .logger import debug_logging, verbose_logging, quiet_logging
-from .chat import coding_repl, check_if_env_vars_set, list_available_models
+from .chat import coding_repl, check_if_env_vars_set, list_available_models, history_filename_for_directory
 
 install(show_locals=True)
 
@@ -61,13 +61,15 @@ def create_parser():
     return parser
 
 def clean_history_files(tmp_dir='tmp'):
-    if os.path.exists(tmp_dir):
+    history_file = history_filename_for_directory(os.getcwd())
+    if os.path.exists(history_file):
         try:
-            shutil.rmtree(tmp_dir)
-            os.makedirs(tmp_dir)
-            print(f"Cleaned history files in {tmp_dir}/")
+            os.remove(history_file)
+            print(f"Cleaned history file: {history_file}")
         except Exception as e:
-            print(f"Error cleaning history files: {e}")
+            print(f"Error cleaning history file: {e}")
+    else:
+        print("No history file found for the current directory.")
 
 def handle_list_files(args):
     extra_ignore_patterns = args.ignore.split(',') if args.ignore else None
