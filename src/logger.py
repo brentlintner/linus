@@ -41,4 +41,5 @@ def error(message):
     console.print(f"ERROR: {message}", style="bold red")
 
 def print_markdown(block, end="\n"):
-    console.print(Markdown(block, code_theme="everforest-dark"), end=end)
+    # HACK: why does register not work? needs to be before rich imports?
+    console.print(Markdown(block, code_theme=EverforestDarkStyle), end=end)
