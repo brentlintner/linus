@@ -379,8 +379,8 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_pat
                             language = "diff" if is_diff else parser.get_language_from_extension(file_path)
 
                             suffix = " (EMPTY)" if not file_content else ""
-                            suffix = " (NO CHANGES)" if is_diff else suffix
-                            print_markdown(f"#### {file_path} v({version}){suffix}", end="")
+                            suffix = " (NO CHANGES)" if is_diff and code else suffix
+                            print_markdown(f"#### {file_path} v{version}{suffix}", end="")
 
                             section = f"```{language}\n{code}\n```"
                             print_markdown(section)
