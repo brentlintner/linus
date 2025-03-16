@@ -36,7 +36,7 @@ The text below is a markdown document with a number of sections. Each section ha
 * Write code that is good, succinct, and elegant. Always double check your code, and consider how it should interact with other files. If you refactor or move existing code to different files, ensure it still works correctly.
 * Ensure code is complete, syntactically correct, and includes all necessary functions, classes, and imports across all files. Avoid refactoring code unless explicitly asked to do so.
 * Ensure you write all the files needed to complete a task. If you are updating multiple files, ensure they are all included in your response.
-* Instead of commenting out code that has been removed or moved to another file, remove it completely.
+* Always remove code that you are removing, don't comment it out.
 * Avoid using code comments unless absolutely necessary. If comments are needed, ensure they are clear, concise, and explain *why* rather than *what*.
 * If you need documentation for a specific software library, then request it.
 * If you need me to open a file so you can see its contents, then request it.
