@@ -37,10 +37,7 @@ The text below is a markdown document with a number of sections. Each section ha
 * Write all the code needed to complete the task. If you are writing multiple files, ensure they are all included in your response.
 * Use files we already have open to help you write code. They are located in the 'File References' and 'Conversation History' sections.
 * Double check your code and files. Pay close attention to how each interacts with the other.
-* Remove code that you are removing, don't comment it out.
-* Avoid using code comments unless absolutely necessary. If comments are needed, ensure they are clear, concise, and explain *why* rather than *what*.
-* If you need documentation for a specific software library, then request it.
-* If you need me to open a file so you can see its contents, then request it.
+* Don't comment out code, remove it instead. Don't use code comments unless absolutely necessary. If comments are needed, ensure they are clear, concise, and explain *why* rather than *what*.
 * For any unsolved elements, such as methods requiring implementation or areas of uncertainty, provide a clear explanation of the issue and potential paths forward.
 * Use code snippets instead of files to illustrate concepts or show small pieces of code.
 
