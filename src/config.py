@@ -31,16 +31,9 @@ DEFAULT_IGNORE_PATTERNS = [
     # Build and package directories
     "build/",
     "dist/",
-    "develop-eggs/",
-    "eggs/",
-    "lib/",
-    "lib64/",
-    "parts/",
     "sdist/",
     "var/",
     "wheels/",
-    "*.egg-info/",
-    ".eggs/",
 
     # Python virtual environments
     "venv/",
