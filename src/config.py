@@ -6,7 +6,7 @@ load_dotenv()
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 GEMINI_MODEL = os.getenv("GEMINI_MODEL") or "gemini-1.5-pro-002"
 
-PROMPT_PREFIX_FILE = os.path.join(os.path.dirname(__file__), "background.md")
+PROMPT_PREFIX_FILE = os.path.join(os.path.dirname(__file__), "..", "docs", "background.md")
 
 # Default ignore patterns, combining best practices from various sources
 DEFAULT_IGNORE_PATTERNS = [
