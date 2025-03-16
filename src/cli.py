@@ -28,6 +28,8 @@ def add_repl_args(parser):
     group.add_argument("-i", "--ignore", type=str, help="Comma-separated list of additional ignore patterns.")
     group.add_argument("-w", "--writeable", action="store_true", help="Enable auto-writing to files from AI responses.")
     group.add_argument("-n", "--no-resume", action="store_true", help="Do not resume previous conversation. Start a new chat.")
+    group.add_argument("--model", type=str, help="Specify the model to use (e.g., gemini/gemini-pro, claude/claude-3-sonnet).")
+
     # fmt: on
 
 def add_debug_args(parser):
@@ -75,25 +77,27 @@ def handle_list_files(args):
     files = generate_project_file_list(extra_ignore_patterns, include_patterns)
     print(files)
 
-def handle_tokens(args):
-    client = genai.Client(api_key=os.getenv('GOOGLE_API_KEY'))
+def handle_tokens(args, model: str):
+    # TODO: Litellm does not support token counting the same way
+    return
+    # client = genai.Client(api_key=os.getenv('GOOGLE_API_KEY'))
 
-    extra_ignore_patterns = args.ignore.split(',') if args.ignore else []
-    include_patterns = args.files.split(',') if args.files else []
-    file_paths = generate_project_file_list(extra_ignore_patterns, include_patterns)
-    total_tokens = 0
-    for file_path in file_paths.splitlines():
-        try:
-            with open(file_path, 'r', encoding='utf-8') as f:
-                content = f.read()
-            tokens = client.models.count_tokens(model=os.getenv('GEMINI_MODEL') or '', contents=content).total_tokens
-            total_tokens += tokens or 0
-        except FileNotFoundError:
-            print(f"{file_path}: NOT FOUND", file=sys.stderr)
-        except Exception as e:
-            print(f"Error with {file_path}: {e}", file=sys.stderr)
+    # extra_ignore_patterns = args.ignore.split(',') if args.ignore else []
+    # include_patterns = args.files.split(',') if args.files else []
+    # file_paths = generate_project_file_list(extra_ignore_patterns, include_patterns)
+    # total_tokens = 0
+    # for file_path in file_paths.splitlines():
+    #     try:
+    #         with open(file_path, 'r', encoding='utf-8') as f:
+    #             content = f.read()
+    #         tokens = client.models.count_tokens(model=model or '', contents=content).total_tokens
+    #         total_tokens += tokens or 0
+    #     except FileNotFoundError:
+    #         print(f"{file_path}: NOT FOUND", file=sys.stderr)
+    #     except Exception as e:
+    #         print(f"Error with {file_path}: {e}", file=sys.stderr)
 
-    print(f"Total tokens: {total_tokens}")
+    # print(f"Total tokens: {total_tokens}")
 
 def configure_logger(args):
     if args.debug:
@@ -133,7 +137,7 @@ def main():
         sys.exit(0)
     elif args.tokens:
         if args.files:
-            handle_tokens(args)
+            handle_tokens(args, args.model)
         sys.exit(0)
 
     os.chdir(args.directory)
@@ -141,6 +145,7 @@ def main():
     resume = not args.no_resume
 
     coding_repl(
+        model=args.model,
         resume=resume,
         writeable=args.writeable,
         ignore_patterns=args.ignore,

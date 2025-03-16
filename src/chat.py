@@ -7,8 +7,7 @@ import uuid
 import json
 from datetime import datetime, timezone
 from collections import deque, defaultdict
-from google import genai
-from google.genai import types
+from litellm import completion
 from . import parser
 from .repl import create_prompt_session
 from .logger import (
@@ -21,7 +20,8 @@ from .logger import (
 )
 from .config import (
     GOOGLE_API_KEY,
-    GEMINI_MODEL,
+    ANTHROPIC_API_KEY,
+    # GEMINI_MODEL,  <- No longer needed
     PROMPT_PREFIX_FILE
 )
 from .file_utils import (
@@ -84,9 +84,13 @@ def check_if_env_vars_set():
         error("Please set the GOOGLE_API_KEY environment variable.")
         sys.exit(1)
 
-    if not GEMINI_MODEL:
-        error("Please set the GEMINI_MODEL environment variable (ex: GEMINI_MODEL=gemini-1.5-pro-002)")
+    if not ANTHROPIC_API_KEY:
+        error("Please set the ANTHROPIC_API_KEY environment variable.")
         sys.exit(1)
+
+    # if not GEMINI_MODEL:  <- No longer needed
+    #     error("Please set the GEMINI_MODEL environment variable (ex: GEMINI_MODEL=gemini-1.5-pro-002)")
+    #     sys.exit(1)
 
 def generate_timestamped_uuid():
     uuid_val = str(uuid.uuid4())
@@ -127,13 +131,10 @@ def last_session():
         return None
 
 def list_available_models():
+    # TODO: Implement using litellm.model_list
     check_if_env_vars_set()
-
-    # Configure the client (using environment variables)
-    client = genai.Client(api_key=GOOGLE_API_KEY)
-
-    for m in client.models.list():
-        console.print(f"{(m.name or '').replace('models/', '')} ({m.description})")
+    error("Not Implemented: Model listing needs to be re-written using litellm")
+    sys.exit(1)
 
 class FilePartBuffer:
     def __init__(self):
@@ -165,9 +166,7 @@ class FilePartBuffer:
         del self.final_parts[(file_path, version)]  # Clean up
         return full_content
 
-def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_patterns=None):
-    client = genai.Client(api_key=GOOGLE_API_KEY)
-
+def coding_repl(model: str, resume=False, writeable=False, ignore_patterns=None, include_patterns=None):
     # Split the comma-separated ignore patterns into a list
     extra_ignore_patterns = ignore_patterns.split(',') if ignore_patterns else None
 
@@ -225,9 +224,6 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_pat
                     f.write(''.join(history))
 
     session = create_prompt_session()
-
-    # Initialize session-level token count
-    session_total_tokens = 0
 
     def calculate_history_stats():
         total_characters = sum(len(entry) for entry in history)
@@ -287,17 +283,24 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_pat
             with open(history_filename, 'w', encoding='utf-8') as f:
                 f.write(''.join(history))
 
-    def send_request_to_ai(is_continuation=False):
+    def send_request_to_ai(model_identifier: str, is_continuation=False):
         """Sends a request to the AI and processes the streamed response."""
-        nonlocal session_total_tokens
 
         request_text = ''.join(history) + f'\n{parser.CONVERSATION_END_SEP}\n'
 
-        contents = [types.Part.from_text(text=request_text)]
+        messages = [{"role": "user", "content": request_text}]
 
         start_time = time.time()
 
-        stream = client.models.generate_content_stream(model=GEMINI_MODEL, contents=contents)
+        try:
+            stream = completion(
+                model=model_identifier,
+                messages=messages,
+                stream=True
+            )
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            return False
 
         full_response_text = ""
         queued_response_text = ""
@@ -306,11 +309,15 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_pat
 
         with console.status("Linus is thinking...", spinner="point") as status:
             for chunk in stream:
-                if not chunk.text:
+                if not chunk['choices']:
                     continue
 
-                queued_response_text += chunk.text
-                full_response_text += chunk.text
+                text = chunk['choices'][0]['delta'].get('content', '')
+                if not text:
+                    continue
+
+                queued_response_text += text
+                full_response_text += text
 
                 # Check for the *start* of a file block
                 in_progress_file = parser.find_in_progress_file(queued_response_text)
@@ -463,22 +470,6 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_pat
 
         status.stop()
 
-        # --- Metadata and Logging (AFTER processing all chunks) ---
-
-        last_chunk = chunk # HACK: 'chunk' is still in scope from the loop
-
-        # Initialize counters
-        prompt_token_count = 0
-        candidates_token_count = 0
-        cached_content_token_count = 0
-        total_token_count = 0
-
-        if last_chunk and last_chunk.usage_metadata:
-            prompt_token_count = last_chunk.usage_metadata.prompt_token_count or 0
-            candidates_token_count = last_chunk.usage_metadata.candidates_token_count or 0
-            cached_content_token_count = last_chunk.usage_metadata.cached_content_token_count or 0
-            total_token_count = last_chunk.usage_metadata.total_token_count or 0
-
         # --- History and File Writing ---
 
         if is_continuation:
@@ -512,9 +503,6 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_pat
             if len(assembled_files) > 0:
                 print()
 
-        # Update session total tokens
-        session_total_tokens += total_token_count
-
         if is_verbose():
             end_time = time.time()
             duration = end_time - start_time
@@ -523,9 +511,7 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_pat
             console.print(
                 f"{human_format_number(total_lines)} lines, "
                 f"{human_format_number(total_characters)} characters, "
-                f"{human_format_number(total_token_count)} tokens, "
-                f"{human_format_number(session_total_tokens)} session tokens, "
-                f"{duration:.2f}s ({GEMINI_MODEL.replace('gemini-', '')})"
+                f"{duration:.2f}s ({model.replace('gemini-', '').replace('claude-', '')})"
             )
 
         return False
@@ -544,7 +530,7 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_pat
 
                 force_continue_counter += 1
                 debug(f"Forcing continuation... attempts={force_continue_counter}")
-                force_continue = send_request_to_ai(is_continuation=True)
+                force_continue = send_request_to_ai(model, is_continuation=True)
                 continue
 
             if not force_continue:
@@ -565,12 +551,12 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_pat
 
             if prompt_text.startswith('$continue'):
                 process_user_input()
-                force_continue = send_request_to_ai(is_continuation=True)
+                force_continue = send_request_to_ai(model, is_continuation=True)
                 continue
 
             process_user_input(prompt_text)
 
-            force_continue = send_request_to_ai(is_continuation=False)
+            force_continue = send_request_to_ai(model, is_continuation=False)
 
         except KeyboardInterrupt:
             if input("\nReally quit? (y/n) ").lower() == 'y':
