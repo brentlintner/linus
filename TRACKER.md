@@ -82,6 +82,8 @@ Anything related to the project management of the project, such as tracking issu
 
 ## Icebox
 
+* Selling: SaaS web app, or just a cli download (forever license), or commerical license for commercial use (?)
+
 ### Bugs
 
 * Sometimes can print a diff if long running? (1.5 pro issue?)
