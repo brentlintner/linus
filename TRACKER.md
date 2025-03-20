@@ -5,11 +5,12 @@ Anything related to the project management of the project, such as tracking issu
 ## Epics
 
 * Make stable regardless of file size and output length
-* Make stable in terms of good code generation and context awareness
+* Make stable in terms of runnable code generation and context awareness
 * Have a test suite
-* More code correct (or is the no pruning causing hallucinations?)
 
 ## Current
+
+* Does having more succinct, highly cohesive, short method code help the AI's context awareness?
 
 ## Backlog
 
@@ -30,7 +31,9 @@ Anything related to the project management of the project, such as tracking issu
     * Eventually, -o to set initially open files (now defaults to -f), -f will just limit the files to the project
     * Add unicode > OR Remove '> ' from the prompt? (clean copy/paste)
 
-* Smoke test that runs multiple times, with a minimal prompt.
+* Tests
+    * First system test: Need no color + quiet + test for testing
+    * Smoke test that runs multiple times, with a minimal prompt.
     * Need to escape+enter
 
 * Learning:
@@ -76,9 +79,6 @@ Anything related to the project management of the project, such as tracking issu
     * Prune is disabled right now (NOTE: we are going to change this anyways when we introduce only "open files")
     * Use a vector database to store embeddings of files and their contents, and optimize prompt generation for large projects and files
     * For very large projects, consider using an external memory mechanism like a vector database (with embeddings generated).
-
-* Tests
-    * First system test: Need no color + quiet + test for testing
 
 ## Icebox
 
