@@ -28,7 +28,7 @@ Anything related to the project management of the project, such as tracking issu
     * Always add a trailing newline to files only if the existing one does, else always remove it
     * Finish linting
     * Eventually, -o to set initially open files (now defaults to -f), -f will just limit the files to the project
-    * Remove '> ' from the prompt? (clean copy/paste)
+    * Add unicode > OR Remove '> ' from the prompt? (clean copy/paste)
 
 * Smoke test that runs multiple times, with a minimal prompt.
     * Need to escape+enter
@@ -130,6 +130,7 @@ Anything related to the project management of the project, such as tracking issu
 * Support text to speech output for responses
 * Show better progress bars, notably when writing a file (extract from file or diff the line and compare to current version)
 * Be able to see the git history of a file (useful when able to actually commit?)
+    * Have the concept of "Git Blame" mapping to conversation fingerprint points
 * Consider using advanced APIs like function calling and search grounding
 * Have privacy confirmation for file system integration, and other sensitive data or destructive operations
 * Have extra security confirmation for file system integration, terminal commands run, injection/MITM attacks, heuristics and other sensitive data or destructive operations

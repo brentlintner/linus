@@ -37,26 +37,26 @@ bin/ai
 Start a fully featured chat repl with file system integrations:
 
 ```sh
-bin/ai -wf
+bin/ai -wf .
 ```
 
-List the files the model can access if `-w` is enabled:
+List the files the model can access if `-f` is used:
 
 ```sh
-bin/ai -l
+bin/ai -lf .
 ```
 
 Show detailed stats about the current session:
 
 ```sh
-bin/ai -ifv
+bin/ai -wf . -v
 ```
 
 ## Development
 
 ```sh
 pipenv install --dev
-bin/ai --debug
+bin/ai -wf . -V
 ```
 
 ## Testing
