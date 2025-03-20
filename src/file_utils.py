@@ -91,8 +91,10 @@ def generate_project_file_contents(extra_ignore_patterns=None, include_patterns=
     ignore_patterns = load_ignore_patterns(extra_ignore_patterns)
     ignore_spec = pathspec.PathSpec.from_lines('gitwildmatch', ignore_patterns)
     include_spec = pathspec.PathSpec.from_lines('gitwildmatch', include_patterns)
+    allow_all = "." in include_patterns
     output = ""
 
+    # TODO: avoid recursing ignored directories (ex .git)
     for root, _, files in os.walk(directory):
         relative_path = os.path.relpath(root, directory)
         if relative_path == '.':
@@ -101,8 +103,8 @@ def generate_project_file_contents(extra_ignore_patterns=None, include_patterns=
         # Output files and their contents
         for file in files:
             file_path = os.path.join(relative_path, file)
-            is_ignored = ignore_spec.match_file(file_path) and not (include_patterns and include_spec.match_file(file_path))
-            if not is_ignored:
+            allowed = not ignore_spec.match_file(file_path) and (allow_all or include_spec.match_file(file_path))
+            if allowed:
                 output += get_file_contents(file_path)
 
     return output
@@ -112,16 +114,18 @@ def generate_project_file_list(extra_ignore_patterns=None, include_patterns=[], 
     ignore_patterns = load_ignore_patterns(extra_ignore_patterns)
     ignore_spec = pathspec.PathSpec.from_lines('gitwildmatch', ignore_patterns)
     include_spec = pathspec.PathSpec.from_lines('gitwildmatch', include_patterns)
+    allow_all = "." in include_patterns
     output = []  # Use a list to store file names
 
+    # TODO: avoid recursing ignored directories (ex .git)
     for root, _, files in os.walk(directory):
         relative_path = os.path.relpath(root, directory)
         if relative_path == '.':
             relative_path = ''
         for file in files:
             file_path = os.path.join(relative_path, file)
-            is_ignored = ignore_spec.match_file(file_path) and not (include_patterns and include_spec.match_file(file_path))
-            if not is_ignored:
+            allowed = not ignore_spec.match_file(file_path) and (allow_all or include_spec.match_file(file_path))
+            if allowed:
                 output.append(file_path)
 
     return "\n".join(output)  # Join with newlines
