@@ -14,7 +14,11 @@ Anything related to the project management of the project, such as tracking issu
 
 ## Backlog
 
+* Sqlite DB
+    * Prune history not working (keeps previous version?)
+
 * Prompt Engineering
+    * It's still talking about parts etc
     * Try to avoid writing tests, leave that to separate (causes attention shift for llm?)
     * Allow llm to say, you're wrong about your request
     * Prompt should have flow to where the LLM _will_ start writing and responding
@@ -44,9 +48,6 @@ Anything related to the project management of the project, such as tracking issu
         * Additionally, if the tests fail, then we would ofc tell the model that first, with something akin to "the tests failed, was there something that you missed?" sort of thing
     * Consider using a meta-learning approach to improve the model's performance
     * ex: $learn command tells model to summarize the conversation into a paragraph, this is stored in the db and all are added to the prompt per project
-
-* Sqlite DB
-    * Prune history not working (keeps previous version?)
 
 * Prompt Customization
     * Linus keeps using metadata {{{}}} syntax (use PROJECT.md instead)
