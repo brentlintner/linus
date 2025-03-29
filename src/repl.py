@@ -40,14 +40,18 @@ class FilePathCompleter(Completer):
     def get_completions(self, document, __complete_event__):
         word_before_cursor = document.get_word_before_cursor()
 
+        # Check if we are completing a command or a path
         if '@' not in word_before_cursor:
             return
 
-        for root, _, items in os.walk(self.cwd):
+        for root, dirs, items in os.walk(self.cwd, topdown=True):
+            # Filter out ignored directories
+            dirs[:] = [d for d in dirs if not self.is_ignored(os.path.join(root, d))]
             for item in items:
                 path = re.sub(r'^\./', '', os.path.relpath(os.path.join(root, item)))
                 if not self.is_ignored(path) and item.startswith(word_before_cursor[1:]):  # Skip the '@' character
                     yield Completion(path, start_position=-len(word_before_cursor) + 1)
+
 
 class CommandCompleter(Completer):
     def __init__(self, commands):

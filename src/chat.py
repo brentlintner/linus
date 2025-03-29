@@ -499,7 +499,7 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_pat
         if writeable:
             # Write all assembled files
             if assembled_files:
-                console.print("Files Changed\n", style="bold")
+                console.print("\nFiles Changed\n", style="bold")
             for (file_path, version), file_content in assembled_files.items():
                 console.print(f"  {file_path}", style="bold green")
                 full_path = os.path.join(cwd, file_path)  # Get full path for writing
