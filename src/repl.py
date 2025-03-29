@@ -28,7 +28,7 @@ class FilePathCompleter(Completer):
 
     def load_ignore_patterns(self):
         ignore_patterns = [] + DEFAULT_IGNORE_PATTERNS
-        for ignore_file in ['.gitignore']:
+        for ignore_file in ['.gitignore', '.linignore']:
             if os.path.exists(ignore_file):
                 with open(ignore_file, encoding='utf-8') as f:
                     ignore_patterns.extend([line.strip() for line in f if line.strip() and not line.startswith('#')])

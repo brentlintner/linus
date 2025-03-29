@@ -13,7 +13,7 @@ def format_number(num, magnitude):
 
 def load_ignore_patterns(extra_ignore_patterns=None):
     ignore_patterns = [] + DEFAULT_IGNORE_PATTERNS
-    for ignore_file in ['.gitignore']:
+    for ignore_file in ['.gitignore', '.linignore']:
         if os.path.exists(ignore_file):
             with open(ignore_file, encoding="utf-8") as f:
                 ignore_patterns.extend([line.strip() for line in f if line.strip() and not line.startswith('#')])
@@ -53,7 +53,7 @@ def generate_project_structure(extra_ignore_patterns=None, directory=None):
         "type": "directory"
     }]
 
-    for root, dirs, files in os.walk(directory):
+    for root, dirs, files in os.walk(directory, topdown=True):
         relative_path = os.path.relpath(root, directory)
         relative_path = '' if relative_path == '.' else relative_path
 
@@ -95,10 +95,13 @@ def generate_project_file_contents(extra_ignore_patterns=None, include_patterns=
     output = ""
 
     # TODO: avoid recursing ignored directories (ex .git)
-    for root, _, files in os.walk(directory):
+    for root, dirs, files in os.walk(directory, topdown=True):
         relative_path = os.path.relpath(root, directory)
         if relative_path == '.':
             relative_path = ''
+
+        # Filter out ignored directories
+        dirs[:] = [d for d in dirs if not ignore_spec.match_file(os.path.join(relative_path, d))]
 
         # Output files and their contents
         for file in files:
@@ -117,11 +120,14 @@ def generate_project_file_list(extra_ignore_patterns=None, include_patterns=[], 
     allow_all = "." in include_patterns
     output = []  # Use a list to store file names
 
-    # TODO: avoid recursing ignored directories (ex .git)
-    for root, _, files in os.walk(directory):
+    for root, dirs, files in os.walk(directory, topdown=True):
         relative_path = os.path.relpath(root, directory)
         if relative_path == '.':
             relative_path = ''
+
+        # Filter out ignored directories
+        dirs[:] = [d for d in dirs if not ignore_spec.match_file(os.path.join(relative_path, d))]
+
         for file in files:
             file_path = os.path.join(relative_path, file)
             allowed = not ignore_spec.match_file(file_path) and (allow_all or include_spec.match_file(file_path))
