@@ -6,14 +6,12 @@ Anything related to the project management of the project, such as tracking issu
 
 * Make stable regardless of file size and output length
 * Make stable in terms of runnable code generation and context awareness
+* Does having more succinct, highly cohesive, short method code help the AI's context awareness?
 * Have a test suite
 
 ## Current
 
-* Bug: properly add Linus: to the conversation (only if not already continued from start of send_ai)
-* Make a .linignore file to ignore files and directories
 * Include top level directory name if it is ignored
-* Does having more succinct, highly cohesive, short method code help the AI's context awareness?
 
 ## Backlog
 
