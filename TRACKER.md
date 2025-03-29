@@ -16,8 +16,13 @@ Anything related to the project management of the project, such as tracking issu
 
 ## Backlog
 
+* File List
+    * Include top level directory name if it is ignored?
+
 * Sqlite DB
     * Prune history not working (keeps previous version?)
+        * Prune history based on context window size (i.e. keep a few versions of each file if possible)
+        * Only prune a file once it gets too big, and only prune the oldest versions
 
 * Prompt Engineering
     * It's still talking about parts etc
