@@ -292,6 +292,9 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_pat
         """Sends a request to the AI and processes the streamed response."""
         nonlocal session_total_tokens
 
+        # NOTE: We need set this here because is_continuation can be manually set to True in the chunk processing loop below
+        should_add_user_prefix = not is_continuation
+
         request_text = ''.join(history) + f'\n{parser.CONVERSATION_END_SEP}\n'
 
         contents = [types.Part.from_text(text=request_text)]
@@ -481,18 +484,17 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_pat
 
         # --- History and File Writing ---
 
-        if is_continuation:
-            history.append(f'\n{full_response_text}\n')
-            if history_filename:
-                with open(history_filename, 'w', encoding='utf-8') as f:
-                    f.write(''.join(history))
-            return True
+        if should_add_user_prefix:
+            history.append('\n**Linus:**\n')
 
-        else:
-            history.append(f'\n**Linus:**\n\n{full_response_text}\n')
-            if history_filename:
-                with open(history_filename, 'w', encoding='utf-8') as f:
-                    f.write(''.join(history))
+        history.append(f'\n{full_response_text}\n')
+
+        if history_filename:
+            with open(history_filename, 'w', encoding='utf-8') as f:
+                f.write(''.join(history))
+
+        if is_continuation:
+            return True
 
         if writeable:
             # Write all assembled files
