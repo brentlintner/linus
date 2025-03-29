@@ -1,0 +1,7 @@
+ .pytest
+ *.md
+ vendor
+ docs
+ *.lock
+ tests/fixtures
+ .*
