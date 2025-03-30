@@ -12,6 +12,7 @@ Anything related to the project management of the project, such as tracking issu
 ## Current
 
 * Include top level directory name if it is ignored
+* Add file metadata start to incomplete file block?
 
 ## Backlog
 
