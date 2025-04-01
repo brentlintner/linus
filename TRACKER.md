@@ -13,6 +13,14 @@ Anything related to the project management of the project, such as tracking issu
 
 * Always merge multiple parts into one file after LLM sends it
 
+* Fucking LLM refactor issues
+    * Fucking LLM and it's relative pathing when I @ include it
+
+    * Compact/Prune command:
+        * Compact leaves a lot of empty lines
+        * Compact does not remove the no more parts block
+        * Compact removes all files not just the previous versions?!
+
 * Still hallucinating and writing both our conversations. Should make that more forceful or even re-add it to my own reply?
     * --> possible the massive amount of files, and it lost context
     * I.e add 'remember the 'Instructions' section you should follow'

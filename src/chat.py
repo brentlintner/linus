@@ -285,8 +285,10 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_pat
         """Compacts files in the history list to only the latest version."""
         history_content = '\n'.join(history)
 
+        before_file_refs, after_file_refs = history_content.split(parser.FILES_START_SEP, 1)
+
         # Find all file instances (path, version) in the history
-        all_file_versions = parser.find_files(history_content)
+        all_file_versions = parser.find_files(after_file_refs)
 
         if not all_file_versions:
             debug("No files found in history to prune.")
@@ -295,7 +297,7 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_pat
         # Determine the latest version for each file path
         latest_versions = defaultdict(int)
         for path, version, *_ in all_file_versions:
-            if version > latest_versions[path]:
+            if path not in latest_versions or not version < latest_versions[path]:
                 latest_versions[path] = version
 
         # Identify older versions to remove
@@ -312,7 +314,8 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_pat
         removed_count = 0
         for path, version in files_to_remove:
             debug(f"Removing older version {version} of file {path}.")
-            history_content = re.sub(parser.match_file_with_version(path, version), '', history_content, flags=re.DOTALL)
+            after_file_refs = re.sub(parser.match_file_with_version(path, version), '', after_file_refs, flags=re.DOTALL)
+            # TODO: remove the nomoreparts from the history too!!
             removed_count += 1
 
         debug(f"Removed {removed_count} older file version blocks in total.")
@@ -322,7 +325,7 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_pat
 
         history.clear()
 
-        history.append(history_content)
+        history.append(f"{before_file_refs.strip()}\n{parser.FILES_START_SEP}\n{after_file_refs}")
 
         if history_filename:
             with open(history_filename, 'w', encoding='utf-8') as f:
