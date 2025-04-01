@@ -11,17 +11,35 @@ Anything related to the project management of the project, such as tracking issu
 
 ## Current
 
-* Include top level directory name if it is ignored
-* Add file metadata start to incomplete file block?
+* Always merge multiple parts into one file after LLM sends it
+
+* Still hallucinating and writing both our conversations. Should make that more forceful or even re-add it to my own reply?
+    * --> possible the massive amount of files, and it lost context
+    * I.e add 'remember the 'Instructions' section you should follow'
+
+* Snippets find files causes out of range (just remove snippets formatting?)
+* Bug: Add file metadata start to incomplete file block?
+* Bug: Parts don't have a newline at the end if we strip the last line?
+
+* Even quicker streaming (look for \n\n, and leave right side of it for next prompt)
+* Always add a trailing newline to files only if the existing one does, else always remove it
 
 ## Backlog
+
+* Polishing
+    * Include top level directory name if it is ignored
+    * Print separate consistency now that you changed end logs earlier
+    * Add back the request/response token logging separate
+    * Finish linting
+    * Eventually, -o to set initially open files (now defaults to -f), -f will just limit the files to the project
+    * Add unicode > OR Remove '> ' from the prompt? (clean copy/paste)
 
 * File List
     * Include top level directory name if it is ignored?
 
 * Sqlite DB
     * Prune history not working (keeps previous version?)
-        * Prune history based on context window size (i.e. keep a few versions of each file if possible)
+        * "Auto compact" history based on context window size (i.e. keep a few versions of each file if possible)
         * Only prune a file once it gets too big, and only prune the oldest versions
 
 * Prompt Engineering
@@ -31,16 +49,6 @@ Anything related to the project management of the project, such as tracking issu
     * Prompt should have flow to where the LLM _will_ start writing and responding
     * Current "wait before coding" is too good (waits even when it finishes a file and needs to write another?)
     * "If you make a mistake that breaks the current codebase, correct it by sending a new version of the file."
-
-* Polishing
-    * Print separate consistency now that you changed end logs earlier
-    * Add back the request/response token logging separate
-    * Parts don't have a newline at the end if we strip the last line?
-    * Even quicker streaming (look for \n\n, and leave right side of it for next prompt)
-    * Always add a trailing newline to files only if the existing one does, else always remove it
-    * Finish linting
-    * Eventually, -o to set initially open files (now defaults to -f), -f will just limit the files to the project
-    * Add unicode > OR Remove '> ' from the prompt? (clean copy/paste)
 
 * Tests
     * First system test: Need no color + quiet + test for testing

@@ -71,7 +71,7 @@ def create_prompt_session(cwd):
     prompt_style = Style.from_dict({'': '#8CB9B3 bold'})
 
     file_completer = FuzzyCompleter(FilePathCompleter(cwd))
-    command_completer = FuzzyCompleter(CommandCompleter(['reset', 'refresh', 'exit', 'continue']))
+    command_completer = FuzzyCompleter(CommandCompleter(['compact', 'reset', 'refresh', 'exit', 'continue']))
 
     # Combine completers
     class CombinedCompleter(Completer):

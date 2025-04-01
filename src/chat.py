@@ -9,6 +9,7 @@ from datetime import datetime, timezone
 from collections import deque, defaultdict
 from google import genai
 from google.genai import types
+from pygments.lexer import include
 from . import parser
 from .repl import create_prompt_session
 from .logger import (
@@ -27,7 +28,6 @@ from .config import (
 from .file_utils import (
     generate_project_structure,
     generate_project_file_contents,
-    prune_file_history,
     generate_diff,
     get_file_contents,
     human_format_number
@@ -62,14 +62,8 @@ def prompt_prefix(extra_ignore_patterns=None, include_patterns=None, cwd=os.getc
         # No files included, return prefix without file tree and file contents.
         return prefix.replace(parser.FILE_TREE_PLACEHOLDER, '[]').replace(parser.FILES_PLACEHOLDER, '')
 
-    if include_patterns == ["."]:
-        # Include all files in the current working directory, just use the old logic.
-        project_structure_json = generate_project_structure(extra_ignore_patterns, cwd)
-        project_files = generate_project_file_contents(extra_ignore_patterns, include_patterns, cwd)
-    else:
-        # Use the provided include_patterns
-        project_structure_json = generate_project_structure(extra_ignore_patterns, cwd)
-        project_files = generate_project_file_contents(extra_ignore_patterns, include_patterns, cwd)
+    project_structure_json = generate_project_structure(extra_ignore_patterns, include_patterns, cwd)
+    project_files = generate_project_file_contents(extra_ignore_patterns, include_patterns, cwd)
 
     project_structure = json.dumps(
         project_structure_json, indent=2) if is_debug() else json.dumps(project_structure_json, separators=(',', ':'))
@@ -282,7 +276,53 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_pat
             debug(f"Appending file {file_path} (v{new_version}) to history")
             history.append(get_file_contents(os.path.join(cwd, file_path), new_version)) # Use os.path.join
 
-            prune_file_history(file_path, history, new_version) # Prune files user sent
+        if history_filename:
+            with open(history_filename, 'w', encoding='utf-8') as f:
+                f.write(''.join(history))
+
+    # TODO: ensure everything after the conversation history is used, and before is not modified
+    def compact_history():
+        """Compacts files in the history list to only the latest version."""
+        history_content = '\n'.join(history)
+
+        # Find all file instances (path, version) in the history
+        all_file_versions = parser.find_files(history_content)
+
+        if not all_file_versions:
+            debug("No files found in history to prune.")
+            return # Nothing to do
+
+        # Determine the latest version for each file path
+        latest_versions = defaultdict(int)
+        for path, version, *_ in all_file_versions:
+            if version > latest_versions[path]:
+                latest_versions[path] = version
+
+        # Identify older versions to remove
+        files_to_remove = []
+        for path, version, *_ in all_file_versions:
+            if version < latest_versions[path]:
+                files_to_remove.append((path, version))
+
+        if not files_to_remove:
+            debug("No older file versions found to prune.")
+            return # Nothing to do
+
+        # Remove the identified older versions using parser.match_file
+        removed_count = 0
+        for path, version in files_to_remove:
+            debug(f"Removing older version {version} of file {path}.")
+            history_content = re.sub(parser.match_file_with_version(path, version), '', history_content, flags=re.DOTALL)
+            removed_count += 1
+
+        debug(f"Removed {removed_count} older file version blocks in total.")
+
+        if removed_count == 0:
+            return
+
+        history.clear()
+
+        history.append(history_content)
 
         if history_filename:
             with open(history_filename, 'w', encoding='utf-8') as f:
@@ -509,9 +549,6 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_pat
                 with open(full_path, 'w', encoding='utf-8') as f: # Use full path
                     f.write(file_content)
 
-                # TODO: doesn't work?
-                # prune_file_history(file_path, history, new_version) # Prune files LLM has sent
-
             if len(assembled_files) > 0:
                 print()
 
@@ -557,6 +594,10 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_pat
 
             if should_exit(prompt_text):
                 break
+
+            if prompt_text.startswith('$compact'):
+                compact_history()
+                continue
 
             if prompt_text.startswith('$reset'):
                 reset_history()

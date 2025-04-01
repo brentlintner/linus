@@ -2,9 +2,15 @@ import os
 import re
 import difflib
 import pathspec
+from collections import defaultdict
 from .logger import debug
 from .config import DEFAULT_IGNORE_PATTERNS
-from .parser import find_files, file_block, get_language_from_extension, match_file
+from .parser import (
+    find_files,
+    file_block,
+    get_language_from_extension,
+    match_file_with_version
+)
 
 def format_number(num, magnitude):
     # TODO: Add more prefixes if needed (e.g., 'G' for billions)
@@ -41,10 +47,12 @@ def generate_diff(file_path, current_content):
     return stringifed_diff
 
 # NOTE: we don't use the args.files here, because we want to include all non-default ignored files
-def generate_project_structure(extra_ignore_patterns=None, directory=None):
-    directory = directory or os.getcwd() # Use provided directory or default to current.
+def generate_project_structure(extra_ignore_patterns=None, include_patterns=[], directory=None):
+    directory = directory or os.getcwd()  # Use provided directory or default to current.
     ignore_patterns = load_ignore_patterns(extra_ignore_patterns)
-    spec = pathspec.PathSpec.from_lines('gitwildmatch', ignore_patterns)
+    ignore_spec = pathspec.PathSpec.from_lines('gitwildmatch', ignore_patterns)
+    include_spec = pathspec.PathSpec.from_lines('gitwildmatch', include_patterns)
+    allow_all = "." in include_patterns
 
     file_tree = [{
         "id": "$root",
@@ -55,60 +63,52 @@ def generate_project_structure(extra_ignore_patterns=None, directory=None):
 
     for root, dirs, files in os.walk(directory, topdown=True):
         relative_path = os.path.relpath(root, directory)
-        relative_path = '' if relative_path == '.' else relative_path
+        if relative_path == '.':
+            relative_path = ''
 
-        dirs[:] = [dir for dir in dirs if not spec.match_file(os.path.join(relative_path, dir))]
-        files[:] = [file for file in files if not spec.match_file(os.path.join(relative_path, file))]
+        # Filter out ignored directories (for walking, not for the list)
+        dirs[:] = [d for d in dirs if not ignore_spec.match_file(os.path.join(relative_path, d))]
 
+        # TODO: be better, i.e. add the directory to the tree even if empty or match fails (because it's for a file vs a dir)
         for dir_path in dirs:
             dir_path = os.path.join(relative_path, dir_path)
             dir_parent = os.path.dirname(dir_path)
+            allowed = not ignore_spec.match_file(dir_path) and (allow_all or include_spec.match_file(dir_path))
 
-            file_tree.append({
-                "id": dir_path,
-                "name": os.path.basename(dir_path),
-                "parent": dir_parent != '.' and dir_parent or "$root",
-                "type": "directory"
-            })
+            if allowed:
+                debug(f"Project structure (add): {dir_path}")
+                file_tree.append({
+                    "id": dir_path,
+                    "name": os.path.basename(dir_path),
+                    "parent": dir_parent != '.' and dir_parent or "$root",
+                    "type": "directory"
+                })
 
         for file in files:
             file_path = os.path.join(relative_path, file)
             file_parent = os.path.dirname(file_path)
-
-            file_tree.append({
-                "id": file_path,
-                "name": os.path.basename(file),
-                "parent": file_parent != '.' and file_parent or "$root",
-                "type": "file"
-            })
+            allowed = not ignore_spec.match_file(file_path) and (allow_all or include_spec.match_file(file_path))
+            if allowed:
+                debug(f"Project structure (add): {file_path}")
+                file_tree.append({
+                    "id": file_path,
+                    "name": os.path.basename(file),
+                    "parent": file_parent != '.' and file_parent or "$root",
+                    "type": "file"
+                })
 
     file_tree = sorted(file_tree, key=lambda x: x['id'])
 
     return file_tree
 
 def generate_project_file_contents(extra_ignore_patterns=None, include_patterns=[], directory=None):
-    directory = directory or os.getcwd()  # Use provided directory or default to current
-    ignore_patterns = load_ignore_patterns(extra_ignore_patterns)
-    ignore_spec = pathspec.PathSpec.from_lines('gitwildmatch', ignore_patterns)
-    include_spec = pathspec.PathSpec.from_lines('gitwildmatch', include_patterns)
-    allow_all = "." in include_patterns
+    files = generate_project_file_list(extra_ignore_patterns, include_patterns, directory)
     output = ""
 
-    # TODO: avoid recursing ignored directories (ex .git)
-    for root, dirs, files in os.walk(directory, topdown=True):
-        relative_path = os.path.relpath(root, directory)
-        if relative_path == '.':
-            relative_path = ''
-
-        # Filter out ignored directories
-        dirs[:] = [d for d in dirs if not ignore_spec.match_file(os.path.join(relative_path, d))]
-
-        # Output files and their contents
-        for file in files:
-            file_path = os.path.join(relative_path, file)
-            allowed = not ignore_spec.match_file(file_path) and (allow_all or include_spec.match_file(file_path))
-            if allowed:
-                output += get_file_contents(file_path)
+    # TODO: make an array
+    for file_path in files.splitlines():
+        debug(f"File contents (add): {file_path}")
+        output += get_file_contents(file_path)
 
     return output
 
@@ -145,24 +145,6 @@ def get_file_contents(file_path, version=1):
     except Exception as e:
         # TODO: use logging here not return
         return f"    Error reading {file_path}: {e}\n"
-
-def prune_file_history(file_path, history, current_version):
-    """Removes previous mentions of the given file from the history."""
-    pruned_history = '\n'.join(history)
-
-    files = find_files(pruned_history)
-
-    # Find all files in the current history entry
-    for existing_file_path, version, _, _, _, _ in files:
-        # If the file paths match and the version is older, remove all file blocks (i.e. all parts)
-        if existing_file_path == file_path and version < current_version:
-            debug(f"Pruning file {file_path} (v{version}) from history")
-            pruned_history = re.sub(match_file(existing_file_path), '', pruned_history, flags=re.DOTALL)
-
-    history.clear()
-
-    history.append(pruned_history)
-
 
 def human_format_number(num):
     """Converts an integer to a human-readable string (e.g., 1.3M, 450K)."""
