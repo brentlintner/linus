@@ -11,28 +11,26 @@ Anything related to the project management of the project, such as tracking issu
 
 ## Current
 
-* Always merge multiple parts into one file after LLM sends it
-
-* Fucking LLM refactor issues
-    * Fucking LLM and it's relative pathing when I @ include it
-
+* Compact/File Rework
+    * Fucking LLM and it's abs pathing when I @ include it
     * Compact/Prune command:
         * Compact leaves a lot of empty lines
         * Compact does not remove the no more parts block
         * Compact removes all files not just the previous versions?!
+    * Always merge multiple parts into one file after LLM sends it
+    * Bug: Add file metadata start to incomplete file block?
 
 * Still hallucinating and writing both our conversations. Should make that more forceful or even re-add it to my own reply?
     * --> possible the massive amount of files, and it lost context
     * I.e add 'remember the 'Instructions' section you should follow'
 
+## Backlog
+
 * Snippets find files causes out of range (just remove snippets formatting?)
-* Bug: Add file metadata start to incomplete file block?
 * Bug: Parts don't have a newline at the end if we strip the last line?
 
 * Even quicker streaming (look for \n\n, and leave right side of it for next prompt)
 * Always add a trailing newline to files only if the existing one does, else always remove it
-
-## Backlog
 
 * Polishing
     * Include top level directory name if it is ignored
