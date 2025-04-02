@@ -17,11 +17,12 @@ def format_number(num, magnitude):
     suffixes = ['', 'K', 'M', 'B', 'T']
     return f'{num:.1f}{suffixes[magnitude]}'
 
-def load_ignore_patterns(extra_ignore_patterns=None):
+def load_ignore_patterns(extra_ignore_patterns=None, directory=os.getcwd()):
     ignore_patterns = [] + DEFAULT_IGNORE_PATTERNS
     for ignore_file in ['.gitignore', '.linignore']:
-        if os.path.exists(ignore_file):
-            with open(ignore_file, encoding="utf-8") as f:
+        file_path = os.path.join(directory, ignore_file)
+        if os.path.exists(file_path):
+            with open(file_path, encoding="utf-8") as f:
                 ignore_patterns.extend([line.strip() for line in f if line.strip() and not line.startswith('#')])
     if extra_ignore_patterns:
         ignore_patterns.extend(extra_ignore_patterns)
@@ -49,7 +50,7 @@ def generate_diff(file_path, current_content):
 # NOTE: we don't use the args.files here, because we want to include all non-default ignored files
 def generate_project_structure(extra_ignore_patterns=None, include_patterns=[], directory=None):
     directory = directory or os.getcwd()  # Use provided directory or default to current.
-    ignore_patterns = load_ignore_patterns(extra_ignore_patterns)
+    ignore_patterns = load_ignore_patterns(extra_ignore_patterns, directory)
     ignore_spec = pathspec.PathSpec.from_lines('gitwildmatch', ignore_patterns)
     include_spec = pathspec.PathSpec.from_lines('gitwildmatch', include_patterns)
     allow_all = "." in include_patterns
@@ -114,7 +115,7 @@ def generate_project_file_contents(extra_ignore_patterns=None, include_patterns=
 
 def generate_project_file_list(extra_ignore_patterns=None, include_patterns=[], directory=None):
     directory = directory or os.getcwd()  # Use provided directory or default to current.
-    ignore_patterns = load_ignore_patterns(extra_ignore_patterns)
+    ignore_patterns = load_ignore_patterns(extra_ignore_patterns, directory)
     ignore_spec = pathspec.PathSpec.from_lines('gitwildmatch', ignore_patterns)
     include_spec = pathspec.PathSpec.from_lines('gitwildmatch', include_patterns)
     allow_all = "." in include_patterns
