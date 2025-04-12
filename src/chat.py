@@ -160,7 +160,77 @@ class FilePartBuffer:
         del self.final_parts[(file_path, version)]  # Clean up
         return full_content
 
+def compact_history(history_list, history_filename=None):
+    """Compacts files in the history list to only the latest version."""
+    # Expects history_list to be a list containing one string element (the full history)
+    if not history_list:
+        return history_list # Return empty list if input is empty
+
+    history_content = history_list[0] # Assume the full history is the first element
+
+    try:
+        before_file_refs, after_file_refs = history_content.split(parser.FILES_START_SEP, 1)
+    except ValueError:
+        # FILES_START_SEP not found, nothing to compact related to file refs
+        debug("Compact: FILES_START_SEP not found, no file compaction possible.")
+        return history_list
+
+    # Find all file instances (path, version) in the history
+    all_file_versions = parser.find_files(after_file_refs)
+
+    if not all_file_versions:
+        debug("No files found in history to prune.")
+        return history_list # Nothing to do
+
+    # Determine the latest version for each file path
+    latest_versions = defaultdict(int)
+    for path, version, *_ in all_file_versions:
+        if path not in latest_versions or version > latest_versions[path]: # Keep highest version
+            debug(f"Compact: found v{version} for {path} as latest")
+            latest_versions[path] = version
+
+    # Identify older versions to remove
+    files_to_remove = []
+    for path, version, *_ in all_file_versions:
+        if version < latest_versions[path]:
+            debug(f"Compact: will remove v{version} of {path}")
+            files_to_remove.append((path, version))
+
+    if not files_to_remove:
+        debug("No older file versions found to prune.")
+        return history_list # Nothing to do
+
+    # Remove the identified older versions using parser.match_file
+    removed_count = 0
+    compacted_after_file_refs = after_file_refs # Work on a copy
+    for path, version in files_to_remove:
+        debug(f"Removing older version {version} of file {path}.")
+        # Remove both the content block and the NoMoreParts block for the older version
+        compacted_after_file_refs = re.sub(parser.match_file_with_version(path, version), '', compacted_after_file_refs, flags=re.DOTALL)
+        compacted_after_file_refs = re.sub(parser.match_no_more_parts_file_with_version(path, version), '', compacted_after_file_refs, flags=re.DOTALL)
+        removed_count += 1 # Count removals based on (path, version) pairs
+
+    debug(f"Removed {removed_count} older file version blocks in total.")
+
+    if removed_count == 0:
+        return history_list
+
+    # Reconstruct the history content
+    compacted_history_content = f"{before_file_refs}{parser.FILES_START_SEP}\n{compacted_after_file_refs}"
+
+    # Write back to file if filename provided
+    if history_filename:
+        try:
+            with open(history_filename, 'w', encoding='utf-8') as f:
+                f.write(compacted_history_content)
+            debug(f"Compacted history written to {history_filename}")
+        except Exception as e:
+            error(f"Failed to write compacted history to {history_filename}: {e}")
+
+    return [compacted_history_content] # Return as a list with one element
+
 def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_patterns=None, cwd=os.getcwd()):
+    global history # Ensure we modify the global history
     client = genai.Client(api_key=GOOGLE_API_KEY)
 
     # Split the comma-separated ignore patterns into a list
@@ -274,58 +344,8 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_pat
             new_version = highest_version + 1
 
             debug(f"Appending file {file_path} (v{new_version}) to history")
-            history.append(get_file_contents(os.path.join(cwd, file_path), new_version)) # Use os.path.join
-
-        if history_filename:
-            with open(history_filename, 'w', encoding='utf-8') as f:
-                f.write(''.join(history))
-
-    # TODO: ensure everything after the conversation history is used, and before is not modified
-    def compact_history():
-        """Compacts files in the history list to only the latest version."""
-        history_content = '\n'.join(history)
-
-        before_file_refs, after_file_refs = history_content.split(parser.FILES_START_SEP, 1)
-
-        # Find all file instances (path, version) in the history
-        all_file_versions = parser.find_files(after_file_refs)
-
-        if not all_file_versions:
-            debug("No files found in history to prune.")
-            return # Nothing to do
-
-        # Determine the latest version for each file path
-        latest_versions = defaultdict(int)
-        for path, version, *_ in all_file_versions:
-            if path not in latest_versions or not version < latest_versions[path]:
-                latest_versions[path] = version
-
-        # Identify older versions to remove
-        files_to_remove = []
-        for path, version, *_ in all_file_versions:
-            if version < latest_versions[path]:
-                files_to_remove.append((path, version))
-
-        if not files_to_remove:
-            debug("No older file versions found to prune.")
-            return # Nothing to do
-
-        # Remove the identified older versions using parser.match_file
-        removed_count = 0
-        for path, version in files_to_remove:
-            debug(f"Removing older version {version} of file {path}.")
-            after_file_refs = re.sub(parser.match_file_with_version(path, version), '', after_file_refs, flags=re.DOTALL)
-            # TODO: remove the nomoreparts from the history too!!
-            removed_count += 1
-
-        debug(f"Removed {removed_count} older file version blocks in total.")
-
-        if removed_count == 0:
-            return
-
-        history.clear()
-
-        history.append(f"{before_file_refs.strip()}\n{parser.FILES_START_SEP}\n{after_file_refs}")
+            file_content_block = get_file_contents(full_file_path, new_version) # Use os.path.join
+            history.append(file_content_block)
 
         if history_filename:
             with open(history_filename, 'w', encoding='utf-8') as f:
@@ -599,7 +619,10 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_pat
                 break
 
             if prompt_text.startswith('$compact'):
-                compact_history()
+                # Pass the global history and filename to the standalone function
+                history = compact_history(history, history_filename)
+                print(' ', flush=True)
+                console.print("History compacted.", style="bold yellow")
                 continue
 
             if prompt_text.startswith('$reset'):

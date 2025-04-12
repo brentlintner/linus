@@ -157,15 +157,21 @@ def match_file(file_path, incomplete=False):
     escaped = re.escape(file_path)
 
     if incomplete:
-        return rf'{FILE_METADATA_START}\nPath: {escaped}\n.*?{FILE_METADATA_END}\n?(.*)(?:{END_OF_FILE})?'
+        return rf'\n?{FILE_METADATA_START}\nPath: {escaped}\n.*?{FILE_METADATA_END}\n?(.*)(?:{END_OF_FILE})?\n?'
 
-    return rf'{FILE_METADATA_START}\nPath: {escaped}\n.*?{FILE_METADATA_END}\n?(.*?){END_OF_FILE}'
+    return rf'\n?{FILE_METADATA_START}\nPath: {escaped}\n.*?{FILE_METADATA_END}\n?(.*?){END_OF_FILE}\n?'
 
 def match_file_with_version(file_path, version):
     escaped = re.escape(file_path)
     version = str(version)
 
-    return rf'{FILE_METADATA_START}\nPath: {escaped}\n.*?Version: {version}.*?{FILE_METADATA_END}\n?(.*?){END_OF_FILE}'
+    return rf'\n?{FILE_METADATA_START}\nPath: {escaped}\n.*?Version: {version}.*?{FILE_METADATA_END}\n?(.*?){END_OF_FILE}\n?'
+
+def match_no_more_parts_file_with_version(file_path, version):
+    escaped = re.escape(file_path)
+    version = str(version)
+
+    return rf'\n?{FILE_METADATA_START}\nPath: {escaped}\n.*?Version: {version}.*?NoMoreParts: True.*?{FILE_METADATA_END}\n?(.*?){END_OF_FILE}\n?'
 
 def match_snippet():
     return rf'{SNIPPET_METADATA_START}.*?\nLanguage: (.*?)\n.*?{SNIPPET_METADATA_END}\n?(.*?){END_OF_SNIPPET}'
