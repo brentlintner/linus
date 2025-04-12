@@ -20,7 +20,10 @@ Anything related to the project management of the project, such as tracking issu
     * Always merge multiple parts into one file after LLM sends it
     * Bug: Add file metadata start to incomplete file block?
 
+* Still refactors or fixes adjacent code, possibly if arbitrary "confirm" is given, vs "it's in the latest outline of your approach"
+
 * Still hallucinating and writing both our conversations. Should make that more forceful or even re-add it to my own reply?
+    * Possible it is because of the "wait before coding" prompt and it's not clear enough
     * --> possible the massive amount of files, and it lost context
     * I.e add 'remember the 'Instructions' section you should follow'
 
