@@ -476,7 +476,7 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_pat
                         incomplete_file_block = queued_response_text
                     # Queued text has a file metadata start block in the middle
                     else:
-                        incomplete_file_block = after_file
+                        incomplete_file_block = f"{parser.FILE_METADATA_START}{after_file}"
 
                     # Remove the last line from the incomplete file content, in case its cut off
                     content_lines = incomplete_file_block.splitlines()
