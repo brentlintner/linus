@@ -599,6 +599,11 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_pat
 
     while True:
         try:
+            # Always write in case we break early
+            if history_filename:
+                with open(history_filename, 'w', encoding='utf-8') as f:
+                    f.write(''.join(history))
+
             if force_continue:
                 if force_continue_counter > 5:
                     error(f"Model is stuck (maxCount = {force_continue_counter}. Please manually continue.")
