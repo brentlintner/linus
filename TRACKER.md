@@ -12,11 +12,7 @@ Anything related to the project management of the project, such as tracking issu
 ## Current
 
 * Compact/File Rework
-    * Fucking LLM and it's abs pathing when I @ include it
-    * Compact/Prune command:
-        * Compact leaves a lot of empty lines
-        * Compact does not remove the no more parts block
-        * Compact removes all files not just the previous versions?!
+    * Refresh should prune all files in the conversation history
     * Always merge multiple parts into one file after LLM sends it
     * Bug: Add file metadata start to incomplete file block?
 
