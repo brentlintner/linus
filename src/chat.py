@@ -344,7 +344,7 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_pat
             new_version = highest_version + 1
 
             debug(f"Appending file {file_path} (v{new_version}) to history")
-            file_content_block = get_file_contents(full_file_path, new_version) # Use os.path.join
+            file_content_block = get_file_contents(file_path, new_version) # Use os.path.join
             history.append(file_content_block)
 
         if history_filename:
