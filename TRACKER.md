@@ -11,8 +11,9 @@ Anything related to the project management of the project, such as tracking issu
 
 ## Current
 
+* Refresh should run $compact first so it "prunes all files in the conversation history"
+
 * Compact/File Rework
-    * Refresh should prune all files in the conversation history
     * Always merge multiple parts into one file after LLM sends it
     * Bug: Add file metadata start to incomplete file block?
 
