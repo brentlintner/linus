@@ -521,8 +521,8 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_pat
                         print_markdown(queued_response_text, end="")
                         queued_response_text = "" # Clear the queue
                         is_continuation = True
+                    # We just have normal text left, print it
                     else:
-                        debug('Response text left in queue, but no files or incomplete file parts found.')
                         print_markdown(queued_response_text, end="")
                         queued_response_text = "" # Clear the queue
                         is_continuation = False # Important, stops potential infinite loops
@@ -583,13 +583,20 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_pat
             duration = end_time - start_time
             total_characters, total_lines = calculate_history_stats()
             console.print()
-            console.print(
-                f"{human_format_number(total_lines)} lines, "
-                f"{human_format_number(total_characters)} characters, "
-                f"{human_format_number(total_token_count)} tokens, "
-                f"{human_format_number(session_total_tokens)} session tokens, "
-                f"{duration:.2f}s ({GEMINI_MODEL.replace('gemini-', '')})"
-            )
+            if (is_debug()):
+                console.print(
+                    f"{human_format_number(session_total_tokens)} (session), "
+                    f"{human_format_number(prompt_token_count)} (request), "
+                    f"{human_format_number(candidates_token_count)} (response), "
+                    f"{human_format_number(total_lines)} (lines), "
+                    f"{human_format_number(total_characters)} (chars)"
+                    f"{duration:.2f}s ({GEMINI_MODEL})"
+                )
+            else:
+                console.print(
+                    f"{human_format_number(session_total_tokens)} tok, "
+                    f"{duration:.2f}s"
+                )
 
         return False
 
