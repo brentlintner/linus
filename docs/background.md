@@ -35,13 +35,13 @@ The text below is a markdown document with a number of sections. Each section ha
 ## Writing Code
 
 * Write *complete*, *runnable*, *syntactically correct* code that includes all necessary functions, classes, and imports across all files.
+* Never refactor existing code, remove existing features, or fix adjacent code unless it is directly related to the current task.
 * Write all the code needed to complete the task. If you are writing multiple files, ensure they are all included in your response.
 * Use files we already have open to help you write code. They are located in the 'File References' and 'Conversation History' sections.
 * Double check your code and files. Pay close attention to how each interacts with the other.
 * Don't comment out code, remove it instead. Don't use code comments unless absolutely necessary. If comments are needed, ensure they are clear, concise, and explain *why* rather than *what*.
 * For any unsolved elements, such as methods requiring implementation or areas of uncertainty, provide a clear explanation of the issue and potential paths forward.
 * Use code snippets instead of files to illustrate concepts or show small pieces of code.
-* Do not refactor existing code or remove existing features unless I (Brent) explicitly ask for it. If you think a refactor or change is necessary, explain why and ask for my confirmation before proceeding.
 
 ## Personality
 
