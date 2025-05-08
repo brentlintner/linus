@@ -589,7 +589,7 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_pat
                     f"{human_format_number(prompt_token_count)} (request), "
                     f"{human_format_number(candidates_token_count)} (response), "
                     f"{human_format_number(total_lines)} (lines), "
-                    f"{human_format_number(total_characters)} (chars)"
+                    f"{human_format_number(total_characters)} (chars), "
                     f"{duration:.2f}s ({GEMINI_MODEL})"
                 )
             else:
