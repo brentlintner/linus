@@ -155,7 +155,7 @@ class FilePartBuffer:
 
         sorted_parts = sorted(self.buffer[(file_path, version)].items())
         # TODO: ignore the nomoreparts (part 0)? should be empty always
-        full_content = ''.join(part_data for _, part_data in sorted_parts)
+        full_content = '\n'.join(part_data for _, part_data in sorted_parts)
         del self.buffer[(file_path, version)]
         del self.final_parts[(file_path, version)]  # Clean up
         return full_content
