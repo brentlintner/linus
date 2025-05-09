@@ -11,13 +11,14 @@ Anything related to the project management of the project, such as tracking issu
 
 ## Current
 
-* Refresh should run $compact first so it "prunes all files in the conversation history"
+* Allow using a specific model depending on project (use a .linrc file?)
 
 * Compact/File Rework
     * Always merge multiple parts into one file after LLM sends it
     * Bug: Add file metadata start to incomplete file block?
+    * Should consider dynamic putting it together with vector etc
 
-* Still refactors or fixes adjacent code, possibly if arbitrary "confirm" is given, vs "it's in the latest outline of your approach"
+* Refresh should run $compact first so it "prunes all files in the conversation history"
 
 * Still hallucinating and writing both our conversations. Should make that more forceful or even re-add it to my own reply?
     * Possible it is because of the "wait before coding" prompt and it's not clear enough
