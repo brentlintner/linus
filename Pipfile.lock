@@ -149,20 +149,20 @@
         },
         "google-auth": {
             "hashes": [
-                "sha256:58f0e8416a9814c1d86c9b7f6acf6816b51aba167b2c76821965271bac275540",
-                "sha256:ed4cae4f5c46b41bae1d19c036e06f6c371926e97b19e816fc854eff811974ee"
+                "sha256:a33cde547a2134273226fa4b853883559947ebe9207521f7afc707efbf690f58",
+                "sha256:f7e568d42eedfded58734f6a60c58321896a621f7c116c411550a4b4a13da90b"
             ],
             "markers": "python_version >= '3.7'",
-            "version": "==2.40.1"
+            "version": "==2.40.2"
         },
         "google-genai": {
             "hashes": [
-                "sha256:5916ee985bf69ac7b68c4488949225db71e21579afc7ba5ecd5321173b60d3b2",
-                "sha256:7c608de5bb173486a546f5ec4562255c26bae72d33d758a3207bb26f695d0087"
+                "sha256:4b4ed4ed781a9d61e5ce0fef1486dd3a5d7ff0a73bd76b9633d21e687ab998df",
+                "sha256:6ae5d24282244f577ca4f0d95c09f75ab29e556602c9d3531b70161e34cd2a39"
             ],
             "index": "pypi",
             "markers": "python_version >= '3.9'",
-            "version": "==1.14.0"
+            "version": "==1.16.1"
         },
         "grpcio": {
             "hashes": [
@@ -481,11 +481,11 @@
         },
         "typing-inspection": {
             "hashes": [
-                "sha256:50e72559fcd2a6367a19f7a7e610e6afcb9fac940c650290eed893d61386832f",
-                "sha256:9765c87de36671694a67904bf2c96e395be9c6439bb6c87b5142569dcdd65122"
+                "sha256:389055682238f53b04f7badcb49b989835495a96700ced5dab2d8feae4b26f51",
+                "sha256:6ae134cc0203c33377d43188d4064e9b357dba58cff3185f22924610e70a9d28"
             ],
             "markers": "python_version >= '3.9'",
-            "version": "==0.4.0"
+            "version": "==0.4.1"
         },
         "urllib3": {
             "hashes": [
