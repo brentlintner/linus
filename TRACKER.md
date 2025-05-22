@@ -74,7 +74,7 @@ Anything related to the project management of the project, such as tracking issu
 * Prompt Customization
     * Linus keeps using metadata {{{}}} syntax (use PROJECT.md instead)
     * Pull in language specific files in the Database to help the LLM (ex: https://dotcursorrules.com/)
-    * Pull in best practices, cheatsheets and other useful information from the Database
+    * Pull in best practices, cheatsheets and other useful information from the Database (depending on settings and context)
     * If a PROJECT.md exists, pull that into the Database
         * Create one for this project to test out
         * For example: don't use the {{}} syntax inline in any file's content, use the placeholder method in parser.py
