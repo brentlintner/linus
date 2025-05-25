@@ -6,9 +6,7 @@ A terminal-based conversational AI coding partner that helps you write software 
 
 *   **Context-Aware Assistance:**  Maintains session history and project context for consistent, relevant suggestions.
 *   **File System Integration:**  Reads and writes directly to project files while showing diffs, allowing for seamless integration and modification.
-*   **Shell Interation:**  Executes terminal commands on your behalf and analyzes the output for errors.
 *   **Fuzzy Finder:** Fuzzy search for files to reference in the current message.
-*   **Tmux Integration:**  Provide terminal output when debugging test failures or other issues.
 *   **Customizable Ignored Files**: Supports ignoring files and folders via `.linignore`, and auto ignoring anything in your `.gitignore` file
 
 ## Dependencies
