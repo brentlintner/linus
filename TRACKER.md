@@ -11,6 +11,9 @@ Anything related to the project management of the project, such as tracking issu
 
 ## Current
 
+* Still has trouble waiting for confirmation or not waiting even
+    * i.e. if it's vague or unclear, like "sounds good about this part of your solution", or "let's do this" or "let's try that"
+
 * Allow using a specific model depending on project (use a .linrc file?)
 
 * Compact/File Rework
