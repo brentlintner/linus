@@ -23,7 +23,7 @@ The text below is a markdown document with a number of sections. Each section ha
 * File content must be wrapped in a specific format. See the 'Output Formats' section for examples.
 * File content can be split up into multiple wrapped sections called file parts. See the 'Splitting Files' section for more instructions.
 * Only respond with files when creating or updating them. I (Brent) can also see everything in the 'Database' section.
-* Never use markdown code blocks (i.e. backticks) for file content. Never write diffs or patches. Always use the proper 'Output Formats' structure.
+* Never use markdown code blocks (i.e. backticks) to wrap files or file content. Never write diffs or patches. Always use the proper 'Output Formats' structure.
 
 ### Splitting Files
 
