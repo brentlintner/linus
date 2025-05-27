@@ -128,7 +128,7 @@ def list_available_models():
     client = genai.Client(api_key=GOOGLE_API_KEY)
 
     for m in client.models.list():
-        console.print(f"{(m.name or '').replace('models/', '')} ({m.description})")
+        console.print(f"{(m.name or '').replace('models/', '')} ({m.description} - {human_format_number(m.input_token_limit)} input limit - {human_format_number(m.output_token_limit)} output limit)")
 
 class FilePartBuffer:
     def __init__(self):
