@@ -349,7 +349,7 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_pat
         request_text = ''.join(history)
         # Ensure CONVERSATION_END_SEP is only added if not already somehow present from continuation
         if not request_text.strip().endswith(parser.CONVERSATION_END_SEP):
-             request_text += f'\n{parser.CONVERSATION_END_SEP}\n'
+            request_text += f'\n{parser.CONVERSATION_END_SEP}\n'
 
         contents = [types.Part.from_text(text=request_text)]
         start_time = time.time()
@@ -491,17 +491,30 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_pat
             m = active_chunk.usage_metadata
             prompt_token_count = m.prompt_token_count or 0
             candidates_token_count = m.candidates_token_count or 0
-            # cached_content_token_count = m.cached_content_token_count or 0 # If available
+            cached_content_token_count = m.cached_content_token_count or 0 # If available
             total_token_count = m.total_token_count or 0
         session_total_tokens += total_token_count
         if is_verbose():
-            duration = time.time() - start_time
-            chars, lines = calculate_history_stats()
+            end_time = time.time()
+            duration = end_time - start_time
+            total_characters, total_lines = calculate_history_stats()
             console.print()
-            if is_debug():
-                console.print(f"{human_format_number(session_total_tokens)} (sess), {human_format_number(prompt_token_count)} (req), {human_format_number(candidates_token_count)} (res), {human_format_number(lines)} (lns), {human_format_number(chars)} (ch), {duration:.2f}s ({GEMINI_MODEL})")
+            if (is_debug()):
+                console.print(
+                    f"{human_format_number(session_total_tokens)} (session), "
+                    f"{human_format_number(prompt_token_count)} (request), "
+                    f"{human_format_number(candidates_token_count)} (response), "
+                    f"{human_format_number(cached_content_token_count)} (cached), "
+                    f"{human_format_number(total_lines)} (lines), "
+                    f"{human_format_number(total_characters)} (chars), "
+                    f"{duration:.2f}s ({GEMINI_MODEL})"
+                )
             else:
-                console.print(f"{human_format_number(session_total_tokens)} tokens, {duration:.2f}s")
+                console.print(
+                    f"{human_format_number(session_total_tokens)} tokens, "
+                    f"{human_format_number(cached_content_token_count)} cached, "
+                    f"{duration:.2f}s"
+                )
 
         return is_continuation_needed
 
