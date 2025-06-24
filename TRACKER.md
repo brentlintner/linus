@@ -11,19 +11,21 @@ Anything related to the project management of the project, such as tracking issu
 
 ## Current
 
-* Allow using a specific model depending on project (use a .linrc file?)
-
 * Compact/File Rework
+    * Need to ideally keep prompts <200K characters for better pricing
+        * Auto compact option?
+    * Should consider dynamic putting it together with vector etc
     * Always merge multiple parts into one file after LLM sends it
     * Bug: Add file metadata start to incomplete file block?
-    * Should consider dynamic putting it together with vector etc
+    * Refresh should run $compact first so it "prunes all files in the conversation history"
 
-* Refresh should run $compact first so it "prunes all files in the conversation history"
+* Allow using a specific model depending on project (use a .linrc file?)
 
 * Prompt Issues
     * Still has trouble refactoring when it's all in a file and very related (i.e. a method)
     * Still has trouble waiting for confirmation or not waiting even
         * i.e. if it's vague or unclear, like "sounds good about this part of your solution", or "let's do this" or "let's try that"
+        * modify the last instruction to say if my last message was a confirmation, then you can proeeced, else wait for confirmation
     * Still hallucinating and writing both our conversations. Should make that more forceful or even re-add it to my own reply?
         * Possible it is because of the "wait before coding" prompt and it's not clear enough
         * --> possible the massive amount of files, and it lost context
@@ -31,14 +33,19 @@ Anything related to the project management of the project, such as tracking issu
 
 ## Backlog
 
-* Snippets find files causes out of range (just remove snippets formatting?)
+* Search grounding for better experience?
+    * Have option to enable or disable it?
+    * Show grounding metadata counts and tokens etc for debug
+    * https://ai.google.dev/gemini-api/docs/google-search
 
-* Bug: Parts don't have a newline at the end if we strip the last line?
+* Snippets find files causes out of range (just remove snippets formatting?)
+    * Just remove the concept of snippets, just use markdown code blocks instead, or better to keep metadata consistent?
 
 * Considering using FinishReason API to determine if the LLM ran out of tokens or not
     * Not a big issue with latest models though, but helpful for debug mode?
 
 * Even quicker streaming (look for \n\n, and leave right side of it for next prompt)
+
 * Always add a trailing newline to files only if the existing one does, else always remove it
 
 * Polishing
@@ -81,6 +88,7 @@ Anything related to the project management of the project, such as tracking issu
 
 * Prompt Customization
     * Linus keeps using metadata {{{}}} syntax (use PROJECT.md instead)
+    * Consider having per path project.md so it only applies if the context applies?
     * Pull in language specific files in the Database to help the LLM (ex: https://dotcursorrules.com/)
     * Pull in best practices, cheatsheets and other useful information from the Database (depending on settings and context)
     * If a PROJECT.md exists, pull that into the Database
