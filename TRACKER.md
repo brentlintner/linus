@@ -12,6 +12,7 @@ Anything related to the project management of the project, such as tracking issu
 ## Current
 
 * Compact/File Rework
+    * Bug: $reset removes the conversation history if it's a single history entry? (i.e. was resumed at some point)
     * Need to ideally keep prompts <200K characters for better pricing
         * Auto compact option?
     * Should consider dynamic putting it together with vector etc
