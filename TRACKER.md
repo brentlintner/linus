@@ -1,4 +1,3 @@
-# Project Management
 
 Anything related to the project management of the project, such as tracking issues, features, bugs, and chores.
 
@@ -20,10 +19,16 @@ Anything related to the project management of the project, such as tracking issu
     * Bug: Add file metadata start to incomplete file block?
     * Refresh should run $compact first so it "prunes all files in the conversation history"
 
-* Allow using a specific model depending on project (use a .linrc file?)
+* Config File
+    * Allow using a specific model depending on project (use a .linrc file?)
+
+* File Split / EOF Handling
+    * When adding parts only look for a single \n after metadata header (so we don't lose indentation)
+    * Always add a trailing newline to files only if the existing one does, else always remove it
 
 * Prompt Issues
     * Still has trouble refactoring when it's all in a file and very related (i.e. a method)
+    * Ensure files in the initial file references section are back to back (no newline between parts, like llm does)
     * Still has trouble waiting for confirmation or not waiting even
         * i.e. if it's vague or unclear, like "sounds good about this part of your solution", or "let's do this" or "let's try that"
         * modify the last instruction to say if my last message was a confirmation, then you can proeeced, else wait for confirmation
@@ -34,31 +39,21 @@ Anything related to the project management of the project, such as tracking issu
 
 ## Backlog
 
-* Search grounding for better experience?
-    * Have option to enable or disable it?
-    * Show grounding metadata counts and tokens etc for debug
-    * https://ai.google.dev/gemini-api/docs/google-search
+* Consider handling prompt feedback cases https://ai.google.dev/api/generate-content#v1beta.GenerateContentResponse
 
-* Snippets find files causes out of range (just remove snippets formatting?)
-    * Just remove the concept of snippets, just use markdown code blocks instead, or better to keep metadata consistent?
+* Have option to enable or disable search grounding?
 
 * Considering using FinishReason API to determine if the LLM ran out of tokens or not
     * Not a big issue with latest models though, but helpful for debug mode?
 
 * Even quicker streaming (look for \n\n, and leave right side of it for next prompt)
 
-* Always add a trailing newline to files only if the existing one does, else always remove it
-
 * Polishing
     * Include top level directory name if it is ignored
     * Print separate consistency now that you changed end logs earlier
-    * Add back the request/response token logging separate
     * Finish linting
     * Eventually, -o to set initially open files (now defaults to -f), -f will just limit the files to the project
     * Add unicode > OR Remove '> ' from the prompt? (clean copy/paste)
-
-* File List
-    * Include top level directory name if it is ignored?
 
 * Sqlite DB
     * Prune history not working (keeps previous version?)
@@ -66,7 +61,7 @@ Anything related to the project management of the project, such as tracking issu
         * Only prune a file once it gets too big, and only prune the oldest versions
 
 * Prompt Engineering
-    * It's still talking about parts etc
+    * It's still talking about parts etc (?)
     * Try to avoid writing tests, leave that to separate (causes attention shift for llm?)
     * Allow llm to say, you're wrong about your request
     * Prompt should have flow to where the LLM _will_ start writing and responding
