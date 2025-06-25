@@ -354,7 +354,6 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_pat
     def send_request_to_ai(is_continuation=False):
         """Sends a request to the AI and processes the streamed response."""
         nonlocal session_total_tokens
-
         # NOTE: We need set this here because is_continuation can be manually set to True in the chunk processing loop below
         should_add_user_prefix = not is_continuation
 
@@ -362,9 +361,23 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_pat
 
         contents = [types.Part.from_text(text=request_text)]
 
+        tools = [
+            types.Tool(google_search=types.GoogleSearch()),
+            types.Tool(url_context=types.UrlContext())
+        ]
+
+        config = types.GenerateContentConfig(
+            tools=tools,
+            response_modalities=["TEXT"]
+        )
+
         start_time = time.time()
 
-        stream = client.models.generate_content_stream(model=GEMINI_MODEL, contents=contents)
+        stream = client.models.generate_content_stream(
+            model=GEMINI_MODEL,
+            contents=contents,
+            config=config
+        )
 
         full_response_text = ""
         queued_response_text = ""
@@ -538,12 +551,16 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_pat
         candidates_token_count = 0
         cached_content_token_count = 0
         total_token_count = 0
+        thoughts_token_count = 0
+        tool_use_prompt_token_count = 0
 
         if last_chunk and last_chunk.usage_metadata:
             prompt_token_count = last_chunk.usage_metadata.prompt_token_count or 0
             candidates_token_count = last_chunk.usage_metadata.candidates_token_count or 0
             cached_content_token_count = last_chunk.usage_metadata.cached_content_token_count or 0
             total_token_count = last_chunk.usage_metadata.total_token_count or 0
+            thoughts_token_count = last_chunk.usage_metadata.thoughts_token_count or 0
+            tool_use_prompt_token_count = last_chunk.usage_metadata.tool_use_prompt_token_count or 0
 
         # --- History and File Writing ---
 
@@ -562,7 +579,7 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_pat
         if writeable:
             # Write all assembled files
             if assembled_files:
-                console.print("\nFiles Changed\n", style="bold")
+                console.print("\nFiles Changed\n", style="bold yellow")
             for (file_path, version), file_content in assembled_files.items():
                 console.print(f"  {file_path}", style="bold green")
                 full_path = os.path.join(cwd, file_path)  # Get full path for writing
@@ -583,11 +600,34 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_pat
             duration = end_time - start_time
             total_characters, total_lines = calculate_history_stats()
             console.print()
-            if (is_debug()):
+
+            if is_debug():
+                # --- Grounding Metadata ---
+                grounding_metadata = None
+                if last_chunk.candidates and last_chunk.candidates[0]:
+                    grounding_metadata = getattr(last_chunk.candidates[0], 'grounding_metadata', None)
+
+                    if grounding_metadata and grounding_metadata.grounding_chunks:
+                        console.print("Grounding Sources", style="bold yellow")
+                        sites = []
+                        for result in grounding_metadata.grounding_chunks:
+                            ground = result.web or result.retrieved_context
+                            if re.search("grounding-api-redirect", ground.uri, re.IGNORECASE):
+                                sites.append(ground.title)
+                            else:
+                                sites.append(ground.uri)
+
+                        for site in list(set(sites)):
+                            console.print(f"  - {re.sub(r'https?://', '', site)}")
+
+                        console.print()
+
                 console.print(
                     f"{human_format_number(session_total_tokens)} (session), "
                     f"{human_format_number(prompt_token_count)} (request), "
                     f"{human_format_number(candidates_token_count)} (response), "
+                    f"{human_format_number(thoughts_token_count)} (thoughts), "
+                    f"{human_format_number(tool_use_prompt_token_count)} (tool), "
                     f"{human_format_number(cached_content_token_count)} (cached), "
                     f"{human_format_number(total_lines)} (lines), "
                     f"{human_format_number(total_characters)} (chars), "
@@ -596,6 +636,7 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_pat
             else:
                 console.print(
                     f"{human_format_number(session_total_tokens)} tokens, "
+                    f"{human_format_number(prompt_token_count)} prompt, "
                     f"{human_format_number(cached_content_token_count)} cached, "
                     f"{duration:.2f}s"
                 )
