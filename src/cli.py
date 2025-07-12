@@ -15,7 +15,7 @@ def add_general_args(parser):
     group = parser.add_argument_group(title="General Options")
     # fmt: off
     group.add_argument("-m", "--models", action="store_true", help="List available generative AI models.")
-    group.add_argument("-c", "--clean", action="store_true", help="Remove all history files in the tmp/ directory.")
+    group.add_argument("-c", "--clean", action="store_true", help="Clean history file for the current project (cwd).")
     group.add_argument("-v", "--verbose", action="store_true", help="Log verbose output.")
     group.add_argument("-q", "--quiet", action="store_true", help="Only print responses, in plain text")
     group.add_argument('--version', action='version', version=f'%(prog)s {__version__}', help="Show the version number and exit.")
@@ -34,7 +34,7 @@ def add_debug_args(parser):
     group = parser.add_argument_group(title="Debug Options")
     # fmt: off
     group.add_argument("-V", "--debug", action="store_true", help="Log debug output.")
-    group.add_argument("-d", "--directory", type=str, default=os.getcwd(), help="Specify working directory.")
+    group.add_argument("-d", "--directory", type=str, help="Specify working directory (used internally, see bin/ai entry point).")
     # fmt: on
 
 def add_file_listing_args(parser):
