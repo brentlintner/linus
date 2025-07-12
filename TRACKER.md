@@ -10,6 +10,19 @@ Anything related to the project management of the project, such as tracking issu
 
 ## Current
 
+* Sqlite DB?
+    * Init on run
+    * Store conversation history & file references
+    * Prompt in general is created on demand from the database
+    * Store the conversation history in the database
+        * Files revisions are stored as strings in the message history and stripped out of metadata
+        * Snippets are stored still inside the message history as metdata strings for now
+    * Only load the last N messages (i.e. 10) into memory?
+    * Auto compact the conversation history based on the context window size
+    * Now we don't need $compact, as the database will handle it
+    * Now $reset will clear the conversation history and file references, then re-initialize the database (with files)
+    * Post TODO: file watchers to update the database when files change (new revisions?)
+
 * Compact/File Rework
     * Bug: $reset removes the conversation history if it's a single history entry? (i.e. was resumed at some point)
     * Need to ideally keep prompts <200K characters for better pricing
@@ -18,9 +31,6 @@ Anything related to the project management of the project, such as tracking issu
     * Always merge multiple parts into one file after LLM sends it
     * Bug: Add file metadata start to incomplete file block?
     * Refresh should run $compact first so it "prunes all files in the conversation history"
-
-* Config File
-    * Allow using a specific model depending on project (use a .linrc file?)
 
 * File Split / EOF Handling
     * When adding parts only look for a single \n after metadata header (so we don't lose indentation)
@@ -47,6 +57,9 @@ Anything related to the project management of the project, such as tracking issu
     * Not a big issue with latest models though, but helpful for debug mode?
 
 * Even quicker streaming (look for \n\n, and leave right side of it for next prompt)
+
+* Config File
+    * Allow using a specific model depending on project (use a .linrc file?)
 
 * Polishing
     * Include top level directory name if it is ignored
@@ -129,8 +142,7 @@ Anything related to the project management of the project, such as tracking issu
 * If model stops mid file, even if continue, it won't write the file
 * Files and tree data should be refreshed every time the project is resumed, depending on the flags enabled
 * Resume is really slow for giant files
-* Ensure trailing newlines don't happen a lot
-    * This means we drop an empty last part too?
+* Ensure trailing newlines always are added to files?
 
 ### Features
 

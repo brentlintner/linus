@@ -1,4 +1,5 @@
 .env
+.lin.db
 tmp
 .DS_Store
 .ignore

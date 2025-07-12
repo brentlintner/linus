@@ -11,6 +11,7 @@ prompt-toolkit = "~=3.0.48"
 pathspec = "~=0.12.1"
 rich = "~=13.7.0"
 google-genai = "*"
+peewee = "*"
 
 [dev-packages]
 watchdog = "*"

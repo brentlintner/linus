@@ -32,6 +32,7 @@ from .file_utils import (
     get_file_contents,
     human_format_number
 )
+from .database import initialize_database
 
 history = []
 
@@ -160,13 +161,14 @@ class FilePartBuffer:
         del self.final_parts[(file_path, version)]  # Clean up
         return full_content
 
+# TODO: this is a hacky way to compact the history, ideally we should have a more robust way to handle file versions (using the new DB way)
 def compact_history(history_list, history_filename=None):
     """Compacts files in the history list to only the latest version."""
     # Expects history_list to be a list containing one string element (the full history)
     if not history_list:
         return history_list # Return empty list if input is empty
 
-    history_content = history_list[0] # Assume the full history is the first element
+    history_content = history_list[0] # Assume the full history is the first element (hacky, but works for now)
 
     try:
         before_file_refs, after_file_refs = history_content.split(parser.FILES_START_SEP, 1)
@@ -233,6 +235,10 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_pat
     global history # Ensure we modify the global history
     client = genai.Client(api_key=GOOGLE_API_KEY)
 
+    # Initialize the database
+    db = initialize_database(cwd)
+    debug(f"Using sqlite database: {db.database}")
+
     # Split the comma-separated ignore patterns into a list
     extra_ignore_patterns = ignore_patterns.split(',') if ignore_patterns else None
 
@@ -244,7 +250,8 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_pat
     previous_session = last_session(cwd)
 
     if resume and previous_session:
-        prompt_history_file = os.path.join(os.path.dirname(__file__), f"../tmp/{previous_session[0]}")
+        previous_session_path = previous_session[0] # Get the filename from the tuple
+        prompt_history_file = os.path.join(os.path.dirname(__file__), f"../tmp/{previous_session_path}")
         with open(prompt_history_file, 'r', encoding='utf-8') as f:
             prompt_history = f.read()
 
@@ -310,6 +317,7 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_pat
 
     def refresh_project_context():
         prefix = prompt_prefix(extra_ignore_patterns, include_patterns, cwd)
+        # TODO: this is probably error prone
         history[0] = re.sub(parser.match_before_conversation_history(), prefix, history[0], flags=re.DOTALL)
         if history_filename:
             with open(history_filename, 'w', encoding='utf-8') as f:
@@ -447,7 +455,7 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_pat
                             continue
 
                         # TODO: need to look for multiple files here? I think we can assume not because we're streaming
-                        file_path, version, file_content, language, part_id, no_more_parts = files[0]
+                        file_path, version, file_content, language, part_id, no_more_parts = files[0] # Get the first file only (hacky, but works for now)
 
                         file_part_buffer.add(file_path, file_content, part_id, no_more_parts, version)
 
@@ -470,9 +478,11 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_pat
                     else:
                         status.update("Linus is typing...")
                         file_path = None
-                        language, code = parser.find_snippets(section)[0]
-                        section = f"```{language}\n{code}\n```"
-                        print_markdown(section)
+                        snippets = parser.find_snippets(section)
+                        if snippets:
+                            language, code = snippets[0]  # Get the first snippet (TODO: handle multiple snippets? will there be multiple based on parsing?)
+                            section = f"```{language}\n{code}\n```"
+                            print_markdown(section)
 
             # Handle any remaining text in the queue (non-code block parts)
             if queued_response_text:
@@ -509,7 +519,7 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_pat
                         error("")
                         return False
 
-                    file_path, version, file_content, language, part_id, no_more_parts = files[0]
+                    file_path, version, file_content, language, part_id, no_more_parts = files[0]  # Get the first file only (hacky, but works for now)
 
                     file_part_buffer.add(file_path, file_content, part_id, no_more_parts, version)
 
@@ -526,7 +536,7 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_pat
 
                 else:
                     files = parser.find_files(full_response_text)
-                    unfinished_files = [file for file in files if not file[5]] # No more parts
+                    unfinished_files = [file for file in files if not file[5]] # No more parts (check the last element, no_more_parts)
 
                     # We have cut off mid normal text (i.e. have not seen nomoreparts for a file)
                     if unfinished_files:
@@ -604,6 +614,7 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_pat
             if is_debug():
                 # --- Grounding Metadata ---
                 grounding_metadata = None
+                # If the last chunk has candidates and the first candidate has grounding metadata
                 if last_chunk.candidates and last_chunk.candidates[0]:
                     grounding_metadata = getattr(last_chunk.candidates[0], 'grounding_metadata', None)
 
