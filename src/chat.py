@@ -327,7 +327,7 @@ def process_response(full_response_text, assembled_files, state):
 
     Chat.create(user=llm_user, message=full_response_text.strip())
 
-    if not state['writeable']:
+    if state['writeable']:
         # Write all assembled files
         if assembled_files:
             console.print("\nFiles Changed\n", style="bold yellow")
