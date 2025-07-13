@@ -8,6 +8,7 @@ from prompt_toolkit.completion import FuzzyCompleter, Completer, Completion
 from prompt_toolkit.shortcuts import CompleteStyle
 import pathspec
 
+# TODO: rename this to prompt.py or something more appropriate? (chat is technically the true repl)
 from .config import DEFAULT_IGNORE_PATTERNS
 
 key_bindings = KeyBindings()

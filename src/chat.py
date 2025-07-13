@@ -29,6 +29,7 @@ from .file_utils import (
 from .database import initialize_database, User, Chat, db_proxy
 
 def llm_prompt(ignore_patterns=None, include_patterns=None, cwd=os.getcwd()):
+    # TODO: if prompt is larger than 500K characters, show a warning and confirmation (in debug?)
     try:
         with open(PROMPT_PREFIX_FILE, 'r', encoding='utf-8') as f:
             prefix = f.read()
@@ -136,12 +137,14 @@ def process_response_metadata(response, state):
                 f"{duration:.2f}s"
             )
 
-def process_request_stream(stream, state, file_part_buffer, assembled_files, cwd):
+def process_request_stream(stream, state):
     """Processes the streamed response from the AI."""
     full_response_text = ""
     queued_response_text = ""
 
-    assembled_files = {}  # Store successfully assembled files here.
+    cwd = state['cwd']
+    assembled_files = {}
+    file_part_buffer = state['file_part_buffer']
 
     with console.status("Linus is thinking...", spinner="point") as status:
         for chunk in stream:
@@ -272,7 +275,7 @@ def process_request_stream(stream, state, file_part_buffer, assembled_files, cwd
                     error(incomplete_file_block)
                     error("")
                     state['force_continue'] = False
-                    return full_response_text, last_chunk
+                    return full_response_text, last_chunk, assembled_files
 
                 file_path, version, file_content, language, part_id, no_more_parts = files[0]  # Get the first file only (hacky, but works for now)
 
@@ -306,9 +309,11 @@ def process_request_stream(stream, state, file_part_buffer, assembled_files, cwd
 
     status.stop()
 
-    return full_response_text, last_chunk
+    return full_response_text, last_chunk, assembled_files
 
-def process_response_files(full_response_text, state, assembled_files, llm_user, cwd):
+def process_response(full_response_text, assembled_files, state):
+    llm_user, _ = User.get_or_create(name='linus')
+
     # If we are forcing a continuation, we need to append the response to the last chat message by the llm user
     if state['force_continue']:
         # TODO: handle no chats found (should not happen)
@@ -317,6 +322,8 @@ def process_response_files(full_response_text, state, assembled_files, llm_user,
         last_chat.message = last_chat.message.strip()
         last_chat.save()
         return
+
+    cwd = state['cwd']
 
     Chat.create(user=llm_user, message=full_response_text.strip())
 
@@ -336,6 +343,37 @@ def process_response_files(full_response_text, state, assembled_files, llm_user,
         if len(assembled_files) > 0:
             print()
 
+def print_recap():
+    # Show recap of previous chats
+    # TODO: add flag to not show previous chats on resume
+    with db_proxy:
+        chats = Chat.select().join(User).order_by(Chat.timestamp)
+        for chat in chats:
+            message = chat.message.strip()
+
+            files = parser.find_files(message)
+            for file_path, version, content, _, _, _ in files:
+                language = parser.get_language_from_extension(file_path)
+                # HACK: ideally we avoid doing this per file, but it's a quick fix for now
+                replaced_content = content.replace("\\", "\\\\")
+                suffix = " (EMPTY)" if not replaced_content else ""
+                message = re.sub(
+                    parser.match_file(file_path),
+                    rf'#### {file_path} (v{version}){suffix}\n\n```{language}\n{replaced_content}\n```',
+                    message,
+                    flags=re.DOTALL,
+                    count=1)
+                # HACK: extra parts are not removed just the first one
+                message = re.sub(parser.match_file(file_path), '', message, flags=re.DOTALL)
+
+            message = re.sub(
+                parser.match_snippet(),
+                r'#### \1\n\n```\1\n\2\n```',
+                message,
+                flags=re.DOTALL)
+
+            print_markdown(f'**{chat.user.name.capitalize()}:**\n\n{message}')
+
 def send_request_to_ai(state, client):
     """Sends a request to the AI and processes the streamed response."""
     request_text = llm_prompt(
@@ -351,48 +389,22 @@ def send_request_to_ai(state, client):
             f.write(request_text)
         debug(f"Current request saved to {tmp_file}")
 
-    file_part_buffer = state['file_part_buffer']
-    cwd = state['cwd']
-
-    contents = [types.Part.from_text(text=request_text)]
-
-    llm_user, _ = User.get_or_create(name='linus')
-
-    tools = [
-        types.Tool(google_search=types.GoogleSearch()),
-        types.Tool(url_context=types.UrlContext())
-    ]
-
-    config = types.GenerateContentConfig(
-        tools=tools,
-        response_modalities=["TEXT"]
-    )
-
     state['start_time'] = time.time()
 
-    stream = client.models.generate_content_stream(
-        model=GEMINI_MODEL,
-        contents=contents,
-        config=config
-    )
+    tools = [types.Tool(google_search=types.GoogleSearch()), types.Tool(url_context=types.UrlContext())]
+    config = types.GenerateContentConfig(tools=tools, response_modalities=["TEXT"])
+    contents = [types.Part.from_text(text=request_text)]
 
-    assembled_files = {}  # Store successfully assembled files here.
+    stream = client.models.generate_content_stream(model=GEMINI_MODEL, contents=contents, config=config)
 
-    full_response_text, last_chunk = process_request_stream(stream, state, file_part_buffer, assembled_files, cwd)
+    full_response_text, last_chunk, assembled_files = process_request_stream(stream, state)
 
-    process_response_files(full_response_text, state, assembled_files, llm_user, cwd)
+    process_response(full_response_text, assembled_files, state)
 
-    if not state['force_continue']:
-        process_response_metadata(last_chunk, state) # HACK: 'chunk' is still in scope from the loop
+    process_response_metadata(last_chunk, state) # HACK: 'chunk' is still in scope from the loop
 
-    state['force_continue'] = False  # Reset force continue state
-    return
-
-def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_patterns=None, cwd=os.getcwd()):
-    # Initialize the database
-    db = initialize_database(cwd)
-    debug(f"Using sqlite database: {db.database}")
-
+# TODO: make into a class or better structure?
+def session_state(cwd, resume=False, writeable=False, ignore_patterns=None, include_patterns=None):
     # Split the comma-separated ignore patterns into a list
     ignore_patterns = ignore_patterns.split(',') if ignore_patterns else None
 
@@ -400,9 +412,7 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_pat
     if include_patterns is not None and "." in include_patterns:
         include_patterns = ["."]  # Treat "." as a special case, including all files.
 
-    client = genai.Client(api_key=GOOGLE_API_KEY)
-    session = create_prompt_session(cwd)
-    state = {
+    return {
         'session_total_tokens': 0,
         'file_part_buffer': FilePartBuffer(),
         'force_continue': False,
@@ -414,19 +424,7 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_pat
         'cwd': cwd,
     }
 
-    # Show recap of previous chats
-    # TODO: add flag to not show previous chats on resume
-    with db_proxy:
-        chats = Chat.select().join(User).order_by(Chat.timestamp)
-        for chat in chats:
-            message = chat.message.strip()
-            message = re.sub(
-                parser.match_snippet(),
-                r'#### \1\n\n```\1\n\2\n```',
-                message,
-                flags=re.DOTALL)
-            print_markdown(f'**{chat.user.name.capitalize()}:**\n\n{message}')
-
+def repl_loop(session, client, state):
     while True:
         try:
             if state['force_continue']:
@@ -476,3 +474,16 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_pat
         except Exception:
             print("Linus has glitched!\n")
             console.print_exception(show_locals=True)
+
+def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_patterns=None, cwd=os.getcwd()):
+    initialize_database(cwd)
+
+    client = genai.Client(api_key=GOOGLE_API_KEY)
+
+    session = create_prompt_session(cwd)
+
+    state = session_state(cwd, resume, writeable, ignore_patterns, include_patterns)
+
+    print_recap()
+
+    repl_loop(session, client, state)

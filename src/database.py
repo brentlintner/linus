@@ -10,6 +10,7 @@ from peewee import (
     Proxy
 )
 from datetime import datetime
+from .logger import debug
 
 # Use a proxy for the database so we can initialize it later.
 db_proxy = Proxy()
@@ -53,5 +54,7 @@ def initialize_database(directory):
         # Pre-populate users if they don't exist
         User.get_or_create(name='brent')
         User.get_or_create(name='linus')
+
+    debug(f"Using sqlite database: {database.database}")
 
     return database
