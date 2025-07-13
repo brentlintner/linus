@@ -19,6 +19,7 @@ TERMINAL_METADATA_START =   placeholder('START TERMINAL METADATA')
 TERMINAL_METADATA_END =     placeholder('END TERMINAL METADATA')
 END_OF_FILE =               placeholder('END OF FILE')
 END_OF_SNIPPET =            placeholder('END OF CODE SNIPPET')
+END_OF_TERMINAL_LOG =       placeholder('END OF TERMINAL LOG')
 FILE_TREE_PLACEHOLDER =     placeholder('FILE_TREE_JSON')
 FILES_PLACEHOLDER =         placeholder('FILE_REFERENCES')
 FILES_START_SEP =           placeholder('FILE_REFERENCES START')
@@ -248,10 +249,10 @@ Language: {language}
 def terminal_log_block(content, title):
     return f"""
 {TERMINAL_METADATA_START}
-Session: {title}
+Name: {title}
 {TERMINAL_METADATA_END}
 {content}
-{END_OF_FILE}
+{END_OF_TERMINAL_LOG}
 """
 
 def get_language_from_extension(filename):

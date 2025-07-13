@@ -1,24 +1,29 @@
 import subprocess
 import os
+import re
 
-from .chat import error
+from .logger import error
 from .parser import terminal_log_block
 
-def get_tmux_pane_content(__session_name__, pane_id):
-    command = ["tmux", "capture-pane", "-p", "-t", f"{pane_id}", "-S", "-"]
+def get_tmux_pane_content(__session_name__, pane_id, history=200):
+    command = ["tmux", "capture-pane", "-p", "-t", f"{pane_id}", "-S", f"-{history}"]
     result = subprocess.run(command, capture_output=True, text=True, check=True)
     if result.returncode != 0:
         error(f"Error capturing pane {pane_id}: {result.stderr}")
         return ""  # Return empty string on error
     return result.stdout
 
-def get_tmux_pane_ids(session_name, __pane_id__):
-    command = ["tmux", "list-panes", "-s", "-F", "#{pane_id}", "-t", session_name]
+def get_tmux_panes(session_name):
+    command = ["tmux", "list-panes", "-s", "-F", "#D{{{}}}#W-#P-#T", "-t", session_name]
     result = subprocess.run(command, capture_output=True, text=True, check=True)
     if result.returncode != 0:
         error(f"Error listing panes for {session_name}: {result.stderr}")
         return [] # Return empty list on error.  Important!
-    return result.stdout.strip().splitlines()
+    panes = result.stdout.strip().splitlines()
+    panes = [pane.split("{{{}}}") for pane in panes]
+
+    # TODO: (possible to just give no pane + -S - somehow?)
+    return [[pid, title] for pid, title in panes if not re.search(r"n?vim", title, flags=re.IGNORECASE)]
 
 def get_current_tmux_pane_id():
     """Gets the current tmux pane ID."""
@@ -38,13 +43,13 @@ def get_tmux_logs():
         error(f"Error getting tmux session name: {e}")
         return f"Error getting tmux session name: {e}\n"
 
-    pane_ids = get_tmux_pane_ids(session_name, current_pane_id)
+    panes = get_tmux_panes(session_name)
+
     all_logs = ""
 
-    for pane_id in pane_ids:
-        if pane_id != current_pane_id:
-            content = get_tmux_pane_content(session_name, pane_id)
-            # TODO: use "-F\#W-\#P-\#T" as title
-            title = f"Pane {pane_id}"
+    for pid, title in panes:
+        if pid != current_pane_id:
+            content = get_tmux_pane_content(session_name, pid)
             all_logs += terminal_log_block(content, title)
+
     return all_logs

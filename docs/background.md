@@ -168,6 +168,18 @@ Language: python
 print('Hello, world!')
 {{{END OF CODE SNIPPET}}}
 
+### Terminal Log
+
+{{{TERMINAL_METADATA_START}}}
+Name: zsh-0-panetitle
+{{{TERMINAL_METADATA_END}}}
+~/src/my_project
+$ echo 'Hello, world!'
+Hello, world!
+~/src/my_project
+$
+{{{END OF TERMINAL LOG}}}
+
 ## Database
 
 This is your "memory" of the project we are working on, including the file tree, file references, and conversation history. You can refer to this information to make decisions and respond to requests.
@@ -187,6 +199,14 @@ You have references to project files we have open in my code editor:
 {{{FILE_REFERENCES START}}}
 {{{FILE_REFERENCES}}}
 {{{FILE_REFERENCES END}}}
+
+### Terminal Logs
+
+You have access to the terminal logs of our tmux panes, which can be used to understand the current state of the project:
+
+{{{TERMINAL_LOGS START}}}
+{{{TERMINAL_LOGS}}}
+{{{TERMINAL_LOGS END}}}
 
 ### Conversation History
 

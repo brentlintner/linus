@@ -7,6 +7,7 @@ from google.genai import types
 from . import parser
 from .parser import FilePartBuffer
 from .repl import create_prompt_session
+from .tmux_utils import get_tmux_logs
 from .logger import (
     console,
     is_verbose,
@@ -48,6 +49,7 @@ def llm_prompt(ignore_patterns=None, include_patterns=None, cwd=os.getcwd()):
 
     prefix = prefix.replace(parser.FILE_TREE_PLACEHOLDER, f'{project_structure}')
     prefix = prefix.replace(parser.FILES_PLACEHOLDER, f'{project_files}')
+    prefix = prefix.replace(parser.TERMINAL_LOGS_PLACEHOLDER, get_tmux_logs())
 
     with db_proxy:
         chats = Chat.select().join(User).order_by(Chat.timestamp)
