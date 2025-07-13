@@ -11,7 +11,6 @@ Anything related to the project management of the project, such as tracking issu
 ## Current
 
 * Sqlite DB?
-    * Init on run
     * Store conversation history & file references
     * Prompt in general is created on demand from the database
     * Store the conversation history in the database
@@ -19,9 +18,13 @@ Anything related to the project management of the project, such as tracking issu
         * Snippets are stored still inside the message history as metdata strings for now
     * Only load the last N messages (i.e. 10) into memory?
     * Auto compact the conversation history based on the context window size
-    * Now we don't need $compact, as the database will handle it
+    * Now we don't need $compact, as the database will handle it (or only for stripping out files in message history)
     * Now $reset will clear the conversation history and file references, then re-initialize the database (with files)
-    * Post TODO: file watchers to update the database when files change (new revisions?)
+    * Post TODO: file watchers to update the database when files change (new revisions?)??
+    * Remove Files table as we won't use it anymore?
+    * Prune history not working (keeps previous version?)
+        * "Auto compact" history based on context window size (i.e. keep a few versions of each file if possible)
+        * Only prune a file once it gets too big, and only prune the oldest versions
 
 * Compact/File Rework
     * Bug: $reset removes the conversation history if it's a single history entry? (i.e. was resumed at some point)
@@ -38,6 +41,7 @@ Anything related to the project management of the project, such as tracking issu
 
 * Prompt Issues
     * Still has trouble refactoring when it's all in a file and very related (i.e. a method)
+        * Can't fix? Only fix with modular, simple code that isn't complex (ex: using a method that returns an arrary or none)
     * Ensure files in the initial file references section are back to back (no newline between parts, like llm does)
     * Still has trouble waiting for confirmation or not waiting even
         * i.e. if it's vague or unclear, like "sounds good about this part of your solution", or "let's do this" or "let's try that"
@@ -46,6 +50,25 @@ Anything related to the project management of the project, such as tracking issu
         * Possible it is because of the "wait before coding" prompt and it's not clear enough
         * --> possible the massive amount of files, and it lost context
         * I.e add 'remember the 'Instructions' section you should follow'
+
+* Terminal Integration
+    * Be able to see test output in the terminal (ex: pytest, etc), just let it run the commnads?
+    * Be able to look at console history with @symbol lookup (ex: a tmux session so the recent log to reference (ex: errors, etc))
+    * Be able to allow the ai to writing command blocks (whitelist each command) that run in a subshell.
+        * Use automatic function calling for this (have a cli flag to enable this, else it will ask to run it)
+        * We then take the sliced output and show it to the llm as an open log file linked to the command. It then can then continue on.
+        * Whitelist once per directory for each command? (needs db)
+
+* Prompt Customization
+    * Linus keeps using metadata {{{}}} syntax (use PROJECT.md instead)
+    * Consider having per path project.md so it only applies if the context applies?
+    * Pull in language specific files in the Database to help the LLM (ex: https://dotcursorrules.com/)
+    * Pull in best practices, cheatsheets and other useful information from the Database (depending on settings and context)
+    * If a PROJECT.md exists, pull that into the Database
+        * Create one for this project to test out
+        * For example: don't use the {{}} syntax inline in any file's content, use the placeholder method in parser.py
+        * Have defaults as well
+            * ex: Always use spaces to indent not tabs (look for .editorconfig files or other files as a reference)
 
 ## Backlog
 
@@ -68,11 +91,6 @@ Anything related to the project management of the project, such as tracking issu
     * Eventually, -o to set initially open files (now defaults to -f), -f will just limit the files to the project
     * Add unicode > OR Remove '> ' from the prompt? (clean copy/paste)
 
-* Sqlite DB
-    * Prune history not working (keeps previous version?)
-        * "Auto compact" history based on context window size (i.e. keep a few versions of each file if possible)
-        * Only prune a file once it gets too big, and only prune the oldest versions
-
 * Prompt Engineering
     * It's still talking about parts etc (?)
     * Try to avoid writing tests, leave that to separate (causes attention shift for llm?)
@@ -94,17 +112,6 @@ Anything related to the project management of the project, such as tracking issu
         * Additionally, if the tests fail, then we would ofc tell the model that first, with something akin to "the tests failed, was there something that you missed?" sort of thing
     * Consider using a meta-learning approach to improve the model's performance
     * ex: $learn command tells model to summarize the conversation into a paragraph, this is stored in the db and all are added to the prompt per project
-
-* Prompt Customization
-    * Linus keeps using metadata {{{}}} syntax (use PROJECT.md instead)
-    * Consider having per path project.md so it only applies if the context applies?
-    * Pull in language specific files in the Database to help the LLM (ex: https://dotcursorrules.com/)
-    * Pull in best practices, cheatsheets and other useful information from the Database (depending on settings and context)
-    * If a PROJECT.md exists, pull that into the Database
-        * Create one for this project to test out
-        * For example: don't use the {{}} syntax inline in any file's content, use the placeholder method in parser.py
-        * Have defaults as well
-            * ex: Always use spaces to indent not tabs (look for .editorconfig files or other files as a reference)
 
 * Ensuring Code Complete / Fallback Error Handling
     * Explore getting the LLM to consistently examine it's changes and consider if it made any mistakes
@@ -153,14 +160,6 @@ Anything related to the project management of the project, such as tracking issu
 * Ignoring Files
     * Auto ignore binary files as well as other common files/dirs that are not code (get list from AI)
     * Have own .linignore file to ignore files and directories
-
-* Terminal Integration
-    * Be able to see test output in the terminal (ex: pytest, etc), just let it run the commnads?
-    * Be able to look at console history with @symbol lookup (ex: a tmux session so the recent log to reference (ex: errors, etc))
-    * Be able to allow the ai to writing command blocks (whitelist each command) that run in a subshell.
-        * Use automatic function calling for this (have a cli flag to enable this, else it will ask to run it)
-        * We then take the sliced output and show it to the llm as an open log file linked to the command. It then can then continue on.
-        * Whitelist once per directory for each command? (needs db)
 
 * File Integration
     * Easier ways to provide supplemental files that are huge ex: readme docs, terminal logs

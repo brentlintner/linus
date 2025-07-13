@@ -1,8 +1,10 @@
 import os
 import re
 import shlex
+from collections import defaultdict
 from pygments.util import ClassNotFound
 from pygments.lexers import get_lexer_for_filename, guess_lexer_for_filename
+from .logger import debug
 
 # NOTE: We must use this way to generate the placeholder wrapper so this parsing doesn't fail for this file when
 #       using this project on itself
@@ -24,6 +26,36 @@ FILES_END_SEP =             placeholder('FILE_REFERENCES END')
 CONVERSATION_START_SEP =    placeholder('CONVERSATION_HISTORY START')
 CONVERSATION_END_SEP =      placeholder('CONVERSATION_HISTORY END')
 TERMINAL_LOGS_PLACEHOLDER = placeholder('TERMINAL_LOGS')
+
+class FilePartBuffer:
+    def __init__(self):
+        self.buffer = defaultdict(lambda: defaultdict(str))
+        # Remove total_parts, no longer needed
+        self.final_parts = {} # Keep track of files with a final part
+
+    def add(self, file_path, part_data, current_part, no_more_parts, version):
+        if no_more_parts:
+            # We only care about the *last* part having this flag
+            debug(f"Received **all parts** of {file_path} (v{version})")
+            self.final_parts[(file_path, version)] = True
+        else:
+            debug(f"Received part {current_part} of {file_path} (v{version})")
+            self.buffer[(file_path, version)][current_part] = part_data
+
+    def is_complete(self, file_path, version):
+        # TODO: debug log if we are missing any parts (i.e. have 2, but not 1)
+        return (file_path, version) in self.final_parts
+
+    def assemble(self, file_path, version):
+        if not self.is_complete(file_path, version):
+            return None
+
+        sorted_parts = sorted(self.buffer[(file_path, version)].items())
+        # TODO: ignore the nomoreparts (part 0)? should be empty always
+        full_content = '\n'.join(part_data for _, part_data in sorted_parts)
+        del self.buffer[(file_path, version)]
+        del self.final_parts[(file_path, version)]  # Clean up
+        return full_content
 
 def find_file_references(content):
     file_references = re.findall(r'@(\S+)', content)
@@ -175,6 +207,9 @@ def match_no_more_parts_file_with_version(file_path, version):
 
 def match_snippet():
     return rf'{SNIPPET_METADATA_START}.*?\nLanguage: (.*?)\n.*?{SNIPPET_METADATA_END}\n?(.*?){END_OF_SNIPPET}'
+
+def match_metadata():
+    return rf'({FILE_METADATA_START}.*?{FILE_METADATA_END}|{SNIPPET_METADATA_START}.*?{SNIPPET_METADATA_END}|{TERMINAL_METADATA_START}.*?{TERMINAL_METADATA_END})'
 
 def match_before_conversation_history():
     return rf'^(.*?){CONVERSATION_START_SEP}'

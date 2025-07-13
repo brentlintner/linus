@@ -1,21 +1,39 @@
 import argparse
 import os
 import sys
-import shutil
 from rich.traceback import install
 from google import genai
 from .__version__ import __version__
-from .file_utils import generate_project_file_list
-from .logger import debug_logging, verbose_logging, quiet_logging
-from .chat import coding_repl, check_if_env_vars_set, list_available_models, history_filename_for_directory
+from .config import GOOGLE_API_KEY, GEMINI_MODEL
+from .file_utils import generate_project_file_list, human_format_number
+from .chat import coding_repl
+from .logger import console, error, debug_logging, verbose_logging, quiet_logging
 
 install(show_locals=True)
+
+def check_if_env_vars_set():
+    if not GOOGLE_API_KEY:
+        error("Please set the GOOGLE_API_KEY environment variable.")
+        sys.exit(1)
+
+    if not GEMINI_MODEL:
+        error("Please set the GEMINI_MODEL environment variable (ex: GEMINI_MODEL=gemini-1.5-pro-002)")
+        sys.exit(1)
+
+def list_available_models():
+    check_if_env_vars_set()
+
+    # Configure the client (using environment variables)
+    client = genai.Client(api_key=GOOGLE_API_KEY)
+
+    for m in client.models.list():
+        console.print(f"{(m.name or '').replace('models/', '')} ({m.description} - {human_format_number(m.input_token_limit)} input limit - {human_format_number(m.output_token_limit)} output limit)")
 
 def add_general_args(parser):
     group = parser.add_argument_group(title="General Options")
     # fmt: off
     group.add_argument("-m", "--models", action="store_true", help="List available generative AI models.")
-    group.add_argument("-c", "--clean", action="store_true", help="Clean history file for the current project (cwd).")
+    group.add_argument("-c", "--clean", action="store_true", help="Clean the database file for the current project (cwd).")
     group.add_argument("-v", "--verbose", action="store_true", help="Log verbose output.")
     group.add_argument("-q", "--quiet", action="store_true", help="Only print responses, in plain text")
     group.add_argument('--version', action='version', version=f'%(prog)s {__version__}', help="Show the version number and exit.")
@@ -61,15 +79,15 @@ def create_parser():
     return parser
 
 def clean_history_files(cwd=os.getcwd()):
-    history_file = history_filename_for_directory(cwd)
-    if os.path.exists(history_file):
+    db_file = os.path.join(cwd, '.lin.db')
+    if os.path.exists(db_file):
         try:
-            os.remove(history_file)
-            print(f"Cleaned history file: {history_file}")
+            os.remove(db_file)
+            print(f"Cleaned database file: {db_file}")
         except Exception as e:
-            print(f"Error cleaning history file: {e}")
+            print(f"Error cleaning database file: {e}")
     else:
-        print("No history file found for the current directory.")
+        print("No database file found for the current directory.")
 
 def handle_list_files(args):
     directory = args.directory

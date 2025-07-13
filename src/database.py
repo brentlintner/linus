@@ -27,7 +27,7 @@ class File(BaseModel):
     path = TextField()
     version = IntegerField()
     content = TextField()
-    timestamp = DateTimeField(default=datetime.utcnow)
+    timestamp = DateTimeField(default=datetime.now)
 
     class Meta:
         indexes = (
@@ -39,7 +39,7 @@ class Chat(BaseModel):
     id = IntegerField(primary_key=True)
     user = ForeignKeyField(User, backref='chats')
     message = TextField()
-    timestamp = DateTimeField(default=datetime.utcnow)
+    timestamp = DateTimeField(default=datetime.now)
 
 def initialize_database(directory):
     """Initializes the database connection and creates tables."""
