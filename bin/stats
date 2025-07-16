@@ -1,3 +1,12 @@
 #!/bin/sh
 
-tokei . -e tmp
+echo
+echo "Source code statistics:"
+tokei . -e tmp -e docs
+echo
+echo "Test code statistics:"
+tokei tests -e tmp -e docs
+echo
+echo "Prompt statistics:"
+tokei docs/background.md
+echo
