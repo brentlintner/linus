@@ -53,7 +53,7 @@ class FilePartBuffer:
 
         sorted_parts = sorted(self.buffer[(file_path, version)].items())
         # TODO: ignore the nomoreparts (part 0)? should be empty always
-        full_content = '\n'.join(part_data for _, part_data in sorted_parts)
+        full_content = ''.join(part_data for _, part_data in sorted_parts)
         del self.buffer[(file_path, version)]
         del self.final_parts[(file_path, version)]  # Clean up
         return full_content
@@ -136,7 +136,7 @@ def find_files(content, incomplete=False):
         all_file_parts.append({
             'path': metadata.get('Path'),
             'version': metadata.get('Version', 1),
-            'content': content.strip(),
+            'content': re.sub(r'\n$', '', content), # Remove trailing newline before the end of file metadata (b/c it's in regex)
             'language': metadata.get('Language'),
             'part': metadata.get('Part'),
             'no_more_parts': metadata.get('NoMoreParts')
@@ -155,7 +155,7 @@ def find_files(content, incomplete=False):
 
     for _key_tuple, parts_array in all_files.items():
         # TODO: be robust and just ignore the nomoreparts content?
-        joined_content = ''.join([part['content'] for part in parts_array])
+        joined_content = ''.join([part['content'] for part in parts_array]) + '\n'  # Join all parts together with a newline at the end
         final_part = parts_array[0] # The first part (0) will have no_more_parts set to True if it exists
         result.append([
             final_part['path'],
@@ -170,7 +170,7 @@ def find_files(content, incomplete=False):
 
 def find_snippets(content):
     snippet_matches = re.finditer(match_snippet(), content, flags=re.DOTALL)
-    return [(match.group(1), match.group(2).rstrip('\n')) for match in snippet_matches] # Still rstrip this one, it seems.
+    return [(match.group(1), match.group(2)) for match in snippet_matches]
 
 def is_file(content):
     return str(content).strip().startswith(FILE_METADATA_START)
@@ -304,15 +304,11 @@ def get_program_from_shebang(shebang_line):
         return None
 
     program = parts[0]  # First element after splitting
-    # print(f"Initial program: {program}")  # Debug print
 
     if program == "env":
         if len(parts) > 1:
             program = parts[1]
-            # print(f"Program after 'env': {program}") # Debug print
         else:
-            # print("'env' with no program") # Debug print
             return None
 
-    # print(f"Returning program: {os.path.basename(program)}")  # Debug print
-    return program.strip() # Remove .strip()
+    return program.strip()

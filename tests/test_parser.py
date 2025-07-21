@@ -3,9 +3,9 @@ import os
 import sys
 
 # Make sure the src directory is in the Python path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-import parser
+import src.parser as parser
 
 # Helper to create delimiter strings using the placeholder function
 ph = parser.placeholder

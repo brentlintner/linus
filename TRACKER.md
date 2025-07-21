@@ -11,7 +11,10 @@ Anything related to the project management of the project, such as tracking issu
 
 ## Backlog
 
+* NOTE: ensure db is saved for linus message (or is it just the debug tmp file not saving immediately?)
+
 * Need to ideally keep prompts <200K characters for better pricing
+    * Auto compact flag (-a)
     * Auto compact when certain threshold is reached (i.e. 100K tokens in metadata)
     * Auto compact goes through the conversation history and removes all files or the last one? (and llm_prompt generation is the same, version 1 always)
     * $compact command runs same method as auto compact (but removes all files?)

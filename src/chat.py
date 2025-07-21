@@ -54,7 +54,7 @@ def llm_prompt(ignore_patterns=None, include_patterns=None, cwd=os.getcwd()):
     with db_proxy:
         chats = Chat.select().join(User).order_by(Chat.timestamp)
         for chat in chats:
-            prefix += f'\n**{chat.user.name.capitalize()}:**\n\n{chat.message}'
+            prefix += f'\n**{chat.user.name.capitalize()}:**\n\n{chat.message}\n'
 
     prefix += f'\n{parser.CONVERSATION_END_SEP}\n'
 
@@ -216,7 +216,7 @@ def process_request_stream(stream, state):
                     file_part_buffer.add(file_path, file_content, part_id, no_more_parts, version)
 
                     if file_part_buffer.is_complete(file_path, version):
-                        file_content = (file_part_buffer.assemble(file_path, version) or "").strip('\n')
+                        file_content = (file_part_buffer.assemble(file_path, version) or "")
                         assembled_files[(file_path, version)] = file_content  # Store assembled file
                         code = generate_diff(file_path, file_content)
                         is_diff = os.path.exists(os.path.join(cwd, file_path)) and code != file_content # Use os.path.join
@@ -258,7 +258,7 @@ def process_request_stream(stream, state):
                     incomplete_file_block = queued_response_text
                 # Queued text has a file metadata start block in the middle
                 else:
-                    incomplete_file_block = f"{parser.FILE_METADATA_START}{after_file}"
+                    incomplete_file_block = f"{parser.FILE_METADATA_START}\n{after_file}"
 
                 # Remove the last line from the incomplete file content, in case its cut off
                 content_lines = incomplete_file_block.splitlines()
@@ -406,7 +406,7 @@ def send_request_to_ai(state, client):
     process_response_metadata(last_chunk, state) # HACK: 'chunk' is still in scope from the loop
 
 # TODO: make into a class or better structure?
-def session_state(cwd, resume=False, writeable=False, ignore_patterns=None, include_patterns=None):
+def create_session_state(cwd, resume=False, writeable=False, ignore_patterns=None, include_patterns=None):
     # Split the comma-separated ignore patterns into a list
     ignore_patterns = ignore_patterns.split(',') if ignore_patterns else None
 
@@ -448,7 +448,7 @@ def repl_loop(session, client, state):
             if prompt_text.startswith('$exit'):
                 break
 
-            # TODO: essentially strip all chat history of file references (so all files are v1 (open files))
+            # TODO: essentially strip all chat history of file references (so all files are v1 (open files), same as if the autocompact was run)
             if prompt_text.startswith('$compact'):
                 debug("(TODO) Compacting database...")
                 break
@@ -484,7 +484,7 @@ def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_pat
 
     session = create_prompt_session(cwd)
 
-    state = session_state(cwd, resume, writeable, ignore_patterns, include_patterns)
+    state = create_session_state(cwd, resume, writeable, ignore_patterns, include_patterns)
 
     print_recap()
 

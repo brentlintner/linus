@@ -109,6 +109,7 @@ def generate_project_file_contents(extra_ignore_patterns=None, include_patterns=
     # TODO: make an array
     for file_path in files.splitlines():
         debug(f"File contents (add): {file_path}")
+        # NOTE: we always user version 1 here, since any newer versions will be in conversation history
         output += get_file_contents(file_path)
 
     return output
