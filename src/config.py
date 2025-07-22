@@ -7,7 +7,7 @@ GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 GEMINI_MODEL = os.getenv("GEMINI_MODEL") or "gemini-1.5-pro-002"
 GEMINI_TEMPERATURE = 0.4
 
-PROMPT_PREFIX_FILE = os.path.join(os.path.dirname(__file__), "..", "prompt.md")
+PROMPT_PREFIX_FILE = os.path.join(os.path.dirname(__file__), "..", "docs", "prompt.md")
 
 # Default ignore patterns, combining best practices from various sources
 DEFAULT_IGNORE_PATTERNS = [
