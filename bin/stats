@@ -2,7 +2,7 @@
 
 echo
 echo "Source code statistics:"
-tokei . -e tmp -e docs
+tokei src bin
 echo
 echo "Test code statistics:"
 tokei tests -e tmp -e docs
