@@ -12,13 +12,17 @@ Anything related to the project management of the project, such as tracking issu
 ## Backlog
 
 * Focusing model experience
-    * Turn down temperature
-    * Tweak prompt to be more focused and concise (updated flow considering recency, guidance and primacy)
+    * (DONE) Turn down temperature
+    * (DONE) Tweak prompt to be more focused and concise (updated flow considering recency, guidance and primacy)
+    * Considering only showing the last tmux command (i.e. everything after 2nd last "^\$$")
 
 * Tests
-    * First system test: Need no color + quiet + test for testing
-    * Smoke test that runs multiple times, with a minimal prompt.
-    * Need to escape+enter
+    * Integration tests for client injectiong (parsing mainly)
+    * Unit for tmux, parser, file utils etc
+    * System tests, really needed? Maybe something to run optionally since it hits the API and is slow + costs money
+        * First system test: Need no color + quiet + test for testing?
+        * Smoke test that runs multiple times, with a minimal prompt?
+        * Need to escape+enter?
 
 * Need to ideally keep prompts <200K characters for better pricing
     * Auto compact flag (-a)
@@ -30,12 +34,12 @@ Anything related to the project management of the project, such as tracking issu
     * NOTE: ensure db is saved for linus message (or is it just the debug tmp file not saving immediately?)
 
 * File Split / EOF Handling
-    * When adding parts only look for a single \n after metadata header (so we don't lose indentation)
-    * Always add a trailing newline to files only if the existing one does, else always remove it
-    * Ensure files in the initial file references section are back to back (no newline between parts, like llm does)
+    * (DONE) When adding parts only look for a single \n after metadata header (so we don't lose indentation)
+    * (DONE) Always add a trailing newline to files
+    * Needed? Ensure files in the initial file references section are back to back (no newline between parts, like llm does)
 
 * Project Customization
-    * Per project .linrc so it only applies if the context applies?
+    * Per project .lin.md so it only applies if the context applies?
     * language .linrc - Pull in language specific files in the Database to help the LLM (ex: https://dotcursorrules.com/)- add to .linrc
     * library .linrc - Pull in best practices, cheatsheets and other useful information in general (or make the main background have that?)
         * To start: Always use spaces to indent not tabs (look for .editorconfig files or other files as a reference)
