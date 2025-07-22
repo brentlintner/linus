@@ -19,6 +19,7 @@ from .logger import (
 from .config import (
     GOOGLE_API_KEY,
     GEMINI_MODEL,
+    GEMINI_TEMPERATURE,
     PROMPT_PREFIX_FILE
 )
 from .file_utils import (
@@ -394,7 +395,7 @@ def send_request_to_ai(state, client):
     state['start_time'] = time.time()
 
     tools = [types.Tool(google_search=types.GoogleSearch()), types.Tool(url_context=types.UrlContext())]
-    config = types.GenerateContentConfig(tools=tools, response_modalities=["TEXT"])
+    config = types.GenerateContentConfig(tools=tools, temperature=GEMINI_TEMPERATURE, response_modalities=["TEXT"])
     contents = [types.Part.from_text(text=request_text)]
 
     stream = client.models.generate_content_stream(model=GEMINI_MODEL, contents=contents, config=config)
