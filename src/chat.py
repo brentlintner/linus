@@ -375,6 +375,7 @@ def print_recap():
                 message,
                 flags=re.DOTALL)
 
+            print()
             print_markdown(f'**{chat.user.name.capitalize()}:**\n\n{message}')
 
 def send_request_to_ai(state, client):
