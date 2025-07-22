@@ -1,13 +1,17 @@
 # Linus
 
-A terminal-based conversational AI coding partner that helps you write software more efficiently.
+A CLI based conversational AI coding partner that helps you write software more efficiently.
 
 ## Features
 
-*   **Context-Aware Assistance:**  Maintains session history and project context for consistent, relevant suggestions.
-*   **File System Integration:**  Reads and writes directly to project files while showing diffs, allowing for seamless integration and modification.
-*   **Fuzzy Finder:** Fuzzy search for files to reference in the current message.
-*   **Customizable Ignored Files**: Supports ignoring files and folders via `.linignore`, and auto ignoring anything in your `.gitignore` file
+* **Highly Tuned:**  Built on a custom, finely tuned prompt and model config for optimal performance.
+* **Context-Aware:**  Automatically includes up-to-date project files, directory structure, terminal logs, and other relevant context in each request.
+* **Persistent Memory:**  Maintains a history of interactions, allowing the AI to remember past conversations and context.
+* **File System Integration:**  Writes directly to project files while showing diffs.
+* **Command Completion:** Fuzzy search files to reference (`@`), or run specific commands (`$`).
+* **Ignore Files**: Alongside a default ignore list, supports custom ignores via `.linignore`, and auto ignores anything in your `.gitignore` file.
+* **Tmux Integration**:  Automatically adds relevant panes and their history to the prompt.
+* **Project Specific Customization**: Supports per-project `.lin.md` files for further customization of the AI's behaviour and context.
 
 ## Dependencies
 
@@ -20,7 +24,7 @@ A terminal-based conversational AI coding partner that helps you write software 
 ```sh
 pipenv install
 cp .env.example .env
-open .env # Edit .env and set your API key and model (ex: 'gemini-flash-2.0')
+open .env # Edit .env and set your API key and model (run `ai -m` with a valid key to see available models)
 bin/ai -h
 ```
 
@@ -47,14 +51,14 @@ bin/ai -lf .
 Show detailed stats about the current session:
 
 ```sh
-bin/ai -wf . -v
+bin/ai -vwf .
 ```
 
 ## Development
 
 ```sh
 pipenv install --dev
-bin/ai -wf . -V
+bin/ai -Vwf .
 ```
 
 ## Testing
