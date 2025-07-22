@@ -11,7 +11,14 @@ Anything related to the project management of the project, such as tracking issu
 
 ## Backlog
 
-* NOTE: ensure db is saved for linus message (or is it just the debug tmp file not saving immediately?)
+* Focusing model experience
+    * Turn down temperature
+    * Tweak prompt to be more focused and concise (updated flow considering recency, guidance and primacy)
+
+* Tests
+    * First system test: Need no color + quiet + test for testing
+    * Smoke test that runs multiple times, with a minimal prompt.
+    * Need to escape+enter
 
 * Need to ideally keep prompts <200K characters for better pricing
     * Auto compact flag (-a)
@@ -20,6 +27,7 @@ Anything related to the project management of the project, such as tracking issu
     * $compact command runs same method as auto compact (but removes all files?)
     * Now $reset will clear the conversation history and file references, then re-initialize the database and llm prompt will be updated automatically as usual
     * Remove Files table as we won't use it anymore for now
+    * NOTE: ensure db is saved for linus message (or is it just the debug tmp file not saving immediately?)
 
 * File Split / EOF Handling
     * When adding parts only look for a single \n after metadata header (so we don't lose indentation)
@@ -32,16 +40,9 @@ Anything related to the project management of the project, such as tracking issu
     * library .linrc - Pull in best practices, cheatsheets and other useful information in general (or make the main background have that?)
         * To start: Always use spaces to indent not tabs (look for .editorconfig files or other files as a reference)
 
-* Tests
-    * First system test: Need no color + quiet + test for testing
-    * Smoke test that runs multiple times, with a minimal prompt.
-    * Need to escape+enter
-
 ## Icebox
 
 ### Bugs
-
-* Bug: Ensure trailing newlines always are added to files?
 
 ### Features
 
