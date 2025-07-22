@@ -66,7 +66,7 @@ The text below is a markdown document with a number of sections. Each section ha
 
 This section contains rules and context injected from project-specific and global configuration files. These rules augment or may even override the general instructions below.
 
-### Project-Specific Guide (linus.md)
+### Project-Specific Guide
 
 * Empty, no project-specific user guide is defined.
 

@@ -11,6 +11,11 @@ PROMPT_PREFIX_FILE = os.path.join(os.path.dirname(__file__), "..", "docs", "back
 
 # Default ignore patterns, combining best practices from various sources
 DEFAULT_IGNORE_PATTERNS = [
+    # This project
+    ".linignore",
+    ".lin.db",
+    ".lin.md",
+
     # VCS directories
     ".git/",
     ".svn/",
