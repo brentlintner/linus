@@ -11,6 +11,12 @@ Anything related to the project management of the project, such as tracking issu
 
 ## Backlog
 
+* Context IDEA:
+    * Include LSP based information in the prompt, such as function signatures, class definitions, and mention in comments that files they are from?
+    * Any other metadata that can help the LLM understand the context better? (aside from picking files or parts of a file based on vector database)
+    * Maybe last edited, last modified, and other metadata that can help the LLM understand the context better?
+    * Meh on commit history...
+
 * Focusing model experience
     * (DONE) Turn down temperature
     * (DONE) Tweak prompt to be more focused and concise (updated flow considering recency, guidance and primacy)
@@ -49,6 +55,8 @@ Anything related to the project management of the project, such as tracking issu
 ### Bugs
 
 ### Features
+
+* Scrub terminal logs for sensitive data like keys, passwords or hashes
 
 * Consider handling prompt feedback cases https://ai.google.dev/api/generate-content#v1beta.GenerateContentResponse
 
