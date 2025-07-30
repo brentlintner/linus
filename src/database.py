@@ -23,19 +23,6 @@ class User(BaseModel):
     id = IntegerField(primary_key=True)
     name = CharField(unique=True)
 
-class File(BaseModel):
-    id = IntegerField(primary_key=True)
-    path = TextField()
-    version = IntegerField()
-    content = TextField()
-    timestamp = DateTimeField(default=datetime.now)
-
-    class Meta:
-        indexes = (
-            # Create a unique index on path and version
-            (('path', 'version'), True),
-        )
-
 class Chat(BaseModel):
     id = IntegerField(primary_key=True)
     user = ForeignKeyField(User, backref='chats')
@@ -49,7 +36,7 @@ def initialize_database(directory):
     db_proxy.initialize(database)
 
     with db_proxy:
-        db_proxy.create_tables([User, File, Chat], safe=True)
+        db_proxy.create_tables([User, Chat], safe=True)
 
         # Pre-populate users if they don't exist
         User.get_or_create(name='brent')
