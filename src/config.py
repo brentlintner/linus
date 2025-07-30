@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
-GEMINI_MODEL = os.getenv("GEMINI_MODEL") or "gemini-1.5-pro-002"
+GEMINI_MODEL = os.getenv("GEMINI_MODEL") or "gemini-2.5-pro"
 GEMINI_TEMPERATURE = 0.4
 
 PROMPT_PREFIX_FILE = os.path.join(os.path.dirname(__file__), "..", "docs", "prompt.md")

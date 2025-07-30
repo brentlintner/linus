@@ -11,6 +11,10 @@ Anything related to the project management of the project, such as tracking issu
 
 ## Backlog
 
+* If the -f flag is not used, add a note to the prompt so that AI will use snippets only.
+
+* Add a flag to explicitly disable or enable terminal log support
+
 * Context IDEA:
     * Include LSP based information in the prompt, such as function signatures, class definitions, and mention in comments that files they are from?
     * Any other metadata that can help the LLM understand the context better? (aside from picking files or parts of a file based on vector database)
