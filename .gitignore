@@ -6,3 +6,5 @@ tmp
 .tool-versions
 .pytest
 .pytest_cache
+.coverage
+htmlcov
