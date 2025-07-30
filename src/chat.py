@@ -460,7 +460,6 @@ def repl_loop(session, client, state):
                 break
 
             if prompt_text.startswith('$continue'):
-                state['force_continue'] = True
                 send_request_to_ai(state, client)
                 continue
 
