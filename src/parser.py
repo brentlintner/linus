@@ -258,9 +258,18 @@ Name: {title}
 def get_language_from_extension(filename):
     try:
         _, ext = os.path.splitext(filename)
-        if ext:
+        if ext and ext != '.sh':
             lexer = get_lexer_for_filename(filename)
-            return lexer.name.lower()
+            lexer_name = lexer.name.lower()
+            if lexer_name == 'text only':
+                return "text"
+            return lexer_name
+
+        if not os.path.exists(filename):
+            if ext == '.sh':
+                return "sh"
+            else:
+                return "text"
 
         with open(filename, 'r', encoding='utf-8') as f:
             first_line = f.readline()
@@ -304,8 +313,9 @@ def get_program_from_shebang(shebang_line):
         return None
 
     program = parts[0]  # First element after splitting
+    program = program.split('/')[-1]  # Get the last part of the path
 
-    if program == "env":
+    if program == 'env':
         if len(parts) > 1:
             program = parts[1]
         else:
