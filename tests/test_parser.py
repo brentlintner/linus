@@ -28,7 +28,7 @@ def test_find_file_references():
     assert parser.find_file_references(content_with_refs) == ["file1.py", "path/to/file2.txt", "file3"]
     assert parser.find_file_references(content_with_punctuation) == ["file4.py", "file5.c"]
     assert parser.find_file_references(content_mixed) == ["file6.js", "another/file.ts"]
-    assert parser.find_file_references(content_edge_cases) == ["start_of_string", "middle.txt", "end_of_string."]
+    assert parser.find_file_references(content_edge_cases) == ["start_of_string", "middle.txt", "end_of_string"]
 
 
 def test_parse_metadata_basic():
@@ -86,7 +86,7 @@ NoMoreParts: True
 Some text after.
 """
     expected = [
-        ['single.txt', 1, 'This is the content.', 'text', 0, True] # Part is 0 because NoMoreParts is True
+        ['single.txt', 1, 'This is the content.\n', 'text', 0, True] # Part is 0 because NoMoreParts is True
     ]
     assert parser.find_files(content) == expected
 
@@ -117,7 +117,7 @@ NoMoreParts: True
 {END_OF_FILE}
 """
     expected = [
-        ['multi.py', 2, 'Part one content.Part two content.', 'python', 0, True]
+        ['multi.py', 2, 'Part one content.Part two content.\n', 'python', 0, True]
     ]
     assert parser.find_files(content) == expected
 
@@ -156,8 +156,8 @@ NoMoreParts: True
 {END_OF_FILE}
 """
     expected = [
-        ['file1.txt', 1, 'Content 1.', None, 0, True],
-        ['file2.js', 3, 'Content 2.', 'javascript', 0, True]
+        ['file1.txt', 1, 'Content 1.\n', None, 0, True],
+        ['file2.js', 3, 'Content 2.\n', 'javascript', 0, True]
     ]
     # Sort results because finditer doesn't guarantee order relative to other files
     result = sorted(parser.find_files(content), key=lambda x: x[0])
@@ -194,8 +194,8 @@ NoMoreParts: True
 {END_OF_FILE}
 """
     expected = [
-        ['main.c', 1, 'Old content.', None, 0, True],
-        ['main.c', 2, 'New content.', None, 0, True]
+        ['main.c', 1, 'Old content.\n', None, 0, True],
+        ['main.c', 2, 'New content.\n', None, 0, True]
     ]
     result = sorted(parser.find_files(content), key=lambda x: x[1]) # Sort by version
     assert result == expected
@@ -221,7 +221,7 @@ Some content here
 """ # Has END_OF_FILE but missing NoMoreParts block
 
     expected_incomplete = [
-        ['incomplete.txt', 1, 'Some content here', None, 1, False] # NoMoreParts is False
+        ['incomplete.txt', 1, 'Some content here\n', None, 1, False] # NoMoreParts is False
     ]
 
     assert parser.find_files(content_incomplete_part, incomplete=True) == expected_incomplete
@@ -229,7 +229,7 @@ Some content here
     assert parser.find_files(content_incomplete_part) == []
     # When incomplete=False, it *should* find the block with END_OF_FILE, even without NoMoreParts
     # HACK: This currently fails because find_files expects a NoMoreParts block to consider a file complete.
-    # assert parser.find_files(content_no_nomoreparts) == expected_incomplete
+    assert parser.find_files(content_no_nomoreparts) == expected_incomplete
 
 
 def test_find_snippets():
@@ -252,8 +252,8 @@ ls -l
 End text.
 """
     expected = [
-        ('python', 'print("Hello")\ndef func():\n    pass'),
-        ('bash', 'echo "World"\nls -l')
+        ('python', 'print("Hello")\ndef func():\n    pass\n'),
+        ('bash', 'echo "World"\nls -l\n')
     ]
     assert parser.find_snippets(content) == expected
 
@@ -284,7 +284,7 @@ def create_dummy_files(tmp_path_factory):
 
 
 def test_get_language_from_extension():
-    # Using files created in the fixture
+    # Files that do exist (see create_dummy_files fixture)
     assert parser.get_language_from_extension("script.py") == "python"
     assert parser.get_language_from_extension("script.sh") == "sh"
     assert parser.get_language_from_extension("script_bash") == "bash" # Checks shebang overrides filename if no ext
@@ -294,7 +294,11 @@ def test_get_language_from_extension():
     assert parser.get_language_from_extension("no_shebang.py") == "python" # Uses extension if no shebang
     assert parser.get_language_from_extension("tricky_shebang.sh") == "sh" # Handles args in shebang
     assert parser.get_language_from_extension("dot.file") == "text" # Fallback for dotfiles without known ext/shebang
-    assert parser.get_language_from_extension("nonexistent_file.xyz") == "text" # Handles non-existent files
+
+    # Files that do not exist
+    assert parser.get_language_from_extension("not-existing-file.xyz") == "text"
+    assert parser.get_language_from_extension("not-existing-script.py") == "python"
+    assert parser.get_language_from_extension("not-existing-script.sh") == "sh"
 
 def test_file_block_generation():
     file_path = "my/test.py"

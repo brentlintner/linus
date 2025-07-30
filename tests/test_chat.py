@@ -9,6 +9,8 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 from src import chat, parser, database
 
 @pytest.fixture
+# TODO: make tmp_path in the fixtures directory?
+# TODO: delete the database after each test?
 def temp_cwd_with_db(tmp_path):
     """
     A pytest fixture that creates a temporary working directory,
@@ -102,5 +104,45 @@ NoMoreParts: True
     with database.db_proxy:
         last_chat = chat.Chat.select().order_by(chat.Chat.timestamp.desc()).get()
         assert "That should do it" in last_chat.message
-        assert f"Path: {file_path}" in last_chat.message
+        # Check that the file block itself was stripped from the message saved to DB
+        assert f"Path: {file_path}" not in last_chat.message
         assert last_chat.user.name == 'linus', "The chat history should be saved under the 'linus' user"
+
+@patch('src.chat.genai.Client')
+def test_chat_message_strips_files(MockGenaiClient, temp_cwd_with_db):
+    """
+    Tests that file blocks are stripped from the message before being saved
+    to the chat history in the database.
+    """
+    cwd = temp_cwd_with_db
+    state = chat.create_session_state(cwd=str(cwd), writeable=False) # Not writing files
+
+    file_path = "a/b/c.txt"
+    file_content = "This is the content."
+    text_content = "Here is the file you wanted."
+
+    file_block = parser.file_block(file_path, file_content)
+    ai_response_text = f"{text_content}\n\n{file_block}"
+
+    fake_chunks = [MagicMock(text=ai_response_text)]
+    # Add usage_metadata to the last chunk, as the real API does.
+    fake_chunks[-1].usage_metadata = MagicMock(
+        prompt_token_count=10, candidates_token_count=100, total_token_count=110,
+        cached_content_token_count=0, thoughts_token_count=0, tool_use_prompt_token_count=0
+    )
+
+    mock_client_instance = MockGenaiClient.return_value
+    mock_client_instance.models.generate_content_stream.return_value = iter(fake_chunks)
+
+    chat.send_request_to_ai(state, mock_client_instance)
+
+    with database.db_proxy:
+        # Assuming 'linus' is the AI user
+        llm_user = database.User.get(database.User.name == 'linus')
+        last_chat = chat.Chat.select().where(chat.Chat.user == llm_user).order_by(chat.Chat.timestamp.desc()).get()
+        # The text content should be there
+        assert text_content in last_chat.message
+        # The file path (part of the file block) should NOT be there
+        assert file_path not in last_chat.message
+        # The file content (part of the file block) should NOT be there
+        assert file_content not in last_chat.message

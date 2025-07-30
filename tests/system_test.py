@@ -3,6 +3,7 @@ import pytest
 import re
 import os
 
+# NOTE: We do not use these tests right now, since we are testing everything except hitting the actual Gemini API, especially since it is not free, and provides non-deterministic results.
 AI_SCRIPT_PATH = "pipenv"
 cwd = os.getcwd() + "/tests"
 
@@ -108,18 +109,17 @@ def run_test(conversation, ai_args):
         except subprocess.TimeoutExpired:
             process.kill()
 
-@pytest.mark.parametrize("fixture_file, ai_args", test_cases)
-def test_conversation(fixture_file, ai_args):
-    fixture_path = os.path.join("fixtures", fixture_file)
-    with open(fixture_path, "r") as f:
-        fixture_content = f.read()
+# @pytest.mark.parametrize("fixture_file, ai_args", test_cases)
+# def test_conversation(fixture_file, ai_args):
+    # fixture_path = os.path.join("fixtures", fixture_file)
+    # with open(fixture_path, "r") as f:
+        # fixture_content = f.read()
 
-    conversation = parse_conversation(fixture_content)
-    assert run_test(conversation, ai_args)# Create empty fixture files.
-open(os.path.join(cwd, "fixtures/conversation_no_files.txt"), "w").close()
-open(os.path.join(cwd, "fixtures/conversation_with_files.txt"), "w").close()
-open(os.path.join(cwd, "fixtures/conversation_with_all_files.txt"), "w").close()
+    # conversation = parse_conversation(fixture_content)
+    # assert run_test(conversation, ai_args)# Create empty fixture files.
+    # open(os.path.join(cwd, "fixtures/conversation_no_files.txt"), "w").close()
+    # open(os.path.join(cwd, "fixtures/conversation_with_files.txt"), "w").close()
+    # open(os.path.join(cwd, "fixtures/conversation_with_all_files.txt"), "w").close()
 
-# Create a test file
-with open(os.path.join(cwd, "fixtures/test_file.txt"), "w") as f:
-    f.write("This is a test file, for testing purposes.\n")
+    # with open(os.path.join(cwd, "fixtures/test_file.txt"), "w") as f:
+        # f.write("This is a test file, for testing purposes.\n")
