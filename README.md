@@ -4,7 +4,7 @@ A terminal based, conversational AI coding partner. Batteries and sass fully inc
 
 ## Features
 
-* **You're the Navigator**: Linus acts as your pair programmer. He proposes a plan, but you give the final approval. No code gets written without your say-so.
+* **You're the Navigator**: Linus acts as your pair programmer. He proposes a plan, you discuss it, then give the final approval. No code gets written without your say-so.
 * **Complete Project Context**: Reads your current codebase, directory structure, conversation history, and terminal logs to deeply understand every request.
 * **Native Terminal Experience**: Built from the ground up for the command line, with a focus on speed and a keyboard-driven workflow.
 * **Live Web Access**: Grounded with up-to-the-minute search results. Just paste a URL, and it will read the content.
