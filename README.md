@@ -12,6 +12,10 @@ A terminal based, conversational AI coding partner. Batteries and sass fully inc
 * **Per-Project Customization**: Fine-tune behaviour and provide lasting instructions for each project using a simple `.lin.md` file.
 * **Optimized for Code Generation**: Uses a finely-tuned model and prompt configuration engineered specifically for consistent, surgical, high-quality code output.
 
+## Sassy Terminal Screenshot
+
+![screenshot of the app running in the temrinal](docs/screenshot.png)
+
 ## Dependencies
 
 * [Python 3.11+](https://www.python.org/downloads/)
