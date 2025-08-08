@@ -9,7 +9,7 @@ A terminal based, conversational AI coding partner. Batteries and sass fully inc
 * **Native Terminal Experience**: Built from the ground up for the command line, with a focus on speed and a keyboard-driven workflow.
 * **Live Web Access**: Grounded with up-to-the-minute search results. Just paste a URL, and it will read the content.
 * **Seamless Tmux Integration**: Automatically incorporates the content and history of relevant `tmux` panes into its context.
-* **Per-Project Customization**: Fine-tune behavior and provide lasting instructions for each project using a simple `.lin.md` file.
+* **Per-Project Customization**: Fine-tune behaviour and provide lasting instructions for each project using a simple `.lin.md` file.
 * **Optimized for Code Generation**: Uses a finely-tuned model and prompt configuration engineered specifically for consistent, surgical, high-quality code output.
 
 ## Dependencies
@@ -32,7 +32,7 @@ ai -h
 
 ## Usage
 
-Start up a simple chat repl with no open files, just the project directory stucture, terminal pane logs, and conversation history:
+Start up a simple chat repl with no open files, just the project directory structure, terminal pane logs, and conversation history:
 
 ```sh
 ai
@@ -74,7 +74,7 @@ You can reference files in your project by typing `@` followed by a fuzzy search
 
 ### Project Specific Customization
 
-You can create a `.lin.md` file in your project root to customize the AI's behavior and context for that specific project. This file can include instructions, context, or any other information you want the AI to consider when interacting with your project.
+You can create a `.lin.md` file in your project root to customize the AI's behaviour and context for that specific project. This file can include instructions, context, or any other information you want the AI to consider when interacting with your project.
 
 ### Prompt Optimization
 
