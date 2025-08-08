@@ -82,7 +82,7 @@ Currently there is no automatic prompt size optimization, so you need to be care
 
 ### Cleaning Up
 
-To clean up your project and remove any generated files, you can use the `-c` flag:
+To remove your project's conversation history, you can use the `-c` flag, or just remove the `.lin.db` file in your project root.
 
 ```sh
 ai -c
