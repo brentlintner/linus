@@ -4,27 +4,18 @@ Anything related to the project management of the project, such as tracking issu
 
 ## Epics
 
-* Make stable regardless of file size and output length
-* Make stable in terms of runnable code generation and context awareness
-* Does having more succinct, highly cohesive, short method code help the AI's context awareness?
-* Have a test suite
+* (DONE) Make stable regardless of file size and output length
+* Make stable in terms of output limit code generation and context awareness
+* Have a full coverage test suite
 
 ## Backlog
 
-* If the -f flag is not used, add a note to the prompt so that AI will use snippets only.
-
-* Add a flag to explicitly disable or enable terminal log support
-
-* Context IDEA:
-    * Include LSP based information in the prompt, such as function signatures, class definitions, and mention in comments that files they are from?
-    * Any other metadata that can help the LLM understand the context better? (aside from picking files or parts of a file based on vector database)
-    * Maybe last edited, last modified, and other metadata that can help the LLM understand the context better?
-    * Meh on commit history...
-
-* Focusing model experience
-    * (DONE) Turn down temperature
-    * (DONE) Tweak prompt to be more focused and concise (updated flow considering recency, guidance and primacy)
-    * Considering only showing the last tmux command (i.e. everything after 2nd last "^\$$")
+* Pre-OSS
+    * Files in the conversation history get auto stripped out
+    * Add a flag to explicitly disable or enable terminal log support
+    * Fill in the other test shells
+    * .lin.md file support
+    * Needed? Ensure files in the initial file references section are back to back (no newline between parts, like llm does)
 
 * Tests
     * Integration tests for client injectiong (parsing mainly)
@@ -43,22 +34,31 @@ Anything related to the project management of the project, such as tracking issu
     * Remove Files table as we won't use it anymore for now
     * NOTE: ensure db is saved for linus message (or is it just the debug tmp file not saving immediately?)
 
-* File Split / EOF Handling
-    * (DONE) When adding parts only look for a single \n after metadata header (so we don't lose indentation)
-    * (DONE) Always add a trailing newline to files
-    * Needed? Ensure files in the initial file references section are back to back (no newline between parts, like llm does)
-
-* Project Customization
-    * Per project .lin.md so it only applies if the context applies?
-    * language .linrc - Pull in language specific files in the Database to help the LLM (ex: https://dotcursorrules.com/)- add to .linrc
-    * library .linrc - Pull in best practices, cheatsheets and other useful information in general (or make the main background have that?)
-        * To start: Always use spaces to indent not tabs (look for .editorconfig files or other files as a reference)
+* Back to file version support
+    * Cache file versions in the db since we auto generate the prompt each time now
 
 ## Icebox
 
 ### Bugs
 
 ### Features
+
+* Focusing model experience
+    * (DONE) Turn down temperature
+    * (DONE) Tweak prompt to be more focused and concise (updated flow considering recency, guidance and primacy)
+    * Considering only showing the last tmux command (i.e. everything after 2nd last "^\$$")
+    * If the -f flag is not used, add a note to the prompt so that AI will use snippets only?
+
+* Context IDEA:
+    * Include LSP based information in the prompt, such as function signatures, class definitions, and mention in comments that files they are from?
+    * Any other metadata that can help the LLM understand the context better? (aside from picking files or parts of a file based on vector database)
+    * Maybe last edited, last modified, and other metadata that can help the LLM understand the context better?
+    * Meh on commit history...
+
+* Project Customization
+    * language - Pull in language specific files in the Database to help the LLM (ex: https://dotcursorrules.com/)- add to .linrc
+    * library - Pull in best practices, cheatsheets and other useful information in general (or make the main background have that?)
+        * To start: Always use spaces to indent not tabs (look for .editorconfig files or other files as a reference)
 
 * Scrub terminal logs for sensitive data like keys, passwords or hashes
 
