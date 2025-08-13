@@ -318,18 +318,26 @@ def process_request_stream(stream, state):
 def process_response(full_response_text, assembled_files, state):
     llm_user, _ = User.get_or_create(name='linus')
 
+    # This regex will find and match entire file blocks, which we want to strip from the database record.
+    file_block_regex = rf'{parser.FILE_METADATA_START}.*?{parser.END_OF_FILE}'
+    file_pattern = re.compile(file_block_regex, re.DOTALL)
+    message_for_db = file_pattern.sub('', full_response_text).strip()
+
     # If we are forcing a continuation, we need to append the response to the last chat message by the llm user
     if state['force_continue']:
-        # TODO: handle no chats found (should not happen)
         last_chat = Chat.select().where(Chat.user == llm_user).order_by(Chat.timestamp.desc()).get_or_none()
-        last_chat.message += f"\n\n{full_response_text.strip()}\n"
-        last_chat.message = last_chat.message.strip()
-        last_chat.save()
+        # Only append and save if there's non-file content to add
+        if message_for_db and last_chat:
+            last_chat.message += f"\n\n{message_for_db}\n"
+            last_chat.message = last_chat.message.strip()
+            last_chat.save()
         return
 
     cwd = state['cwd']
 
-    Chat.create(user=llm_user, message=full_response_text.strip())
+    # Only create a new chat entry if there's actual text content to save.
+    if message_for_db:
+        Chat.create(user=llm_user, message=message_for_db)
 
     if state['writeable']:
         # Write all assembled files
