@@ -39,6 +39,19 @@ def llm_prompt(ignore_patterns=None, include_patterns=None, cwd=os.getcwd()):
     except FileNotFoundError:
         return "Could not find background.md"
 
+    # Handle project-specific guide
+    project_guide_path = os.path.join(cwd, '.lin.md')
+    if os.path.exists(project_guide_path):
+        with open(project_guide_path, 'r', encoding='utf-8') as f:
+            project_guide_content = f.read()
+    else:
+        project_guide_content = "* Empty, no project-specific user guide is defined."
+    prefix = prefix.replace(parser.PROJECT_SPECIFIC_GUIDE, project_guide_content)
+
+    # Handle global guide (statically for now)
+    global_guide_content = "* Empty, no global user guide is defined."
+    prefix = prefix.replace(parser.GLOBAL_USER_GUIDE, global_guide_content)
+
     if include_patterns is None or not include_patterns:
         # No files included, return prefix without file tree and file contents.
         return prefix.replace(parser.FILE_TREE_PLACEHOLDER, '[]').replace(parser.FILES_PLACEHOLDER, '')

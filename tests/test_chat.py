@@ -146,3 +146,25 @@ def test_chat_message_strips_files(MockGenaiClient, temp_cwd_with_db):
         assert file_path not in last_chat.message
         # The file content (part of the file block) should NOT be there
         assert file_content not in last_chat.message
+
+def test_llm_prompt_guides(temp_cwd_with_db):
+    """
+    Tests that project-specific and global guides are correctly injected into the prompt.
+    """
+    cwd = temp_cwd_with_db
+
+    # 1. Test without a .lin.md file present
+    prompt_no_guide = chat.llm_prompt(cwd=str(cwd))
+    assert "* Empty, no project-specific user guide is defined." in prompt_no_guide
+    assert "* Empty, no global user guide is defined." in prompt_no_guide
+
+    # 2. Test with a .lin.md file present
+    guide_content = "This is the special project guide."
+    guide_file_path = cwd / ".lin.md"
+    with open(guide_file_path, "w", encoding="utf-8") as f:
+        f.write(guide_content)
+
+    prompt_with_guide = chat.llm_prompt(cwd=str(cwd))
+    assert guide_content in prompt_with_guide
+    assert "* Empty, no global user guide is defined." in prompt_with_guide
+    assert "* Empty, no project-specific user guide is defined." not in prompt_with_guide

@@ -69,11 +69,11 @@ This section contains rules and context injected from project-specific and globa
 
 ### Project-Specific Guide
 
-* Empty, no project-specific user guide is defined.
+{{{PROJECT_SPECIFIC_GUIDE}}}
 
 ### Global User Guide
 
-* Empty, no global user guide is defined.
+{{{GLOBAL_USER_GUIDE}}}
 
 ## Personality
 

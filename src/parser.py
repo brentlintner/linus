@@ -27,6 +27,8 @@ FILES_END_SEP =             placeholder('FILE_REFERENCES END')
 CONVERSATION_START_SEP =    placeholder('CONVERSATION_HISTORY START')
 CONVERSATION_END_SEP =      placeholder('CONVERSATION_HISTORY END')
 TERMINAL_LOGS_PLACEHOLDER = placeholder('TERMINAL_LOGS')
+PROJECT_SPECIFIC_GUIDE =    placeholder('PROJECT_SPECIFIC_GUIDE')
+GLOBAL_USER_GUIDE =         placeholder('GLOBAL_USER_GUIDE')
 
 class FilePartBuffer:
     def __init__(self):
@@ -116,9 +118,10 @@ def parse_metadata(metadata_str):
 
     return metadata
 
-# This finds any file metadata+content blocks up to the end of the string or end of file block
-# TODO: split this method up
 def find_files(content, incomplete=False):
+    """
+    This finds any file metadata+content blocks up to the end of the string or end of file block
+    """
     if incomplete:
         regex = rf'{FILE_METADATA_START}\n?(Path: .*?){FILE_METADATA_END}\n?(.*)(?:{END_OF_FILE})?'
     else:
