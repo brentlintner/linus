@@ -9,6 +9,8 @@ GEMINI_TEMPERATURE = 0.4
 
 PROMPT_PREFIX_FILE = os.path.join(os.path.dirname(__file__), "..", "docs", "prompt.md")
 
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+
 # Default ignore patterns, combining best practices from various sources
 DEFAULT_IGNORE_PATTERNS = [
     # This project

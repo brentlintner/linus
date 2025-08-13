@@ -20,7 +20,8 @@ from .config import (
     GOOGLE_API_KEY,
     GEMINI_MODEL,
     GEMINI_TEMPERATURE,
-    PROMPT_PREFIX_FILE
+    PROMPT_PREFIX_FILE,
+    PROJECT_ROOT
 )
 from .file_utils import (
     generate_project_structure,
@@ -388,7 +389,9 @@ def send_request_to_ai(state, client):
 
     if is_debug():
         id = state['cwd'].replace(os.path.sep, '_')
-        tmp_file = f"tmp/linus_request_{id}.txt"
+        tmp_dir = os.path.join(PROJECT_ROOT, "tmp")
+        os.makedirs(tmp_dir, exist_ok=True)
+        tmp_file = os.path.join(tmp_dir, f"linus_request_{id}.txt")
         with open(tmp_file, 'w', encoding='utf-8') as f:
             f.write(request_text)
         debug(f"Current request saved to {tmp_file}")
