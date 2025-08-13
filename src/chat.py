@@ -220,28 +220,31 @@ def process_request_stream(stream, state):
                         error("")
                         continue
 
-                    # TODO: DRY This up with other first_file code
-                    first_file = files[0]  # Get the first file only because we are streaming and most likely just see one (hacky, but works for now)
-                    # TODO: need to look for multiple files here? I think we can assume not because we're streaming
-                    file_path, version, file_content, language, part_id, no_more_parts = first_file
+                    should_continue = False
 
-                    file_part_buffer.add(file_path, file_content, part_id, no_more_parts, version)
+                    for file in files:
+                        file_path, version, file_content, language, part_id, no_more_parts = file
 
-                    if file_part_buffer.is_complete(file_path, version):
-                        file_content = (file_part_buffer.assemble(file_path, version) or "")
-                        assembled_files[(file_path, version)] = file_content  # Store assembled file
-                        code = generate_diff(file_path, file_content)
-                        is_diff = os.path.exists(os.path.join(cwd, file_path)) and code != file_content # Use os.path.join
-                        language = "diff" if is_diff else parser.get_language_from_extension(file_path)
+                        file_part_buffer.add(file_path, file_content, part_id, no_more_parts, version)
 
-                        suffix = " (EMPTY)" if not file_content else ""
-                        print_markdown(f"#### {file_path} v{version}{suffix}", end="")
+                        if file_part_buffer.is_complete(file_path, version):
+                            file_content = (file_part_buffer.assemble(file_path, version) or "")
+                            assembled_files[(file_path, version)] = file_content  # Store assembled file
+                            code = generate_diff(file_path, file_content)
+                            is_diff = os.path.exists(os.path.join(cwd, file_path)) and code != file_content # Use os.path.join
+                            language = "diff" if is_diff else parser.get_language_from_extension(file_path)
 
-                        section = f"```{language}\n{code}\n```"
-                        print_markdown(section)
-                        status.update("Linus is typing...")
-                    else:
-                        continue  # Important: Don't process incomplete chunks
+                            suffix = " (EMPTY)" if not file_content else ""
+                            print_markdown(f"#### {file_path} v{version}{suffix}", end="")
+
+                            section = f"```{language}\n{code}\n```"
+                            print_markdown(section)
+                            status.update("Linus is typing...")
+                        else:
+                            should_continue = True
+
+                    if should_continue:
+                        continue
 
                 else:
                     status.update("Linus is typing...")
@@ -294,16 +297,16 @@ def process_request_stream(stream, state):
                     state['force_continue'] = False
                     return full_response_text, last_chunk, assembled_files
 
-                # TODO: DRY This up with other first_file code
-                first_file = files[0]  # Get the first file only because we are streaming and most likely just see one (hacky, but works for now)
-                file_path, version, file_content, language, part_id, no_more_parts = first_file
+                for file in files:
+                    file_path, version, file_content, language, part_id, no_more_parts = file
 
-                file_part_buffer.add(file_path, file_content, part_id, no_more_parts, version)
+                    file_part_buffer.add(file_path, file_content, part_id, no_more_parts, version)
 
-                full_response_text = re.sub(
-                    parser.match_file(file_path, incomplete=True),
-                    f"{file_content}\n{parser.END_OF_FILE}",
-                    full_response_text)
+                    # HACK: we need need to cut off this incomplete file part manually
+                    full_response_text = re.sub(
+                        parser.match_file(file_path, incomplete=True),
+                        f"{file_content}\n{parser.END_OF_FILE}",
+                        full_response_text)
 
                 if before_file:
                     print_markdown(before_file, end="")
