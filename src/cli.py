@@ -64,7 +64,7 @@ def add_file_listing_args(parser):
 
 def create_parser():
     parser = argparse.ArgumentParser(
-        prog="ai-code",
+        prog="",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         add_help=True
     )
