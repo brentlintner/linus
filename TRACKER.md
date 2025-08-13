@@ -10,9 +10,8 @@ Anything related to the project management of the project, such as tracking issu
 
 ## Backlog
 
-* Bug: did the cli.py update break because we looped over all files now? (why did it log twice as (EMPTY)? Empty diff bug?
-   * AH, yeah I think the process remaining text was the second print, because the last part was missed?
-   * i.e.:
+* Bug: (EMPTY) issue, need to reproduce
+   * i.e. wth:
     ```
     DEBUG: Received part 1 of src/parser.py (v2)
     DEBUG: Received **all parts** of src/cli.py (v2)
@@ -20,7 +19,8 @@ Anything related to the project management of the project, such as tracking issu
     DEBUG: Received **all parts** of src/cli.py (v2)
     (empty cli diff update)
     ```
-
+   *  Consider ensuring that we update the chat db or debug file mid-stream so that if it crashes, we have some data saved
+    ```
 
 * Pre-OSS
     * Files in the conversation history get auto stripped out
