@@ -35,7 +35,7 @@ def get_current_tmux_pane_id():
 def get_tmux_logs():
     current_pane_id = get_current_tmux_pane_id()
     if not current_pane_id:
-        return "No tmux session detected.\n"
+        return ""
 
     try:
         session_name = subprocess.run(["tmux", "display-message", "-p", "#S"], capture_output=True, text=True, check=True).stdout.strip()
