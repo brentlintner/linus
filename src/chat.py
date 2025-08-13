@@ -105,9 +105,9 @@ def process_response_metadata(response, state):
         if is_debug():
             # --- Grounding Metadata ---
             grounding_metadata = None
-            # If the last chunk has candidates and the first candidate has grounding metadata
-            if response.candidates and response.candidates[0]:
-                grounding_metadata = getattr(response.candidates[0], 'grounding_metadata', None)
+            if response.candidates:
+                first_candidate = response.candidates[0] # only ever use the first candidate
+                grounding_metadata = getattr(first_candidate, 'grounding_metadata', None) if first_candidate else None
 
                 if grounding_metadata and grounding_metadata.grounding_chunks:
                     console.print("Grounding Sources", style="bold yellow")
@@ -212,8 +212,10 @@ def process_request_stream(stream, state):
                         error("")
                         continue
 
+                    # TODO: DRY This up with other first_file code
+                    first_file = files[0]  # Get the first file only because we are streaming and most likely just see one (hacky, but works for now)
                     # TODO: need to look for multiple files here? I think we can assume not because we're streaming
-                    file_path, version, file_content, language, part_id, no_more_parts = files[0] # Get the first file only (hacky, but works for now)
+                    file_path, version, file_content, language, part_id, no_more_parts = first_file
 
                     file_part_buffer.add(file_path, file_content, part_id, no_more_parts, version)
 
@@ -238,9 +240,9 @@ def process_request_stream(stream, state):
                     file_path = None
                     snippets = parser.find_snippets(section)
                     if snippets:
-                        language, code = snippets[0]  # Get the first snippet (TODO: handle multiple snippets? will there be multiple based on parsing?)
-                        section = f"```{language}\n{code}\n```"
-                        print_markdown(section)
+                        for language, code in snippets:
+                            section = f"```{language}\n{code}\n```"
+                            print_markdown(section)
 
         # Keep the last chunk for metadata processing (*it is still in scope here unless we got zero chunks but that's another issue*)
         last_chunk = chunk
@@ -281,7 +283,9 @@ def process_request_stream(stream, state):
                     state['force_continue'] = False
                     return full_response_text, last_chunk, assembled_files
 
-                file_path, version, file_content, language, part_id, no_more_parts = files[0]  # Get the first file only (hacky, but works for now)
+                # TODO: DRY This up with other first_file code
+                first_file = files[0]  # Get the first file only because we are streaming and most likely just see one (hacky, but works for now)
+                file_path, version, file_content, language, part_id, no_more_parts = first_file
 
                 file_part_buffer.add(file_path, file_content, part_id, no_more_parts, version)
 
@@ -297,7 +301,11 @@ def process_request_stream(stream, state):
                 state['force_continue'] = True # Force continue to handle the incomplete file
             else:
                 files = parser.find_files(full_response_text)
-                unfinished_files = [file for file in files if not file[5]] # No more parts (check the last element, no_more_parts)
+                unfinished_files = []
+                for file in files:
+                    no_more_parts = file[5]  # Get the no_more_parts boolean
+                    if not no_more_parts:
+                        unfinished_files.append(file)
 
                 # We have cut off mid normal text (i.e. have not seen nomoreparts for a file)
                 if unfinished_files:
