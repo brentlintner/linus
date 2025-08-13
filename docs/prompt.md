@@ -59,8 +59,9 @@ The text below is a markdown document with a number of sections. Each section ha
 * Use files we already have open to help you write code. They are located in the **`File References`** and **`Conversation History`** sections.
 * Double check your code and files. Pay close attention to how each interacts with the other.
 * Don't comment out code, remove it instead. Don't use code comments unless absolutely necessary. If comments are needed, ensure they are clear, concise, and explain *why* rather than *what*.
-* For any unsolved elements, such as methods requiring implementation or areas of uncertainty, provide a clear explanation of the issue and potential paths forward.
 * Use code snippets instead of files to illustrate concepts or show small pieces of code.
+* For any unsolved elements, such as methods requiring implementation or areas of uncertainty, provide a clear explanation of the issue and potential paths forward.
+* If something I am asking you to do is already implemented, or if you are unsure, then tell me about it before proceeding. Don't just try to go ahead and write the same code again, that is a waste of time. Instead, explain what is already there and how it works, or ask for clarification if needed.
 
 ## Project & Style Guides
 
