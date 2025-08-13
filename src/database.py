@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 from peewee import (
     Model,
     SqliteDatabase,
@@ -9,7 +10,6 @@ from peewee import (
     ForeignKeyField,
     Proxy
 )
-from datetime import datetime
 from .logger import debug
 
 # Use a proxy for the database so we can initialize it later.

@@ -1,15 +1,11 @@
 import os
-import re
 import difflib
 import pathspec
-from collections import defaultdict
 from .logger import debug
 from .config import DEFAULT_IGNORE_PATTERNS
 from .parser import (
-    find_files,
     file_block,
     get_language_from_extension,
-    match_file_with_version
 )
 
 def format_number(num, magnitude):
@@ -48,7 +44,9 @@ def generate_diff(file_path, current_content):
     return stringifed_diff
 
 # NOTE: we don't use the args.files here, because we want to include all non-default ignored files
-def generate_project_structure(extra_ignore_patterns=None, include_patterns=[], directory=None):
+def generate_project_structure(extra_ignore_patterns=None, include_patterns=None, directory=None):
+    if include_patterns is None:
+        include_patterns = []
     directory = directory or os.getcwd()  # Use provided directory or default to current.
     ignore_patterns = load_ignore_patterns(extra_ignore_patterns, directory)
     ignore_spec = pathspec.PathSpec.from_lines('gitwildmatch', ignore_patterns)
@@ -102,7 +100,9 @@ def generate_project_structure(extra_ignore_patterns=None, include_patterns=[], 
 
     return file_tree
 
-def generate_project_file_contents(extra_ignore_patterns=None, include_patterns=[], directory=None):
+def generate_project_file_contents(extra_ignore_patterns=None, include_patterns=None, directory=None):
+    if include_patterns is None:
+        include_patterns = []
     files = generate_project_file_list(extra_ignore_patterns, include_patterns, directory)
     output = ""
 
@@ -114,7 +114,9 @@ def generate_project_file_contents(extra_ignore_patterns=None, include_patterns=
 
     return output
 
-def generate_project_file_list(extra_ignore_patterns=None, include_patterns=[], directory=None):
+def generate_project_file_list(extra_ignore_patterns=None, include_patterns=None, directory=None):
+    if include_patterns is None:
+        include_patterns = []
     directory = directory or os.getcwd()  # Use provided directory or default to current.
     ignore_patterns = load_ignore_patterns(extra_ignore_patterns, directory)
     ignore_spec = pathspec.PathSpec.from_lines('gitwildmatch', ignore_patterns)

@@ -38,7 +38,8 @@ def get_tmux_logs():
         return ""
 
     try:
-        session_name = subprocess.run(["tmux", "display-message", "-p", "#S"], capture_output=True, text=True, check=True).stdout.strip()
+        command = ["tmux", "display-message", "-p", "#S"]
+        session_name = subprocess.run(command, capture_output=True, text=True, check=True).stdout.strip()
     except subprocess.CalledProcessError as e:
         error(f"Error getting tmux session name: {e}")
         return f"Error getting tmux session name: {e}\n"
