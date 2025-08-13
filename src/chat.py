@@ -83,11 +83,6 @@ def process_user_input(state, prompt_text=""):
     human_user, _ = User.get_or_create(name='brent')
     message = prompt_text.strip()
 
-    # Ignore converting file references for now, we will always be adding latest files
-    # TODO: eventually we can use this to add specific files to the file references if they are not already "open"
-    #       OR we go through all messages, find the max version of each file, and then set those as the file reference version (see how llm handles this)
-    # file_references = parser.find_file_references(message)
-
     Chat.create(user=human_user, message=message)
 
 def process_response_metadata(response, state):
@@ -258,7 +253,10 @@ def process_request_stream(stream, state):
                             print_markdown(section)
 
         # Keep the last chunk for metadata processing (*it is still in scope here unless we got zero chunks but that's another issue*)
-        last_chunk = chunk
+        try:
+            last_chunk = chunk
+        except NameError:
+            last_chunk = None
 
         # Handle any remaining text in the queue (non-code block parts)
         if queued_response_text:
