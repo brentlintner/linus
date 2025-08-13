@@ -10,6 +10,18 @@ Anything related to the project management of the project, such as tracking issu
 
 ## Backlog
 
+* Bug: did the cli.py update break because we looped over all files now? (why did it log twice as (EMPTY)? Empty diff bug?
+   * AH, yeah I think the process remaining text was the second print, because the last part was missed?
+   * i.e.:
+    ```
+    DEBUG: Received part 1 of src/parser.py (v2)
+    DEBUG: Received **all parts** of src/cli.py (v2)
+    (empty cli diff update)
+    DEBUG: Received **all parts** of src/cli.py (v2)
+    (empty cli diff update)
+    ```
+
+
 * Pre-OSS
     * Files in the conversation history get auto stripped out
     * Add a flag to explicitly disable or enable terminal log support
@@ -42,6 +54,8 @@ Anything related to the project management of the project, such as tracking issu
 ### Bugs
 
 ### Features
+
+* Ideally write files as they are complete vs waiting for the entire response since it could fail and we lose a file?
 
 * Focusing model experience
     * (DONE) Turn down temperature
