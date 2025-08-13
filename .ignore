@@ -1,4 +1,5 @@
 node_modules
+htmlcov
 .pytest
 .pytest_cache
 deployment
