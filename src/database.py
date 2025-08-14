@@ -10,6 +10,7 @@ from peewee import (
     ForeignKeyField,
     Proxy
 )
+from .config import USER_NAME, PARTNER_NAME
 from .logger import debug
 
 # Use a proxy for the database so we can initialize it later.
@@ -39,8 +40,8 @@ def initialize_database(directory):
         db_proxy.create_tables([User, Chat], safe=True)
 
         # Pre-populate users if they don't exist
-        User.get_or_create(name='brent')
-        User.get_or_create(name='linus')
+        User.get_or_create(name=USER_NAME.lower())
+        User.get_or_create(name=PARTNER_NAME.lower())
 
     debug(f"Using sqlite database: {database.database}")
 

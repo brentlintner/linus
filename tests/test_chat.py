@@ -91,7 +91,7 @@ NoMoreParts: True
     mock_client_instance.models.generate_content_stream.return_value = iter(fake_response_chunks)
 
     # 5. Run the function that contains the logic we want to test
-    chat.send_request_to_ai(state, mock_client_instance)
+    chat.send_request_to_ai("(FAKE MESSAGE REQUEST)", state, mock_client_instance)
 
     # 6. Assert the results
     created_file_path = cwd / file_path
@@ -134,7 +134,7 @@ def test_chat_message_strips_files(MockGenaiClient, temp_cwd_with_db):
     mock_client_instance = MockGenaiClient.return_value
     mock_client_instance.models.generate_content_stream.return_value = iter(fake_chunks)
 
-    chat.send_request_to_ai(state, mock_client_instance)
+    chat.send_request_to_ai("(FAKE MESSAGE REQUEST)", state, mock_client_instance)
 
     with database.db_proxy:
         # Assuming 'linus' is the AI user
@@ -147,14 +147,14 @@ def test_chat_message_strips_files(MockGenaiClient, temp_cwd_with_db):
         # The file content (part of the file block) should NOT be there
         assert file_content not in last_chat.message
 
-def test_llm_prompt_guides(temp_cwd_with_db):
+def test_llm_system_prompt_guides(temp_cwd_with_db):
     """
     Tests that project-specific and global guides are correctly injected into the prompt.
     """
     cwd = temp_cwd_with_db
 
     # 1. Test without a .lin.md file present
-    prompt_no_guide = chat.llm_prompt(cwd=str(cwd))
+    prompt_no_guide = chat.llm_system_prompt(cwd=str(cwd))
     assert "* Empty, no project-specific user guide is defined." in prompt_no_guide
     assert "* Empty, no global user guide is defined." in prompt_no_guide
 
@@ -164,7 +164,7 @@ def test_llm_prompt_guides(temp_cwd_with_db):
     with open(guide_file_path, "w", encoding="utf-8") as f:
         f.write(guide_content)
 
-    prompt_with_guide = chat.llm_prompt(cwd=str(cwd))
+    prompt_with_guide = chat.llm_system_prompt(cwd=str(cwd))
     assert guide_content in prompt_with_guide
     assert "* Empty, no global user guide is defined." in prompt_with_guide
     assert "* Empty, no project-specific user guide is defined." not in prompt_with_guide

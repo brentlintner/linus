@@ -6,8 +6,11 @@ load_dotenv()
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 GEMINI_MODEL = os.getenv("GEMINI_MODEL") or "gemini-2.5-pro"
 GEMINI_TEMPERATURE = 0.4
+USER_NAME = "Brent"
+PARTNER_NAME = "Linus"
 
-PROMPT_PREFIX_FILE = os.path.join(os.path.dirname(__file__), "..", "docs", "prompt.md")
+SYSTEM_PROMPT_FILE = os.path.join(os.path.dirname(__file__), "templates", "system.md")
+CONTEXT_PROMPT_FILE = os.path.join(os.path.dirname(__file__), "templates", "context.md")
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 

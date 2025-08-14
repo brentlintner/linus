@@ -24,8 +24,6 @@ FILE_TREE_PLACEHOLDER =     placeholder('FILE_TREE_JSON')
 FILES_PLACEHOLDER =         placeholder('FILE_REFERENCES')
 FILES_START_SEP =           placeholder('FILE_REFERENCES START')
 FILES_END_SEP =             placeholder('FILE_REFERENCES END')
-CONVERSATION_START_SEP =    placeholder('CONVERSATION_HISTORY START')
-CONVERSATION_END_SEP =      placeholder('CONVERSATION_HISTORY END')
 TERMINAL_LOGS_PLACEHOLDER = placeholder('TERMINAL_LOGS')
 PROJECT_SPECIFIC_GUIDE =    placeholder('PROJECT_SPECIFIC_GUIDE')
 GLOBAL_USER_GUIDE =         placeholder('GLOBAL_USER_GUIDE')
@@ -214,9 +212,6 @@ def match_snippet():
 
 def match_metadata():
     return rf'({FILE_METADATA_START}.*?{FILE_METADATA_END}|{SNIPPET_METADATA_START}.*?{SNIPPET_METADATA_END}|{TERMINAL_METADATA_START}.*?{TERMINAL_METADATA_END})'
-
-def match_before_conversation_history():
-    return rf'^(.*?){CONVERSATION_START_SEP}'
 
 def file_block(file_path, content, language=None, version=1):
     language = get_language_from_extension(file_path) if not language else language

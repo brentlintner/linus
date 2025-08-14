@@ -20,8 +20,11 @@ from .config import (
     GOOGLE_API_KEY,
     GEMINI_MODEL,
     GEMINI_TEMPERATURE,
-    PROMPT_PREFIX_FILE,
-    PROJECT_ROOT
+    SYSTEM_PROMPT_FILE,
+    CONTEXT_PROMPT_FILE,
+    PROJECT_ROOT,
+    USER_NAME,
+    PARTNER_NAME
 )
 from .file_utils import (
     generate_project_structure,
@@ -31,13 +34,9 @@ from .file_utils import (
 )
 from .database import initialize_database, User, Chat, db_proxy
 
-def llm_prompt(ignore_patterns=None, include_patterns=None, cwd=os.getcwd()):
-    # TODO: if prompt is larger than 500K characters, show a warning and confirmation (in debug?)
-    try:
-        with open(PROMPT_PREFIX_FILE, 'r', encoding='utf-8') as f:
-            prefix = f.read()
-    except FileNotFoundError:
-        return "Could not find background.md"
+def llm_system_prompt(cwd=os.getcwd()):
+    with open(SYSTEM_PROMPT_FILE, 'r', encoding='utf-8') as f:
+        prompt = f.read()
 
     # Handle project-specific guide
     project_guide_path = os.path.join(cwd, '.lin.md')
@@ -46,15 +45,22 @@ def llm_prompt(ignore_patterns=None, include_patterns=None, cwd=os.getcwd()):
             project_guide_content = f.read()
     else:
         project_guide_content = "* Empty, no project-specific user guide is defined."
-    prefix = prefix.replace(parser.PROJECT_SPECIFIC_GUIDE, project_guide_content)
+    prompt = prompt.replace(parser.PROJECT_SPECIFIC_GUIDE, project_guide_content)
 
     # Handle global guide (statically for now)
     global_guide_content = "* Empty, no global user guide is defined."
-    prefix = prefix.replace(parser.GLOBAL_USER_GUIDE, global_guide_content)
+    prompt = prompt.replace(parser.GLOBAL_USER_GUIDE, global_guide_content)
+
+    return prompt
+
+def llm_context_prompt(ignore_patterns=None, include_patterns=None, cwd=os.getcwd()):
+    # TODO: if prompt is larger than 500K characters, show a warning and confirmation (in debug?)
+    with open(CONTEXT_PROMPT_FILE, 'r', encoding='utf-8') as f:
+        prompt = f.read()
 
     if include_patterns is None or not include_patterns:
-        # No files included, return prefix without file tree and file contents.
-        return prefix.replace(parser.FILE_TREE_PLACEHOLDER, '[]').replace(parser.FILES_PLACEHOLDER, '')
+        # No files included, return prompt without file tree and file contents.
+        return prompt.replace(parser.FILE_TREE_PLACEHOLDER, '[]').replace(parser.FILES_PLACEHOLDER, '')
 
     project_structure_json = generate_project_structure(ignore_patterns, include_patterns, cwd)
     project_files = generate_project_file_contents(ignore_patterns, include_patterns, cwd)
@@ -62,28 +68,11 @@ def llm_prompt(ignore_patterns=None, include_patterns=None, cwd=os.getcwd()):
     project_structure = json.dumps(
         project_structure_json, indent=2) if is_debug() else json.dumps(project_structure_json, separators=(',', ':'))
 
-    prefix = prefix.replace(parser.FILE_TREE_PLACEHOLDER, f'{project_structure}')
-    prefix = prefix.replace(parser.FILES_PLACEHOLDER, f'{project_files}')
-    prefix = prefix.replace(parser.TERMINAL_LOGS_PLACEHOLDER, get_tmux_logs())
+    prompt = prompt.replace(parser.FILE_TREE_PLACEHOLDER, f'{project_structure}')
+    prompt = prompt.replace(parser.FILES_PLACEHOLDER, f'{project_files}')
+    prompt = prompt.replace(parser.TERMINAL_LOGS_PLACEHOLDER, get_tmux_logs())
 
-    with db_proxy:
-        chats = Chat.select().join(User).order_by(Chat.timestamp)
-        for chat in chats:
-            prefix += f'\n**{chat.user.name.capitalize()}:**\n\n{chat.message}\n'
-
-    prefix += f'\n{parser.CONVERSATION_END_SEP}\n'
-
-    return prefix
-
-def process_user_input(state, prompt_text=""):
-    """Processes user input, updating history and handling file references."""
-    if not prompt_text:
-        return
-
-    human_user, _ = User.get_or_create(name='brent')
-    message = prompt_text.strip()
-
-    Chat.create(user=human_user, message=message)
+    return prompt
 
 def process_response_metadata(response, state):
     # Initialize counters
@@ -158,7 +147,7 @@ def process_request_stream(stream, state):
     assembled_files = {}
     file_part_buffer = state['file_part_buffer']
 
-    with console.status("Linus is thinking...", spinner="point") as status:
+    with console.status(f"{PARTNER_NAME} is thinking...", spinner="point") as status:
         for chunk in stream:
             if not chunk.text:
                 continue
@@ -171,7 +160,7 @@ def process_request_stream(stream, state):
 
             if in_progress_file:
                 in_progress_file_path = in_progress_file
-                status.update(f"Linus is writing {in_progress_file_path}...")
+                status.update(f"{PARTNER_NAME} is writing {in_progress_file_path}...")
 
                 # Split into before_file and rest
                 before_file_start, rest = queued_response_text.split(parser.FILE_METADATA_START, 1)
@@ -180,7 +169,7 @@ def process_request_stream(stream, state):
                 if before_file_start:
                     print_markdown(before_file_start)
             else:
-                status.update("Linus is typing...")
+                status.update(f"{PARTNER_NAME} is typing...")
 
             queued_has_complete_code_block = re.search(parser.match_code_block(), queued_response_text, flags=re.DOTALL)
 
@@ -239,7 +228,7 @@ def process_request_stream(stream, state):
 
                             section = f"```{language}\n{code}\n```"
                             print_markdown(section)
-                            status.update("Linus is typing...")
+                            status.update(f"{PARTNER_NAME} is typing...")
                         else:
                             should_continue = True
 
@@ -247,7 +236,7 @@ def process_request_stream(stream, state):
                         continue
 
                 else:
-                    status.update("Linus is typing...")
+                    status.update(f"{PARTNER_NAME} is typing...")
                     file_path = None
                     snippets = parser.find_snippets(section)
                     if snippets:
@@ -338,7 +327,7 @@ def process_request_stream(stream, state):
     return full_response_text, last_chunk, assembled_files
 
 def process_response(full_response_text, assembled_files, state):
-    llm_user, _ = User.get_or_create(name='linus')
+    llm_user, _ = User.get_or_create(name=PARTNER_NAME.lower())
 
     # This regex will find and match entire file blocks, which we want to strip from the database record.
     file_block_regex = rf'{parser.FILE_METADATA_START}.*?{parser.END_OF_FILE}'
@@ -362,10 +351,9 @@ def process_response(full_response_text, assembled_files, state):
         Chat.create(user=llm_user, message=message_for_db)
 
     if state['writeable']:
-        # Write all assembled files
         if assembled_files:
             console.print("\nFiles Changed\n", style="bold yellow")
-        for (file_path, version), file_content in assembled_files.items():
+        for (file_path, _), file_content in assembled_files.items():
             console.print(f"  {file_path}", style="bold green")
             full_path = os.path.join(cwd, file_path)  # Get full path for writing
             directory_path = os.path.dirname(full_path) # Get directory part of the path
@@ -409,28 +397,91 @@ def print_recap():
             print()
             print_markdown(f'**{chat.user.name.capitalize()}:**\n\n{message}')
 
-def send_request_to_ai(state, client):
-    """Sends a request to the AI and processes the streamed response."""
-    request_text = llm_prompt(
+def chat_history_contents():
+    contents = []
+    with db_proxy:
+        chats = Chat.select().join(User).order_by(Chat.timestamp)
+        for chat in chats:
+            if chat.user.name == PARTNER_NAME.lower():
+                contents.append(types.ModelContent(parts=[
+                    types.Part.from_text(text=chat.message.strip())
+                ]))
+            else:
+                contents.append(types.UserContent(parts=[
+                    types.Part.from_text(text=chat.message.strip())
+                ]))
+
+    return contents
+
+def save_user_message(message):
+    human_user, _ = User.get_or_create(name=USER_NAME.lower())
+    Chat.create(user=human_user, message=message)
+
+def ai_request_contents(message, state):
+    contents = []
+    chat_contents = chat_history_contents()
+    context_prompt = llm_context_prompt(
         ignore_patterns=state['ignore_patterns'],
         include_patterns=state['include_patterns'],
         cwd=state['cwd']
     )
 
+    user_content_parts = [types.Part.from_text(text=context_prompt)]
+
+    # We have a new message to send
+    if message:
+        save_user_message(message)
+        user_content_parts.append(types.Part.from_text(text=f"# {USER_NAME}'s Latest Message\n\n{message}"))
+    # We are continuing from last response
+    elif chat_contents:
+        if isinstance(chat_contents[-1], types.UserContent):
+            last_content = chat_contents.pop()
+            last_content_text = "\n".join([part.text or "" for part in last_content.parts])
+            user_content_parts.append(types.Part.from_text(text=f"# {USER_NAME}'s Latest Message\n\n{last_content_text}"))
+        else:
+            user_content_parts.append(
+                types.Part.from_text(text="(System Note: Your last response was incomplete. Please continue.)"))
+    else:
+        raise SystemError("No previous chat history found for continuation.")
+
+    contents += chat_contents
+    contents.append(types.UserContent(parts=user_content_parts))
+
+    return contents
+
+def send_request_to_ai(message, state, client):
+    """Sends a request to the AI and processes the streamed response."""
+    system_prompt = llm_system_prompt(cwd=state['cwd'])
+    contents = ai_request_contents(message, state)
+
+    # TODO: own method
     if is_debug():
         id = state['cwd'].replace(os.path.sep, '_')
         tmp_dir = os.path.join(PROJECT_ROOT, "tmp")
         os.makedirs(tmp_dir, exist_ok=True)
         tmp_file = os.path.join(tmp_dir, f"linus_request_{id}.txt")
         with open(tmp_file, 'w', encoding='utf-8') as f:
-            f.write(request_text)
+            tmp_text = system_prompt
+            for content in contents:
+                parts_text = "\n".join(part.text for part in content.parts)
+                if isinstance(content, types.ModelContent):
+                    tmp_text += f"\n**{PARTNER_NAME}:** \n\n{parts_text}\n"
+                elif isinstance(content, types.UserContent):
+                    tmp_text += f"\n**{USER_NAME}:** \n\n{parts_text}\n"
+            f.write(tmp_text)
         debug(f"Current request saved to {tmp_file}")
 
     state['start_time'] = time.time()
 
-    tools = [types.Tool(google_search=types.GoogleSearch()), types.Tool(url_context=types.UrlContext())]
-    config = types.GenerateContentConfig(tools=tools, temperature=GEMINI_TEMPERATURE, response_modalities=["TEXT"])
-    contents = [types.Part.from_text(text=request_text)]
+    config = types.GenerateContentConfig(
+        system_instruction=system_prompt,
+        temperature=GEMINI_TEMPERATURE,
+        response_modalities=["TEXT"],
+        tools=[
+            types.Tool(google_search=types.GoogleSearch()),
+            types.Tool(url_context=types.UrlContext())
+        ]
+    )
 
     stream = client.models.generate_content_stream(model=GEMINI_MODEL, contents=contents, config=config)
 
@@ -472,7 +523,7 @@ def repl_loop(session, client, state):
 
                 state['force_continue_counter'] += 1
                 debug(f"Forcing continuation... attempts={state['force_continue_counter']}")
-                send_request_to_ai(state, client)
+                send_request_to_ai(None, state, client)
                 continue
 
             if not state['force_continue']:
@@ -493,13 +544,11 @@ def repl_loop(session, client, state):
                 break
 
             if prompt_text.startswith('$continue'):
-                send_request_to_ai(state, client)
+                send_request_to_ai(None, state, client)
                 continue
 
-            process_user_input(state, prompt_text)
-
             state['force_continue'] = False  # Reset force continue state
-            send_request_to_ai(state, client)
+            send_request_to_ai(prompt_text, state, client)
 
         except KeyboardInterrupt:
             if input("\nReally quit? (y/n) ").lower() == 'y':
@@ -508,7 +557,7 @@ def repl_loop(session, client, state):
             if input("\nReally quit? (y/n) ").lower() == 'y':
                 break
         except Exception:
-            print("Linus has glitched!\n")
+            print(f"{PARTNER_NAME} has glitched!\n")
             console.print_exception(show_locals=True)
 
 def coding_repl(resume=False, writeable=False, ignore_patterns=None, include_patterns=None, cwd=os.getcwd()):

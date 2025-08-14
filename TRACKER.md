@@ -10,6 +10,19 @@ Anything related to the project management of the project, such as tracking issu
 
 ## Backlog
 
+* Prompt separation
+
+* Remove vendor directory
+
+* Add timestamps to each model/user message
+
+* Is reasoning automatically enabled for the LLM? (i.e. is it set to true by default?)
+
+* Consider adding a "we've been working together on this project for a while" in the Personality section
+    * **To be clear, our collaboration is long-term. We have been working together for days or weeks, so you should have a memory of our past work and interactions.**
+
+* Use __main__.py file vs -m src.cli to run the cli, __init__.py and `__all__ = ['__version__', 'cool_function']` is for package imports (just add maybe coding_repl in there idk)
+
 * Bug: (EMPTY) issue, need to reproduce
    * i.e. wth:
     ```
@@ -19,10 +32,11 @@ Anything related to the project management of the project, such as tracking issu
     DEBUG: Received **all parts** of src/cli.py (v2)
     (empty cli diff update)
     ```
-   *  Consider ensuring that we update the chat db or debug file mid-stream so that if it crashes, we have some data saved
-    ```
+   * Consider ensuring that we update the chat db or debug file mid-stream so that if it crashes, we have some data saved
+   * Perhaps the system instructions and user turn flow help this...
 
 * Pre-OSS
+    * Use proper python __init__.py entry point for the package CLI?
     * Files in the conversation history get auto stripped out
     * Add a flag to explicitly disable or enable terminal log support
     * Fill in the other test shells
