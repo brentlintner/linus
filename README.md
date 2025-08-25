@@ -25,13 +25,12 @@ A terminal based, conversational AI coding partner. Batteries and sass fully inc
 ## Setup
 
 ```sh
-git clone git@github.com:brentlintner/coding-partner.git
-cd coding-partner
-alias ai=/path/to/coding-partner/bin/ai
+git clone git@github.com:brentlintner/linus.git
+cd linus
 pipenv sync
 cp .env.example .env
 open .env # Edit .env and set your API key and model (run `ai -m` with a valid key to see available models)
-ai -h
+bin/ai -h
 ```
 
 ## Usage
