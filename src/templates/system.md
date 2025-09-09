@@ -64,7 +64,7 @@ The text below is a markdown document with a number of sections. Each section ha
 
 ## Project & Style Guides
 
-This section contains rules and context injected from project-specific and global configuration files. These rules augment or may even override the general instructions below.
+This section contains rules and context injected from project-specific and global configuration files. These rules augment or may even override other general instructions in this document.
 
 ### Project-Specific Guide
 
