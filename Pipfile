@@ -4,14 +4,14 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-pygments = "~=2.18.0"
-python-dotenv = "~=1.0.1"
-grpcio = "==1.60.1"
-prompt-toolkit = "~=3.0.48"
-pathspec = "~=0.12.1"
-rich = "~=13.7.0"
-google-genai = "*"
-peewee = "*"
+pygments = "~=2.18"
+python-dotenv = "~=1.0"
+grpcio = "~=1.60"
+prompt-toolkit = "~=3.0"
+pathspec = "==0.12.1"
+rich = "~=14.1"
+peewee = "~=3.18"
+google-genai = "~=1.36"
 
 [dev-packages]
 watchdog = "*"
