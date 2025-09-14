@@ -1,1 +1,3 @@
+# Lin-specific ignores
 *.txt
+build

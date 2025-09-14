@@ -13,10 +13,10 @@ def format_number(num, magnitude):
     suffixes = ['', 'K', 'M', 'B', 'T']
     return f'{num:.1f}{suffixes[magnitude]}'
 
-def load_ignore_patterns(extra_ignore_patterns=None, directory=os.getcwd()):
+def load_ignore_patterns(extra_ignore_patterns=None, cwd=os.getcwd()):
     ignore_patterns = [] + DEFAULT_IGNORE_PATTERNS
     for ignore_file in ['.gitignore', '.linignore']:
-        file_path = os.path.join(directory, ignore_file)
+        file_path = os.path.join(cwd, ignore_file)
         if os.path.exists(file_path):
             with open(file_path, encoding="utf-8") as f:
                 ignore_patterns.extend([line.strip() for line in f if line.strip() and not line.startswith('#')])
@@ -44,31 +44,31 @@ def generate_diff(file_path, current_content):
     return stringifed_diff
 
 # NOTE: we don't use the args.files here, because we want to include all non-default ignored files
-def generate_project_structure(extra_ignore_patterns=None, include_patterns=None, directory=None):
+def generate_project_structure(extra_ignore_patterns=None, include_patterns=None, cwd=None):
     if include_patterns is None:
         include_patterns = []
-    directory = directory or os.getcwd()  # Use provided directory or default to current.
-    ignore_patterns = load_ignore_patterns(extra_ignore_patterns, directory)
+    cwd = cwd or os.getcwd()  # Use provided cwd or default to current.
+    ignore_patterns = load_ignore_patterns(extra_ignore_patterns, cwd)
     ignore_spec = pathspec.PathSpec.from_lines('gitwildmatch', ignore_patterns)
     include_spec = pathspec.PathSpec.from_lines('gitwildmatch', include_patterns)
     allow_all = "." in include_patterns
 
     file_tree = [{
         "id": "$root",
-        "name": os.path.basename(directory),
+        "name": os.path.basename(cwd),
         "parent": None,
         "type": "directory"
     }]
 
-    for root, dirs, files in os.walk(directory, topdown=True):
-        relative_path = os.path.relpath(root, directory)
+    for root, dirs, files in os.walk(cwd, topdown=True):
+        relative_path = os.path.relpath(root, cwd)
         if relative_path == '.':
             relative_path = ''
 
         # Filter out ignored directories (for walking, not for the list)
         dirs[:] = [d for d in dirs if not ignore_spec.match_file(os.path.join(relative_path, d))]
 
-        # TODO: be better, i.e. add the directory to the tree even if empty or match fails (because it's for a file vs a dir)
+        # TODO: be better, i.e. add the cwd to the tree even if empty or match fails (because it's for a file vs a dir)
         for dir_path in dirs:
             dir_path = os.path.join(relative_path, dir_path)
             dir_parent = os.path.dirname(dir_path)
@@ -100,32 +100,32 @@ def generate_project_structure(extra_ignore_patterns=None, include_patterns=None
 
     return file_tree
 
-def generate_project_file_contents(extra_ignore_patterns=None, include_patterns=None, directory=None):
+def generate_project_file_contents(extra_ignore_patterns=None, include_patterns=None, cwd=None):
     if include_patterns is None:
         include_patterns = []
-    files = generate_project_file_list(extra_ignore_patterns, include_patterns, directory)
+    files = generate_project_file_list(extra_ignore_patterns, include_patterns, cwd)
     output = ""
 
     # TODO: make an array
     for file_path in files.splitlines():
         debug(f"File contents (add): {file_path}")
         # NOTE: we always user version 1 here, since any newer versions will be in conversation history
-        output += get_file_contents(file_path)
+        output += get_file_contents(file_path, cwd=cwd)
 
     return output
 
-def generate_project_file_list(extra_ignore_patterns=None, include_patterns=None, directory=None):
+def generate_project_file_list(extra_ignore_patterns=None, include_patterns=None, cwd=None):
     if include_patterns is None:
         include_patterns = []
-    directory = directory or os.getcwd()  # Use provided directory or default to current.
-    ignore_patterns = load_ignore_patterns(extra_ignore_patterns, directory)
+    cwd = cwd or os.getcwd()  # Use provided cwd or default to current.
+    ignore_patterns = load_ignore_patterns(extra_ignore_patterns, cwd)
     ignore_spec = pathspec.PathSpec.from_lines('gitwildmatch', ignore_patterns)
     include_spec = pathspec.PathSpec.from_lines('gitwildmatch', include_patterns)
     allow_all = "." in include_patterns
     output = []  # Use a list to store file names
 
-    for root, dirs, files in os.walk(directory, topdown=True):
-        relative_path = os.path.relpath(root, directory)
+    for root, dirs, files in os.walk(cwd, topdown=True):
+        relative_path = os.path.relpath(root, cwd)
         if relative_path == '.':
             relative_path = ''
 
@@ -140,9 +140,9 @@ def generate_project_file_list(extra_ignore_patterns=None, include_patterns=None
 
     return "\n".join(output)  # Join with newlines
 
-def get_file_contents(file_path, version=1):
+def get_file_contents(file_path, cwd, version=1):
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(os.path.join(cwd, file_path), 'r', encoding='utf-8') as f:
             contents = f.read()
         block = file_block(file_path, contents, get_language_from_extension(file_path), version)
         return f"{block}\n"

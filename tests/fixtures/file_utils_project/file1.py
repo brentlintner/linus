@@ -1,2 +1,2 @@
-# This is a python file
-print("hello from file 1")
+# This is a python file.
+print("hello from file1.py")

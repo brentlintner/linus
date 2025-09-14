@@ -1,2 +1,2 @@
-// This is a javascript file in a subdirectory
-console.log('hello from file 3');
+// This is a javascript file in a subdirectory.
+console.log("hello from file3.js");

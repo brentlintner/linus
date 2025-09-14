@@ -30,9 +30,9 @@ class Chat(BaseModel):
     message = TextField()
     timestamp = DateTimeField(default=datetime.now)
 
-def initialize_database(directory):
+def initialize_database(cwd):
     """Initializes the database connection and creates tables."""
-    db_path = os.path.join(directory, '.lin.db')
+    db_path = os.path.join(cwd, '.lin.db')
     database = SqliteDatabase(db_path)
     db_proxy.initialize(database)
 

@@ -90,23 +90,23 @@ def clean_history_files(cwd=os.getcwd()):
         print("No database file found for the current directory.")
 
 def handle_list_files(args):
-    directory = args.directory
+    cwd = args.directory
     extra_ignore_patterns = args.ignore.split(',') if args.ignore else None
     include_patterns = args.files.split(',') if args.files else None
-    files = generate_project_file_list(extra_ignore_patterns, include_patterns, directory)
+    files = generate_project_file_list(extra_ignore_patterns, include_patterns, cwd)
     print(files)
 
 def handle_tokens(args):
-    directory = args.directory
+    cwd = args.directory
     client = genai.Client(api_key=os.getenv('GOOGLE_API_KEY'))
 
     extra_ignore_patterns = args.ignore.split(',') if args.ignore else []
     include_patterns = args.files.split(',') if args.files else []
-    file_paths = generate_project_file_list(extra_ignore_patterns, include_patterns, directory)
+    file_paths = generate_project_file_list(extra_ignore_patterns, include_patterns, cwd)
     total_tokens = 0
     for file_path in file_paths.splitlines():
         try:
-            with open(os.path.join(directory, file_path), 'r', encoding='utf-8') as f:
+            with open(os.path.join(cwd, file_path), 'r', encoding='utf-8') as f:
                 content = f.read()
             tokens = client.models.count_tokens(model=os.getenv('GEMINI_MODEL') or '', contents=content).total_tokens
             total_tokens += tokens or 0
