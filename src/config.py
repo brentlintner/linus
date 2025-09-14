@@ -21,6 +21,10 @@ DEFAULT_IGNORE_PATTERNS = [
     ".lin.db",
     ".lin.md",
 
+    # Lock files
+    "*.lock",
+    "package-lock.json",
+
     # VCS directories
     ".git/",
     ".svn/",
